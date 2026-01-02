@@ -2,13 +2,14 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Analytics V6</title>
+    <title>Piscina Analytics V7 (Estiva)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         :root { 
             --primary: #007aff; 
+            --summer: #ff9500; /* Colore per l'esterna */
             --bg: #f5f5f7; 
             --card: #ffffff; 
             --text: #1d1d1f; 
@@ -61,7 +62,12 @@
         table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; font-size: 0.9rem; }
         th { text-align: left; padding: 12px; border-bottom: 2px solid #eee; color: #888; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; position: sticky; top: 0; background: #fff; }
         td { padding: 12px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; background: #eef2ff; color: var(--primary); display: inline-block; }
+        
+        /* BADGES */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
+        .badge-std { background: #eef2ff; color: var(--primary); }
+        .badge-summer { background: #fff8e6; color: var(--summer); border: 1px solid #ffeeba; }
+
         .col-totalone { background-color: #333; color: #fff; font-weight: 800; text-align: center; font-size: 1rem; border-radius: 6px; padding: 4px; }
 
         /* COMPARISON STYLES */
@@ -120,10 +126,22 @@
                 <input type="date" id="i-date">
             </div>
             <div class="input-group">
-                <label>Fascia Oraria</label>
+                <label>Fascia Oraria / Vasca</label>
                 <select id="i-fascia">
-                    <option>Mattina</option><option>Mattina intera</option><option>Pranzo</option><option>Sera</option>
-                    <option>Sabato pom</option><option>Domenica</option><option>Festivo</option><option>Unico</option>
+                    <optgroup label="🏊 Vasca Interna">
+                        <option value="Mattina">Mattina</option>
+                        <option value="Mattina intera">Mattina intera</option>
+                        <option value="Pranzo">Pranzo</option>
+                        <option value="Sera">Sera</option>
+                        <option value="Sabato pom">Sabato pom</option>
+                        <option value="Domenica">Domenica</option>
+                        <option value="Festivo">Festivo</option>
+                        <option value="Unico">Unico</option>
+                    </optgroup>
+                    <optgroup label="☀️ Vasca Esterna (Estate)">
+                        <option value="Estiva - Mattina">Estiva - Mattina</option>
+                        <option value="Estiva - Pomeriggio">Estiva - Pomeriggio</option>
+                    </optgroup>
                 </select>
             </div>
             <div class="input-group">
@@ -169,7 +187,7 @@
                     <thead>
                         <tr>
                             <th style="padding-left:10px">Data</th>
-                            <th>Fascia</th>
+                            <th>Fascia / Vasca</th>
                             <th style="text-align:center">Sing.</th>
                             <th style="text-align:center">Abb.</th>
                             <th style="text-align:center">Grat.</th>
@@ -247,6 +265,7 @@
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // ✅ CONFIGURAZIONE FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0",
       authDomain: "piscinastats-64519.firebaseapp.com",
@@ -289,7 +308,7 @@
             allData = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
             populateYearFilter();
             applyFilters(); 
-            // Pre-fill comparison dates
+            // Pre-fill comparison
             const today = new Date();
             const lastMonth = new Date(); lastMonth.setMonth(today.getMonth()-1);
             document.getElementById('date-b-start').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
@@ -340,10 +359,16 @@
         data.forEach(d => {
             const s = (d.int || 0) + (d.rid || 0);
             const a = (d.abb_int || 0) + (d.abb_rid || 0);
+            
+            // Logica per evidenziare Esterna
+            const isSummer = d.fascia.includes("Estiva");
+            const badgeClass = isSummer ? 'badge badge-summer' : 'badge badge-std';
+            const displayFascia = d.fascia;
+
             tbody.innerHTML += `
                 <tr>
                     <td style="padding-left:10px; font-weight:bold">${d.date.split('-').reverse().join('/')} <span style="font-weight:normal; font-size:0.8rem; color:#888">${d.meteo}</span></td>
-                    <td><span class="badge">${d.fascia}</span></td>
+                    <td><span class="${badgeClass}">${displayFascia}</span></td>
                     <td style="text-align:center">${s}</td>
                     <td style="text-align:center">${a}</td>
                     <td style="text-align:center">${d.grat || 0}</td>
@@ -363,21 +388,17 @@
         const daE = document.getElementById('date-a-end').value;
         const dbS = document.getElementById('date-b-start').value;
         const dbE = document.getElementById('date-b-end').value;
-
         if(!daS || !daE || !dbS || !dbE) return;
 
         const setA = allData.filter(d => d.date >= daS && d.date <= daE);
         const setB = allData.filter(d => d.date >= dbS && d.date <= dbE);
-
         const statsA = calcStats(setA);
         const statsB = calcStats(setB);
 
-        // Update DOM
         updateCompBox('tot', statsA.tot, statsB.tot);
         updateCompBox('sing', statsA.sing, statsB.sing);
         updateCompBox('abb', statsA.abb, statsB.abb);
 
-        // Avg
         const daysA = new Set(setA.map(d=>d.date)).size || 1;
         const daysB = new Set(setB.map(d=>d.date)).size || 1;
         document.getElementById('avg-a').innerText = (statsA.tot / daysA).toFixed(1);
@@ -399,18 +420,15 @@
     function updateCompBox(id, valA, valB) {
         document.getElementById(`comp-${id}-a`).innerText = valA;
         document.getElementById(`comp-${id}-b`).innerText = valB;
-        
         const diffEl = document.getElementById(`diff-${id}`);
         if (valA === 0) {
             diffEl.innerText = valB > 0 ? "+100%" : "0%";
             diffEl.className = "comp-diff diff-neutral";
             return;
         }
-        
         const diff = ((valB - valA) / valA) * 100;
         const sign = diff > 0 ? "+" : "";
         diffEl.innerText = `${sign}${diff.toFixed(1)}%`;
-        
         if(diff > 0) diffEl.className = "comp-diff diff-pos";
         else if(diff < 0) diffEl.className = "comp-diff diff-neg";
         else diffEl.className = "comp-diff diff-neutral";
@@ -420,7 +438,6 @@
     function renderCompChart(sA, sB) {
         const ctx = document.getElementById('chartCompare');
         if(compChart) compChart.destroy();
-        
         compChart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -430,10 +447,7 @@
                     { label: 'Periodo B', data: [sB.tot, sB.sing, sB.abb, sB.grat], backgroundColor: '#ff9500' }
                 ]
             },
-            options: { 
-                responsive: true,
-                scales: { y: { beginAtZero: true } } 
-            }
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
         });
     }
 
