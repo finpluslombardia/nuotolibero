@@ -2,147 +2,200 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Piscina Stats</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Dashboard Piscina Desktop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        :root { --primary: #007aff; --bg: #f2f2f7; --card: #fff; --text: #1c1c1e; --danger: #ff3b30; --success: #34c759; }
-        [data-theme="dark"] { --bg: #000; --card: #1c1c1e; --text: #f2f2f7; }
+        :root { 
+            --primary: #007aff; 
+            --bg: #f5f5f7; 
+            --card: #ffffff; 
+            --text: #1d1d1f; 
+            --border: #d2d2d7;
+            --success: #34c759;
+            --danger: #ff3b30;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 40px; }
         
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; padding-bottom: 90px; }
-        .container { max-width: 600px; margin: 0 auto; }
+        /* Layout Desktop */
+        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 30px; }
         
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 2rem; }
+        
+        /* Cards */
+        .card { background: var(--card); border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+
+        /* INPUT SECTION (Wide) */
+        .input-row-main { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
+        .input-group { display: flex; flex-direction: column; flex: 1; }
+        .input-group label { font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: #666; }
+        
+        /* Griglia Ingressi */
+        .input-grid-tickets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 20px; }
+        .ticket-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: center; transition: border-color 0.2s; }
+        .ticket-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,122,255,0.1); }
+        .ticket-box label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; color: var(--text); white-space: nowrap; }
+        .ticket-box input { width: 100%; font-size: 1.5rem; font-weight: bold; text-align: center; border: none; outline: none; background: transparent; color: var(--primary); }
+
+        /* Form elements */
+        select, input[type="date"] { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: #fff; }
+        
+        /* Buttons */
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.1s; }
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-primary:hover { background: #0062cc; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-edit { background: #eee; color: #333; padding: 5px 10px; font-size: 0.8rem; margin-right: 5px; }
+        .btn-del { background: #ffe5e5; color: var(--danger); padding: 5px 10px; font-size: 0.8rem; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #eee; color: #888; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        tr:hover { background-color: #f9f9f9; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #eef2ff; color: var(--primary); }
+        .num-cell { font-weight: bold; text-align: center; color: #333; }
+        .tot-cell { font-weight: 800; text-align: center; color: var(--primary); background: #f0f7ff; }
+
         /* Login */
-        #login-screen { text-align: center; margin-top: 50px; }
-        input, select, button { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
-        button:active { opacity: 0.7; }
-        
-        /* App */
-        .card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05); }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-box { background: var(--card); padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .val { font-size: 2rem; font-weight: 800; display: block; color: var(--primary); }
-        .lbl { font-size: 0.7rem; text-transform: uppercase; color: #888; font-weight: 600; }
-        
-        .row { display: flex; gap: 10px; }
-        .col { flex: 1; }
-        
-        /* Lista */
-        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 0.95rem; }
-        .history-item:last-child { border-bottom: none; }
-        .h-info { display: flex; flex-direction: column; gap: 4px; }
-        .h-date { font-weight: bold; font-size: 0.85rem; color: #888; }
-        .h-main { font-weight: 600; }
-        
-        .actions { display: flex; gap: 10px; }
-        .icon-btn { background: none; border: none; padding: 5px; width: auto; font-size: 1.1rem; cursor: pointer; color: #888; }
-        .btn-edit { color: var(--primary); }
-        .btn-del { color: var(--danger); }
-
-        /* Nav */
-        .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 10px 25px; border-radius: 30px; display: flex; gap: 25px; z-index: 99; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
-        .nav-item { opacity: 0.5; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
-        .nav-item.active { opacity: 1; border-bottom: 2px solid var(--primary); }
-
-        .hidden { display: none !important; }
-        .editing-mode { border: 2px solid var(--primary); }
+        #login-screen { max-width: 400px; margin: 100px auto; text-align: center; }
+        .hidden { display: none; }
+        .editing-mode { border: 2px solid var(--primary); background-color: #f0f7ff; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div id="login-screen">
+    <h1>🏊‍♂️ Accesso Dashboard</h1>
+    <div class="card" style="margin-top:20px">
+        <div class="input-group" style="margin-bottom:15px; text-align:left">
+            <label>Email</label>
+            <input type="email" id="email" style="width:100%; box-sizing:border-box">
+        </div>
+        <div class="input-group" style="margin-bottom:20px; text-align:left">
+            <label>Password</label>
+            <input type="password" id="password" style="width:100%; box-sizing:border-box">
+        </div>
+        <button class="btn btn-primary" onclick="doLogin()">Entra</button>
+        <p id="login-error" style="color:red; margin-top:10px"></p>
+    </div>
+</div>
+
+<div id="app-screen" class="container hidden">
     
-    <div id="login-screen">
-        <h1>🏊‍♂️ Piscina Login</h1>
-        <div class="card">
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password">
-            <button onclick="doLogin()">Accedi</button>
-            <p id="login-error" style="color:var(--danger); font-size:0.9rem"></p>
+    <div class="header">
+        <h1>📊 Statistiche Piscina</h1>
+        <div>
+            <span id="user-display" style="margin-right:15px; font-weight:500"></span>
+            <button class="btn" style="background:#ddd" onclick="doLogout()">Esci</button>
         </div>
     </div>
 
-    <div id="app-screen" class="hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
-            <h2 style="margin:0">Statistiche</h2>
-            <button onclick="doLogout()" style="width:auto; padding:8px 15px; background:#444; font-size:0.8rem; border-radius:20px">Esci</button>
+    <div class="card" id="input-card">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+            <div class="card-title" id="form-title">Nuovo Inserimento Dati</div>
+            <button id="cancel-edit" class="btn hidden" onclick="cancelEdit()" style="background:#eee; color:red">Annulla Modifica</button>
         </div>
 
-        <div id="tab-insert">
-            <div class="stat-grid">
-                <div class="stat-box">
-                    <span class="val" id="today-count">0</span>
-                    <span class="lbl">Ingressi Oggi</span>
-                </div>
-                <div class="stat-box">
-                    <span class="val" id="total-count-mini" style="color:var(--text)">0</span>
-                    <span class="lbl">Totale Storico</span>
-                </div>
-            </div>
-
-            <div class="card" id="input-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-                    <h3 style="margin:0; font-size:0.9rem; color:#888; text-transform:uppercase" id="form-title">Nuovo Inserimento</h3>
-                    <button id="cancel-edit-btn" onclick="cancelEdit()" class="hidden" style="width:auto; background:none; color:var(--danger); padding:0; font-size:0.8rem">Annulla Modifica</button>
-                </div>
-
+        <div class="input-row-main">
+            <div class="input-group">
+                <label>Data</label>
                 <input type="date" id="i-date">
-                
-                <div class="row">
-                    <select id="i-fascia" class="col">
-                        <option>Mattina</option><option>Pranzo</option><option>Pomeriggio</option><option>Sera</option>
-                    </select>
-                    <select id="i-meteo" class="col">
-                        <option>☀️ Sole</option><option>☁️ Nuvoloso</option><option>🌧️ Pioggia</option>
-                    </select>
-                </div>
-
-                <div class="row">
-                    <select id="i-tipo" class="col" style="flex:2">
-                        <option value="Intero">Intero</option>
-                        <option value="Ridotto">Ridotto</option>
-                        <option value="Abbonamento">Abbonamento</option>
-                        <option value="Gratuito">Gratuito</option>
-                    </select>
-                    
-                    <div class="row" style="align-items:center; flex:2; gap:0">
-                        <button onclick="adj(-1)" style="background:#eee; color:#000; border-radius: 12px 0 0 12px;">-</button>
-                        <input type="number" id="i-qta" value="1" style="text-align:center; margin:0; border-radius:0; border-left:none; border-right:none">
-                        <button onclick="adj(1)" style="background:#eee; color:#000; border-radius: 0 12px 12px 0;">+</button>
-                    </div>
-                </div>
-
-                <button id="btn-save" onclick="saveData()" style="margin-top:15px">💾 Registra Ingressi</button>
             </div>
-
-            <div class="card">
-                <h3>Ultimi Inserimenti</h3>
-                <div id="history-list"></div>
+            <div class="input-group">
+                <label>Fascia Oraria</label>
+                <select id="i-fascia">
+                    <option>Mattina</option>
+                    <option>Mattina intera</option>
+                    <option>Pranzo</option>
+                    <option>Sera</option>
+                    <option>Sabato pom</option>
+                    <option>Domenica</option>
+                    <option>Festivo</option>
+                    <option>Unico</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Meteo</label>
+                <select id="i-meteo">
+                    <option>☀️ Sole</option>
+                    <option>⛅ Nuvoloso</option>
+                    <option>🌧️ Pioggia</option>
+                    <option>❄️ Freddo</option>
+                </select>
             </div>
         </div>
 
-        <div id="tab-stats" class="hidden">
-            <div class="card">
-                <h3>Andamento Settimanale</h3>
-                <canvas id="chart1"></canvas>
+        <div class="input-grid-tickets">
+            <div class="ticket-box">
+                <label>Singolo Intero</label>
+                <input type="number" id="q-intero" value="0" min="0" onfocus="this.select()">
             </div>
-            
-            <div class="card">
-                <h3>Export Dati</h3>
-                <p style="font-size:0.9rem; color:#888; margin-top:0">Scarica tutti i dati in formato Excel/CSV per analisi dettagliate.</p>
-                <button onclick="downloadCSV()" style="background:var(--success)">📥 Scarica Excel Completo</button>
+            <div class="ticket-box">
+                <label>Singolo Ridotto</label>
+                <input type="number" id="q-ridotto" value="0" min="0" onfocus="this.select()">
+            </div>
+            <div class="ticket-box">
+                <label>Gratuito</label>
+                <input type="number" id="q-gratuito" value="0" min="0" onfocus="this.select()">
+            </div>
+            <div class="ticket-box">
+                <label>Abb. Intero</label>
+                <input type="number" id="q-abb-int" value="0" min="0" onfocus="this.select()">
+            </div>
+            <div class="ticket-box">
+                <label>Abb. Ridotto</label>
+                <input type="number" id="q-abb-rid" value="0" min="0" onfocus="this.select()">
             </div>
         </div>
 
-        <div class="nav">
-            <div class="nav-item active" id="nav-1" onclick="switchTab(1)">📝 Dati</div>
-            <div class="nav-item" id="nav-2" onclick="switchTab(2)">📊 Grafici</div>
-        </div>
+        <button id="btn-save" class="btn btn-primary" onclick="saveData()">💾 Salva Registrazione</button>
     </div>
+
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px">
+        
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                <div class="card-title" style="margin:0; border:none">Storico Registrazioni</div>
+                <button class="btn btn-success" style="padding:8px 15px; font-size:0.9rem" onclick="downloadCSV()">📥 Excel</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data / Meteo</th>
+                            <th>Fascia</th>
+                            <th class="num-cell">Int.</th>
+                            <th class="num-cell">Rid.</th>
+                            <th class="num-cell">Grat.</th>
+                            <th class="num-cell">Ab. I</th>
+                            <th class="num-cell">Ab. R</th>
+                            <th class="tot-cell">TOT</th>
+                            <th style="text-align:right">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Riepilogo Ingressi (7gg)</div>
+            <canvas id="chart1" style="max-height:300px"></canvas>
+            
+            <div style="margin-top:30px; border-top:1px solid #eee; padding-top:20px">
+                <div style="font-size:0.9rem; color:#888; margin-bottom:5px">TOTALE STORICO INGRESSI</div>
+                <div id="big-total" style="font-size:2.5rem; font-weight:800; color:var(--primary)">0</div>
+            </div>
+        </div>
+
+    </div>
+
 </div>
 
 <script type="module">
@@ -150,9 +203,6 @@
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // -----------------------------------------------------------
-    // ✅ CONFIGURAZIONE FIREBASE INSERITA (NON TOCCARE)
-    // -----------------------------------------------------------
     const firebaseConfig = {
       apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0",
       authDomain: "piscinastats-64519.firebaseapp.com",
@@ -172,7 +222,7 @@
     // --- AUTH ---
     window.doLogin = async () => {
         try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
-        catch(e) { document.getElementById('login-error').innerText = "Errore: " + e.message; }
+        catch(e) { document.getElementById('login-error').innerText = e.message; }
     };
     window.doLogout = () => signOut(auth);
 
@@ -180,6 +230,7 @@
         if (user) {
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
+            document.getElementById('user-display').innerText = user.email;
             startListening(); 
         } else {
             document.getElementById('login-screen').classList.remove('hidden');
@@ -187,154 +238,143 @@
         }
     });
 
-    // --- DB SYNC ---
+    // --- DB LISTENER ---
     function startListening() {
-        const q = query(collection(db, "ingressi"), orderBy("createdAt", "desc"));
+        const q = query(collection(db, "sessioni"), orderBy("date", "desc"));
         onSnapshot(q, (snapshot) => {
             allData = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-            renderApp();
+            renderTable();
+            renderChart();
         });
     }
 
-    // --- SALVA / AGGIORNA ---
+    // --- SAVE ---
     window.saveData = async () => {
-        const d = document.getElementById('i-date').value;
-        const q = parseInt(document.getElementById('i-qta').value);
-        if(!d || q < 1) return alert("Controlla i dati");
+        const date = document.getElementById('i-date').value;
+        // Leggi i 5 campi
+        const v1 = parseInt(document.getElementById('q-intero').value) || 0;
+        const v2 = parseInt(document.getElementById('q-ridotto').value) || 0;
+        const v3 = parseInt(document.getElementById('q-gratuito').value) || 0;
+        const v4 = parseInt(document.getElementById('q-abb-int').value) || 0;
+        const v5 = parseInt(document.getElementById('q-abb-rid').value) || 0;
+        const total = v1+v2+v3+v4+v5;
+
+        if(!date) return alert("Inserisci la data.");
+        if(total === 0) return alert("Inserisci almeno un ingresso.");
+
+        const payload = {
+            date: date,
+            fascia: document.getElementById('i-fascia').value,
+            meteo: document.getElementById('i-meteo').value,
+            int: v1, rid: v2, grat: v3, abb_int: v4, abb_rid: v5,
+            totale: total,
+            lastUpdate: new Date()
+        };
 
         const btn = document.getElementById('btn-save');
-        const originalText = btn.innerText;
-        btn.disabled = true; btn.innerText = "Attendere...";
+        btn.disabled = true; btn.innerText = "Salvataggio...";
 
         try {
-            const payload = {
-                date: d,
-                fascia: document.getElementById('i-fascia').value,
-                meteo: document.getElementById('i-meteo').value,
-                tipo: document.getElementById('i-tipo').value,
-                qta: q,
-                createdAt: editId ? allData.find(x=>x.id==editId).createdAt : new Date()
-            };
-
             if(editId) {
-                // UPDATE
-                await updateDoc(doc(db, "ingressi", editId), payload);
-                alert("Modifica salvata! ✅");
+                await updateDoc(doc(db, "sessioni", editId), payload);
                 cancelEdit();
             } else {
-                // CREATE
-                await addDoc(collection(db, "ingressi"), payload);
-                alert("Salvato! ☁️");
-                document.getElementById('i-qta').value = 1;
+                await addDoc(collection(db, "sessioni"), payload);
+                // Reset valori a 0
+                document.getElementById('q-intero').value = 0;
+                document.getElementById('q-ridotto').value = 0;
+                document.getElementById('q-gratuito').value = 0;
+                document.getElementById('q-abb-int').value = 0;
+                document.getElementById('q-abb-rid').value = 0;
             }
         } catch(e) { alert("Errore: " + e.message); }
-        
-        btn.disabled = false; btn.innerText = originalText;
+
+        btn.disabled = false; btn.innerText = editId ? "🔄 Aggiorna Registrazione" : "💾 Salva Registrazione";
     };
 
-    // --- MODIFICA / ELIMINA ---
+    // --- EDIT ---
     window.startEdit = (id) => {
         const item = allData.find(x => x.id === id);
         if(!item) return;
-
         editId = id;
         
-        // Popola il form
         document.getElementById('i-date').value = item.date;
         document.getElementById('i-fascia').value = item.fascia;
         document.getElementById('i-meteo').value = item.meteo;
-        document.getElementById('i-tipo').value = item.tipo;
-        document.getElementById('i-qta').value = item.qta;
+        
+        document.getElementById('q-intero').value = item.int;
+        document.getElementById('q-ridotto').value = item.rid;
+        document.getElementById('q-gratuito').value = item.grat;
+        document.getElementById('q-abb-int').value = item.abb_int;
+        document.getElementById('q-abb-rid').value = item.abb_rid;
 
-        // Cambia UI per mostrare modalità modifica
+        // UI Changes
         document.getElementById('input-card').classList.add('editing-mode');
-        document.getElementById('form-title').innerText = "Modifica Ingresso";
+        document.getElementById('form-title').innerText = "Modifica Riga";
         document.getElementById('form-title').style.color = "var(--primary)";
-        document.getElementById('btn-save').innerText = "🔄 Aggiorna Dati";
-        document.getElementById('btn-save').style.background = "var(--text)";
-        document.getElementById('cancel-edit-btn').classList.remove('hidden');
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('btn-save').innerText = "🔄 Aggiorna Registrazione";
+        document.getElementById('cancel-edit').classList.remove('hidden');
+        window.scrollTo({top:0, behavior:'smooth'});
     };
 
     window.cancelEdit = () => {
         editId = null;
         document.getElementById('input-card').classList.remove('editing-mode');
-        document.getElementById('form-title').innerText = "Nuovo Inserimento";
-        document.getElementById('form-title').style.color = "#888";
-        document.getElementById('btn-save').innerText = "💾 Registra Ingressi";
-        document.getElementById('btn-save').style.background = "var(--primary)";
-        document.getElementById('cancel-edit-btn').classList.add('hidden');
-        document.getElementById('i-qta').value = 1;
+        document.getElementById('form-title').innerText = "Nuovo Inserimento Dati";
+        document.getElementById('form-title').style.color = "#555";
+        document.getElementById('btn-save').innerText = "💾 Salva Registrazione";
+        document.getElementById('cancel-edit').classList.add('hidden');
+        
+        // Reset inputs
+        document.querySelectorAll('.ticket-box input').forEach(i => i.value = 0);
     };
 
     window.delItem = async (id) => {
-        if(confirm("Eliminare definitivamente?")) await deleteDoc(doc(db, "ingressi", id));
+        if(confirm("Cancellare questa riga?")) await deleteDoc(doc(db, "sessioni", id));
     };
 
-    // --- EXPORT EXCEL ---
-    window.downloadCSV = () => {
-        if(allData.length === 0) return alert("Nessun dato da scaricare");
-        
-        let csv = "Data;Fascia;Meteo;Tipo;Quantita\n";
-        allData.forEach(row => {
-            csv += `${row.date};${row.fascia};${row.meteo};${row.tipo};${row.qta}\n`;
-        });
+    // --- RENDER ---
+    function renderTable() {
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = "";
+        let grandTotal = 0;
 
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "report_piscina.csv");
-        document.body.appendChild(link);
-        link.click();
-    };
-
-    // --- UI HELPERS ---
-    document.getElementById('i-date').valueAsDate = new Date();
-    window.adj = (n) => {
-        let el = document.getElementById('i-qta');
-        let v = parseInt(el.value) + n;
-        if(v > 0) el.value = v;
-    };
-
-    function renderApp() {
-        // Stats
-        const today = new Date().toISOString().split('T')[0];
-        const todayItems = allData.filter(x => x.date === today);
-        document.getElementById('today-count').innerText = todayItems.reduce((a,b)=>a+b.qta,0);
-        document.getElementById('total-count-mini').innerText = allData.reduce((a,b)=>a+b.qta,0);
-
-        // Lista
-        const list = document.getElementById('history-list');
-        list.innerHTML = "";
-        allData.slice(0, 15).forEach(item => {
-            const d = item.date.split('-').reverse().join('/'); 
-            list.innerHTML += `
-                <div class="history-item">
-                    <div class="h-info">
-                        <span class="h-date">${d} • ${item.fascia}</span>
-                        <span class="h-main">${item.qta} x ${item.tipo}</span>
-                    </div>
-                    <div class="actions">
-                        <button class="icon-btn btn-edit" onclick="startEdit('${item.id}')">✏️</button>
-                        <button class="icon-btn btn-del" onclick="delItem('${item.id}')">🗑️</button>
-                    </div>
-                </div>
+        allData.forEach(d => {
+            grandTotal += d.totale;
+            const dateFmt = d.date.split('-').reverse().join('/');
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <div style="font-weight:bold">${dateFmt}</div>
+                        <div style="font-size:0.8rem; color:#666">${d.meteo}</div>
+                    </td>
+                    <td><span class="badge">${d.fascia}</span></td>
+                    <td class="num-cell">${d.int || '-'}</td>
+                    <td class="num-cell">${d.rid || '-'}</td>
+                    <td class="num-cell">${d.grat || '-'}</td>
+                    <td class="num-cell">${d.abb_int || '-'}</td>
+                    <td class="num-cell">${d.abb_rid || '-'}</td>
+                    <td class="tot-cell">${d.totale}</td>
+                    <td style="text-align:right">
+                        <button class="btn btn-edit" onclick="startEdit('${d.id}')">✏️</button>
+                        <button class="btn btn-del" onclick="delItem('${d.id}')">🗑️</button>
+                    </td>
+                </tr>
             `;
         });
-
-        renderChart();
+        document.getElementById('big-total').innerText = grandTotal;
     }
 
     // --- CHART ---
     let myChart;
     function renderChart() {
         const ctx = document.getElementById('chart1');
+        // Raggruppa per data
         const map = {};
         allData.forEach(d => {
             if(!map[d.date]) map[d.date] = 0;
-            map[d.date] += d.qta;
+            map[d.date] += d.totale;
         });
         
         const labels = Object.keys(map).sort().slice(-7);
@@ -345,21 +385,27 @@
             type: 'bar',
             data: {
                 labels: labels.map(l => l.split('-').slice(1).reverse().join('/')),
-                datasets: [{ label: 'Ingressi', data: data, backgroundColor: '#007aff', borderRadius: 6 }]
+                datasets: [{ label: 'Ingressi Totali', data: data, backgroundColor: '#007aff', borderRadius: 4 }]
             },
             options: { scales: { y: { beginAtZero: true } } }
         });
     }
 
-    window.switchTab = (n) => {
-        document.getElementById('tab-insert').classList.add('hidden');
-        document.getElementById('tab-stats').classList.add('hidden');
-        document.getElementById('nav-1').classList.remove('active');
-        document.getElementById('nav-2').classList.remove('active');
-
-        if(n===1) { document.getElementById('tab-insert').classList.remove('hidden'); document.getElementById('nav-1').classList.add('active'); }
-        else { document.getElementById('tab-stats').classList.remove('hidden'); document.getElementById('nav-2').classList.add('active'); renderChart(); }
+    // --- CSV ---
+    window.downloadCSV = () => {
+        let csv = "Data;Fascia;Meteo;Intero;Ridotto;Gratuito;Abb.Int;Abb.Rid;TOTALE\n";
+        allData.forEach(d => {
+            csv += `${d.date};${d.fascia};${d.meteo};${d.int};${d.rid};${d.grat};${d.abb_int};${d.abb_rid};${d.totale}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "Piscina_Report.csv";
+        link.click();
     };
+
+    // Set Data Oggi
+    document.getElementById('i-date').valueAsDate = new Date();
 </script>
 
 </body>
