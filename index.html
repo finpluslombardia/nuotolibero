@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Executive V9</title>
+    <title>Piscina Dashboard V10</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -37,7 +37,6 @@
         .input-row-main { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px; background: #fafafa; padding: 20px; border-radius: 12px; border: 1px solid #eee; }
         .input-group { display: flex; flex-direction: column; flex: 1; }
         .input-group label { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #555; }
-        .input-grid-tickets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 20px; }
         .ticket-box { background: var(--card); border: 1px solid #d2d2d7; padding: 15px; border-radius: 12px; text-align: center; }
         .ticket-box input { width: 100%; font-size: 1.8rem; font-weight: 800; text-align: center; border: none; outline: none; background: transparent; color: var(--primary); }
         select, input[type="date"] { padding: 12px; border: 1px solid #d2d2d7; border-radius: 10px; width: 100%; box-sizing: border-box; font-size: 0.95rem; }
@@ -119,6 +118,7 @@
                     <optgroup label="☀️ Vasca Esterna">
                         <option value="Estiva - Mattina">Estiva - Mattina</option>
                         <option value="Estiva - Pomeriggio">Estiva - Pomeriggio</option>
+                        <option value="Estiva - Unico">Estiva - Unico</option>
                     </optgroup>
                 </select>
             </div>
@@ -126,7 +126,12 @@
             <div class="input-group" style="margin-bottom:20px">
                 <label>Meteo</label>
                 <select id="i-meteo">
-                    <option>☀️ Sole</option><option>⛅ Nuvoloso</option><option>🌧️ Pioggia</option><option>❄️ Freddo</option>
+                    <option>☀️ Sole</option>
+                    <option>🔥 Caldo elevato</option>
+                    <option>⛅ Nuvoloso</option>
+                    <option>🌧️ Pioggia</option>
+                    <option>⛈️ Temporale</option>
+                    <option>❄️ Freddo</option>
                 </select>
             </div>
 
@@ -248,7 +253,7 @@
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ✅ CONFIGURAZIONE FIREBASE
+    // ✅ CONFIGURAZIONE FIREBASE (Non toccare se funzionava già)
     const firebaseConfig = {
       apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0",
       authDomain: "piscinastats-64519.firebaseapp.com",
@@ -340,7 +345,6 @@
 
         // Best Day
         let bestDay = {date:'-', val:0};
-        // Group by date first (multiple slots per day)
         const dayMap = {};
         filtered.forEach(d => {
             if(!dayMap[d.date]) dayMap[d.date] = 0;
@@ -421,9 +425,7 @@
         const ctx = document.getElementById('chartTrend');
         let labels = [], values = [];
         
-        // Logic: If specific Month -> Show Days. Else -> Show Months.
         if (m !== 'all') {
-            // Daily Trend
             const map = {};
             data.forEach(d => { 
                 const day = new Date(d.date).getDate(); 
@@ -432,15 +434,12 @@
             labels = Object.keys(map).sort((a,b)=>parseInt(a)-parseInt(b));
             values = labels.map(k => map[k]);
         } else {
-            // Monthly Trend
             const map = {};
             data.forEach(d => { 
-                // key format depends on if single year or all years
                 const date = new Date(d.date);
-                const k = y === 'all' ? d.date.substring(0,7) : date.getMonth(); // YYYY-MM or 0-11
+                const k = y === 'all' ? d.date.substring(0,7) : date.getMonth(); 
                 if(!map[k]) map[k]=0; map[k]+=d.totale; 
             });
-            
             if (y !== 'all') {
                 const monthNames = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
                 labels = monthNames;
@@ -450,7 +449,6 @@
                 values = labels.map(k => map[k]);
             }
         }
-
         if(charts['trend']) charts['trend'].destroy();
         charts['trend'] = new Chart(ctx, {
             type: 'line',
