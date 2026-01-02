@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Piscina Stats</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #007aff; /* Blu Piscina */
+            --bg-body: #f2f2f7;
+            --bg-card: #ffffff;
+            --text-main: #1c1c1e;
+            --text-muted: #8e8e93;
+            --border: #d1d1d6;
+            --success: #34c759;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #000000;
+            --bg-card: #1c1c1e;
+            --text-main: #f2f2f7;
+            --text-muted: #aeaeb2;
+            --border: #3a3a3c;
+            --shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px; -webkit-font-smoothing: antialiased; }
+        
+        .container { max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        h1 { font-size: 1.8rem; margin: 0; font-weight: 800; }
+        .theme-btn { background: var(--bg-card); border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; color: var(--text-main); }
+
+        /* Cards */
+        .card { background: var(--bg-card); border-radius: 20px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
+        .card h2 { margin: 0 0 15px 0; font-size: 1.1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Input Form */
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+        input, select { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-size: 1rem; box-sizing: border-box; outline: none; -webkit-appearance: none; }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,122,255,0.15); }
+
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
+
+        /* Buttons */
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: transform 0.1s; }
+        .btn:active { transform: scale(0.98); opacity: 0.8; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
+        .btn-danger { background: #ff3b30; color: white; width: auto; padding: 8px 12px; font-size: 0.8rem; border-radius: 8px; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: var(--bg-card); padding: 15px; border-radius: 16px; text-align: center; box-shadow: var(--shadow); }
+        .stat-val { font-size: 1.6rem; font-weight: 800; color: var(--text-main); display: block; }
+        .stat-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .text-blue { color: var(--primary); }
+        .text-green { color: var(--success); }
+
+        /* Table */
+        .history-list { list-style: none; padding: 0; margin: 0; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
+        .history-item:last-child { border-bottom: none; }
+        .h-left { display: flex; flex-direction: column; gap: 2px; }
+        .h-date { font-weight: 700; font-size: 0.9rem; }
+        .h-sub { font-size: 0.8rem; color: var(--text-muted); }
+        .h-right { text-align: right; }
+        .h-count { font-weight: 700; font-size: 1rem; color: var(--primary); }
+        .h-price { font-size: 0.8rem; color: var(--success); font-weight: 600; }
+
+        /* Menu Bottom (Simil App) */
+        .nav-bottom { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: var(--bg-card); padding: 10px 20px; border-radius: 30px; display: flex; gap: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 100; }
+        .nav-item { padding: 10px; cursor: pointer; opacity: 0.6; font-weight: 600; font-size: 0.9rem; }
+        .nav-item.active { opacity: 1; border-bottom: 2px solid var(--primary); }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="header">
+        <h1>🏊‍♂️ Stats Piscina</h1>
+        <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+
+    <div id="view-input">
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span class="stat-val text-blue" id="today-entries">0</span>
+                <span class="stat-label">Ingressi Oggi</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-val text-green" id="today-eur">€ 0</span>
+                <span class="stat-label">Incasso Oggi</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Nuovo Inserimento</h2>
+            
+            <div class="input-group">
+                <label>Data</label>
+                <input type="date" id="i-date">
+            </div>
+
+            <div class="row">
+                <div class="col input-group">
+                    <label>Fascia Oraria</label>
+                    <select id="i-fascia">
+                        <option>Mattina</option>
+                        <option>Pausa Pranzo</option>
+                        <option>Pomeriggio</option>
+                        <option>Sera</option>
+                    </select>
+                </div>
+                <div class="col input-group">
+                    <label>Meteo</label>
+                    <select id="i-meteo">
+                        <option>☀️ Sole</option>
+                        <option>⛅ Nuvoloso</option>
+                        <option>🌧️ Pioggia</option>
+                        <option>❄️ Freddo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col input-group">
+                    <label>Tipo Ingresso</label>
+                    <select id="i-tipo" onchange="updatePrice()">
+                        <option value="Intero">Intero</option>
+                        <option value="Ridotto">Ridotto</option>
+                        <option value="Abbonamento">Abbonamento</option>
+                        <option value="Gratuito">Gratuito</option>
+                    </select>
+                </div>
+                <div class="col input-group">
+                    <label>Prezzo (€)</label>
+                    <input type="number" id="i-price" value="8.00" step="0.50">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Numero Ingressi</label>
+                <div class="row">
+                    <button class="btn" style="background:var(--bg-body); color:var(--text-main); flex:1" onclick="adj(-1)">-</button>
+                    <input type="number" id="i-count" value="1" style="text-align:center; flex:1">
+                    <button class="btn" style="background:var(--bg-body); color:var(--text-main); flex:1" onclick="adj(1)">+</button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveData()">Registra Ingressi</button>
+        </div>
+
+        <div class="card">
+            <h2>Ultime Registrazioni</h2>
+            <ul class="history-list" id="recent-list"></ul>
+        </div>
+    </div>
+
+    <div id="view-stats" class="hidden">
+        <div class="card">
+            <h2>Andamento Settimanale</h2>
+            <canvas id="chartWeekly"></canvas>
+        </div>
+
+        <div class="card">
+            <h2>Ripartizione Ingressi</h2>
+            <canvas id="chartTypes"></canvas>
+        </div>
+
+        <div class="card">
+            <h2>Totali Generali</h2>
+            <div class="history-item">
+                <span class="h-date">Totale Ingressi</span>
+                <span class="h-count" id="total-entries">0</span>
+            </div>
+            <div class="history-item">
+                <span class="h-date">Totale Incasso</span>
+                <span class="h-price" id="total-eur" style="font-size:1rem">€ 0.00</span>
+            </div>
+            <button class="btn btn-danger" style="margin-top:20px; width:100%" onclick="downloadCSV()">📥 Scarica Excel Completo</button>
+        </div>
+        
+        <div style="text-align:center; margin-top:20px; opacity:0.5; font-size:0.8rem">
+            <button onclick="resetAll()" style="background:none; border:none; color:red">🗑️ Reset Dati</button>
+        </div>
+    </div>
+
+</div>
+
+<div class="nav-bottom">
+    <div class="nav-item active" onclick="switchTab('input')" id="tab-input">📝 Inserisci</div>
+    <div class="nav-item" onclick="switchTab('stats')" id="tab-stats">📊 Statistiche</div>
+</div>
+
+<script>
+    // --- SETUP ---
+    let db = JSON.parse(localStorage.getItem('poolData')) || [];
+    document.getElementById('i-date').valueAsDate = new Date();
+
+    // Gestione Prezzi Default
+    const prices = { "Intero": 8.00, "Ridotto": 5.00, "Abbonamento": 0.00, "Gratuito": 0.00 };
+    function updatePrice() {
+        const type = document.getElementById('i-tipo').value;
+        document.getElementById('i-price').value = prices[type].toFixed(2);
+    }
+
+    function adj(val) {
+        let el = document.getElementById('i-count');
+        let v = parseInt(el.value) + val;
+        if(v < 1) v = 1;
+        el.value = v;
+    }
+
+    // --- SALVATAGGIO ---
+    function saveData() {
+        const entry = {
+            id: Date.now(),
+            date: document.getElementById('i-date').value,
+            timeSlot: document.getElementById('i-fascia').value,
+            weather: document.getElementById('i-meteo').value,
+            type: document.getElementById('i-tipo').value,
+            price: parseFloat(document.getElementById('i-price').value),
+            count: parseInt(document.getElementById('i-count').value)
+        };
+
+        if(!entry.date || entry.count < 1) return alert("Inserisci dati validi");
+
+        db.push(entry);
+        localStorage.setItem('poolData', JSON.stringify(db));
+        
+        // Feedback visivo
+        alert("Salvato! ✅");
+        renderHistory();
+        updateTodayStats();
+    }
+
+    function deleteEntry(id) {
+        if(confirm("Eliminare questa riga?")) {
+            db = db.filter(x => x.id !== id);
+            localStorage.setItem('poolData', JSON.stringify(db));
+            renderHistory();
+            updateTodayStats();
+        }
+    }
+
+    // --- RENDER ---
+    function renderHistory() {
+        const list = document.getElementById('recent-list');
+        list.innerHTML = "";
+        // Ordina per più recente
+        const sorted = [...db].sort((a,b) => b.id - a.id).slice(0, 5);
+
+        sorted.forEach(item => {
+            const dateStr = new Date(item.date).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'});
+            list.innerHTML += `
+                <li class="history-item">
+                    <div class="h-left">
+                        <span class="h-date">${dateStr} - ${item.timeSlot}</span>
+                        <span class="h-sub">${item.type} (${item.weather})</span>
+                    </div>
+                    <div class="h-right">
+                        <span class="h-count">${item.count} ingr.</span>
+                        <div class="h-price">€ ${(item.price * item.count).toFixed(2)}</div>
+                        <button onclick="deleteEntry(${item.id})" style="border:none; background:none; font-size:0.8rem; color:red; cursor:pointer">x</button>
+                    </div>
+                </li>
+            `;
+        });
+    }
+
+    function updateTodayStats() {
+        const today = new Date().toISOString().split('T')[0];
+        const todays = db.filter(x => x.date === today);
+        
+        const count = todays.reduce((acc, curr) => acc + curr.count, 0);
+        const money = todays.reduce((acc, curr) => acc + (curr.price * curr.count), 0);
+
+        document.getElementById('today-entries').innerText = count;
+        document.getElementById('today-eur').innerText = "€ " + money.toFixed(2);
+    }
+
+    // --- STATISTICHE ---
+    let myChart1, myChart2;
+
+    function renderStats() {
+        const totalCount = db.reduce((acc, c) => acc + c.count, 0);
+        const totalMoney = db.reduce((acc, c) => acc + (c.price * c.count), 0);
+        document.getElementById('total-entries').innerText = totalCount;
+        document.getElementById('total-eur').innerText = "€ " + totalMoney.toFixed(2);
+
+        // Grafico 1: Settimanale (Ultimi 7 gg)
+        const ctx1 = document.getElementById('chartWeekly');
+        if(myChart1) myChart1.destroy();
+        
+        // Logica semplificata per raggruppare per data
+        const dateMap = {};
+        db.forEach(e => {
+            if(!dateMap[e.date]) dateMap[e.date] = 0;
+            dateMap[e.date] += e.count;
+        });
+        const dates = Object.keys(dateMap).sort().slice(-7); // Ultimi 7 giorni registrati
+        
+        myChart1 = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: dates.map(d => d.split('-').slice(1).reverse().join('/')),
+                datasets: [{
+                    label: 'Ingressi',
+                    data: dates.map(d => dateMap[d]),
+                    backgroundColor: '#007aff',
+                    borderRadius: 6
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+        });
+
+        // Grafico 2: Torta Tipologie
+        const ctx2 = document.getElementById('chartTypes');
+        if(myChart2) myChart2.destroy();
+
+        const typeMap = {};
+        db.forEach(e => {
+            if(!typeMap[e.type]) typeMap[e.type] = 0;
+            typeMap[e.type] += e.count;
+        });
+
+        myChart2 = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(typeMap),
+                datasets: [{
+                    data: Object.values(typeMap),
+                    backgroundColor: ['#007aff', '#34c759', '#ffcc00', '#ff3b30']
+                }]
+            }
+        });
+    }
+
+    // --- UTILS ---
+    function switchTab(tab) {
+        document.querySelectorAll('[id^="view-"]').forEach(d => d.classList.add('hidden'));
+        document.querySelectorAll('.nav-item').forEach(d => d.classList.remove('active'));
+        
+        document.getElementById(`view-${tab}`).classList.remove('hidden');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+
+        if(tab === 'stats') renderStats();
+    }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        const curr = html.getAttribute('data-theme');
+        const next = curr === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+    }
+
+    function downloadCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,ID,Data,Fascia,Meteo,Tipo,Prezzo,Quantita,Totale\n";
+        db.forEach(row => {
+            let r = [row.id, row.date, row.timeSlot, row.weather, row.type, row.price, row.count, (row.price*row.count)];
+            csvContent += r.join(",") + "\n";
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "stats_piscina.csv");
+        document.body.appendChild(link);
+        link.click();
+    }
+
+    function resetAll() {
+        if(confirm("Sei sicuro di voler cancellare TUTTI i dati? Non si torna indietro.")) {
+            localStorage.removeItem('poolData');
+            db = [];
+            renderHistory();
+            updateTodayStats();
+            renderStats();
+            alert("Database resettato.");
+        }
+    }
+
+    // Init
+    renderHistory();
+    updateTodayStats();
+</script>
+
+</body>
+</html>
