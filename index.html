@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Piscina Desktop</title>
+    <title>Dashboard Piscina Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -15,55 +15,63 @@
             --border: #d2d2d7;
             --success: #34c759;
             --danger: #ff3b30;
+            --warning: #ffcc00;
         }
 
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 40px; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 30px; }
         
-        /* Layout Desktop */
         .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 30px; }
         
         /* Header */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        h1 { margin: 0; font-size: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        h1 { margin: 0; font-size: 1.8rem; font-weight: 800; color: #333; }
         
         /* Cards */
-        .card { background: var(--card); border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .card { background: var(--card); border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); }
+        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 20px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
 
-        /* INPUT SECTION (Wide) */
-        .input-row-main { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
+        /* INPUT SECTION */
+        .input-row-main { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px; background: #fafafa; padding: 20px; border-radius: 10px; border: 1px solid #eee; }
         .input-group { display: flex; flex-direction: column; flex: 1; }
-        .input-group label { font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: #666; }
+        .input-group label { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #555; }
         
-        /* Griglia Ingressi */
+        /* Ticket Grid */
         .input-grid-tickets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 20px; }
-        .ticket-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: center; transition: border-color 0.2s; }
-        .ticket-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,122,255,0.1); }
-        .ticket-box label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; color: var(--text); white-space: nowrap; }
-        .ticket-box input { width: 100%; font-size: 1.5rem; font-weight: bold; text-align: center; border: none; outline: none; background: transparent; color: var(--primary); }
+        .ticket-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 10px; text-align: center; transition: all 0.2s; position: relative; }
+        .ticket-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0,122,255,0.1); transform: translateY(-2px); }
+        .ticket-box label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 10px; color: #666; text-transform: uppercase; }
+        .ticket-box input { width: 100%; font-size: 1.8rem; font-weight: 800; text-align: center; border: none; outline: none; background: transparent; color: var(--primary); }
 
         /* Form elements */
-        select, input[type="date"] { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: #fff; }
+        select, input[type="date"] { padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff; outline: none; transition: border 0.2s; }
+        select:focus, input:focus { border-color: var(--primary); }
         
         /* Buttons */
-        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.1s; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.9; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
-        .btn-primary:hover { background: #0062cc; }
         .btn-success { background: var(--success); color: white; }
-        .btn-edit { background: #eee; color: #333; padding: 5px 10px; font-size: 0.8rem; margin-right: 5px; }
-        .btn-del { background: #ffe5e5; color: var(--danger); padding: 5px 10px; font-size: 0.8rem; }
+        .btn-edit { background: #f0f0f0; color: #333; padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; margin-right: 5px; }
+        .btn-del { background: #fff1f0; color: var(--danger); padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; }
 
         /* Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
-        th { text-align: left; padding: 12px; border-bottom: 2px solid #eee; color: #888; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
-        tr:hover { background-color: #f9f9f9; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; background: #eef2ff; color: var(--primary); }
-        .num-cell { font-weight: bold; text-align: center; color: #333; }
-        .tot-cell { font-weight: 800; text-align: center; color: var(--primary); background: #f0f7ff; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; font-size: 0.95rem; }
+        th { text-align: left; padding: 15px; border-bottom: 2px solid #eee; color: #888; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; position: sticky; top: 0; background: #fff; }
+        td { padding: 15px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+        tr:hover td { background-color: #fcfcfc; }
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; background: #eef2ff; color: var(--primary); display: inline-block; }
+        
+        /* Colonne Totali */
+        .col-group-singoli { background-color: #f9fcff; color: #0044cc; font-weight: 700; text-align: center; border-left: 2px solid #fff; }
+        .col-group-abb { background-color: #fafffa; color: #007722; font-weight: 700; text-align: center; border-left: 2px solid #fff; }
+        .col-group-grat { background-color: #fffcf2; color: #b38600; font-weight: 700; text-align: center; border-left: 2px solid #fff; }
+        .col-totalone { background-color: #333; color: #fff; font-weight: 800; text-align: center; font-size: 1.1rem; border-radius: 8px; }
+
+        .sub-detail { display: block; font-size: 0.7rem; color: #999; font-weight: 500; margin-top: 4px; }
 
         /* Login */
-        #login-screen { max-width: 400px; margin: 100px auto; text-align: center; }
+        #login-screen { max-width: 400px; margin: 80px auto; text-align: center; }
         .hidden { display: none; }
         .editing-mode { border: 2px solid var(--primary); background-color: #f0f7ff; }
     </style>
@@ -71,35 +79,31 @@
 <body>
 
 <div id="login-screen">
-    <h1>🏊‍♂️ Accesso Dashboard</h1>
-    <div class="card" style="margin-top:20px">
-        <div class="input-group" style="margin-bottom:15px; text-align:left">
-            <label>Email</label>
-            <input type="email" id="email" style="width:100%; box-sizing:border-box">
-        </div>
-        <div class="input-group" style="margin-bottom:20px; text-align:left">
-            <label>Password</label>
-            <input type="password" id="password" style="width:100%; box-sizing:border-box">
-        </div>
+    <h1>🏊‍♂️ Dashboard Piscina</h1>
+    <div class="card" style="margin-top:20px; text-align:left">
+        <label style="font-weight:bold; font-size:0.8rem; color:#666">Email</label>
+        <input type="email" id="email" style="width:100%; box-sizing:border-box; margin-bottom:15px; margin-top:5px">
+        <label style="font-weight:bold; font-size:0.8rem; color:#666">Password</label>
+        <input type="password" id="password" style="width:100%; box-sizing:border-box; margin-bottom:20px; margin-top:5px">
         <button class="btn btn-primary" onclick="doLogin()">Entra</button>
-        <p id="login-error" style="color:red; margin-top:10px"></p>
+        <p id="login-error" style="color:red; margin-top:15px; text-align:center"></p>
     </div>
 </div>
 
 <div id="app-screen" class="container hidden">
     
     <div class="header">
-        <h1>📊 Statistiche Piscina</h1>
+        <h1>📊 Statistiche Ingressi</h1>
         <div>
-            <span id="user-display" style="margin-right:15px; font-weight:500"></span>
-            <button class="btn" style="background:#ddd" onclick="doLogout()">Esci</button>
+            <span id="user-display" style="margin-right:15px; font-weight:500; color:#666"></span>
+            <button class="btn" style="background:#e5e5ea; padding:8px 16px" onclick="doLogout()">Esci</button>
         </div>
     </div>
 
     <div class="card" id="input-card">
         <div style="display:flex; justify-content:space-between; align-items:center">
             <div class="card-title" id="form-title">Nuovo Inserimento Dati</div>
-            <button id="cancel-edit" class="btn hidden" onclick="cancelEdit()" style="background:#eee; color:red">Annulla Modifica</button>
+            <button id="cancel-edit" class="btn hidden" onclick="cancelEdit()" style="background:#fff0f0; color:red; border:1px solid red; padding:6px 15px">Annulla Modifica</button>
         </div>
 
         <div class="input-row-main">
@@ -133,11 +137,11 @@
 
         <div class="input-grid-tickets">
             <div class="ticket-box">
-                <label>Singolo Intero</label>
+                <label>Ingresso Intero</label>
                 <input type="number" id="q-intero" value="0" min="0" onfocus="this.select()">
             </div>
             <div class="ticket-box">
-                <label>Singolo Ridotto</label>
+                <label>Ingresso Ridotto</label>
                 <input type="number" id="q-ridotto" value="0" min="0" onfocus="this.select()">
             </div>
             <div class="ticket-box">
@@ -145,38 +149,36 @@
                 <input type="number" id="q-gratuito" value="0" min="0" onfocus="this.select()">
             </div>
             <div class="ticket-box">
-                <label>Abb. Intero</label>
+                <label>Abbonam. Intero</label>
                 <input type="number" id="q-abb-int" value="0" min="0" onfocus="this.select()">
             </div>
             <div class="ticket-box">
-                <label>Abb. Ridotto</label>
+                <label>Abbonam. Ridotto</label>
                 <input type="number" id="q-abb-rid" value="0" min="0" onfocus="this.select()">
             </div>
         </div>
 
-        <button id="btn-save" class="btn btn-primary" onclick="saveData()">💾 Salva Registrazione</button>
+        <button id="btn-save" class="btn btn-primary" onclick="saveData()">💾 Salva nel Database</button>
     </div>
 
-    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px">
+    <div style="display:grid; grid-template-columns: 2.5fr 1fr; gap:30px">
         
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+        <div class="card" style="padding:0; overflow:hidden">
+            <div style="padding:20px 25px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee">
                 <div class="card-title" style="margin:0; border:none">Storico Registrazioni</div>
-                <button class="btn btn-success" style="padding:8px 15px; font-size:0.9rem" onclick="downloadCSV()">📥 Excel</button>
+                <button class="btn btn-success" style="padding:8px 15px; font-size:0.9rem" onclick="downloadCSV()">📥 Scarica Excel</button>
             </div>
             <div style="overflow-x:auto;">
                 <table id="data-table">
                     <thead>
                         <tr>
-                            <th>Data / Meteo</th>
+                            <th style="padding-left:25px">Data / Meteo</th>
                             <th>Fascia</th>
-                            <th class="num-cell">Int.</th>
-                            <th class="num-cell">Rid.</th>
-                            <th class="num-cell">Grat.</th>
-                            <th class="num-cell">Ab. I</th>
-                            <th class="num-cell">Ab. R</th>
-                            <th class="tot-cell">TOT</th>
-                            <th style="text-align:right">Azioni</th>
+                            <th style="text-align:center">Ingr. Singoli</th>
+                            <th style="text-align:center">Abbonamenti</th>
+                            <th style="text-align:center">Gratuiti</th>
+                            <th style="text-align:center">TOTALE</th>
+                            <th style="text-align:right; padding-right:25px">Azioni</th>
                         </tr>
                     </thead>
                     <tbody id="table-body"></tbody>
@@ -185,12 +187,27 @@
         </div>
 
         <div class="card">
-            <div class="card-title">Riepilogo Ingressi (7gg)</div>
-            <canvas id="chart1" style="max-height:300px"></canvas>
+            <div class="card-title">Riepilogo (Ultimi 7gg)</div>
+            <canvas id="chart1" style="max-height:250px"></canvas>
             
-            <div style="margin-top:30px; border-top:1px solid #eee; padding-top:20px">
-                <div style="font-size:0.9rem; color:#888; margin-bottom:5px">TOTALE STORICO INGRESSI</div>
-                <div id="big-total" style="font-size:2.5rem; font-weight:800; color:var(--primary)">0</div>
+            <div style="margin-top:30px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px">
+                    <span style="color:#666">Singoli</span>
+                    <span style="font-weight:bold" id="stat-singoli">0</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px">
+                    <span style="color:#666">Abbonamenti</span>
+                    <span style="font-weight:bold" id="stat-abbonamenti">0</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:5px">
+                    <span style="color:#666">Gratuiti</span>
+                    <span style="font-weight:bold" id="stat-gratuiti">0</span>
+                </div>
+                
+                <div style="background:#f5f5f7; padding:15px; border-radius:10px; text-align:center">
+                    <div style="font-size:0.8rem; color:#888; text-transform:uppercase; margin-bottom:5px">Totale Generale</div>
+                    <div id="big-total" style="font-size:2.5rem; font-weight:800; color:var(--text)">0</div>
+                </div>
             </div>
         </div>
 
@@ -203,6 +220,7 @@
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // ✅ CONFIGURAZIONE FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0",
       authDomain: "piscinastats-64519.firebaseapp.com",
@@ -222,7 +240,7 @@
     // --- AUTH ---
     window.doLogin = async () => {
         try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
-        catch(e) { document.getElementById('login-error').innerText = e.message; }
+        catch(e) { document.getElementById('login-error').innerText = "Password errata o utente non trovato"; }
     };
     window.doLogout = () => signOut(auth);
 
@@ -251,13 +269,15 @@
     // --- SAVE ---
     window.saveData = async () => {
         const date = document.getElementById('i-date').value;
-        // Leggi i 5 campi
         const v1 = parseInt(document.getElementById('q-intero').value) || 0;
         const v2 = parseInt(document.getElementById('q-ridotto').value) || 0;
         const v3 = parseInt(document.getElementById('q-gratuito').value) || 0;
         const v4 = parseInt(document.getElementById('q-abb-int').value) || 0;
         const v5 = parseInt(document.getElementById('q-abb-rid').value) || 0;
-        const total = v1+v2+v3+v4+v5;
+        
+        const totSing = v1 + v2;
+        const totAbb = v4 + v5;
+        const total = totSing + totAbb + v3;
 
         if(!date) return alert("Inserisci la data.");
         if(total === 0) return alert("Inserisci almeno un ingresso.");
@@ -280,17 +300,20 @@
                 cancelEdit();
             } else {
                 await addDoc(collection(db, "sessioni"), payload);
-                // Reset valori a 0
-                document.getElementById('q-intero').value = 0;
-                document.getElementById('q-ridotto').value = 0;
-                document.getElementById('q-gratuito').value = 0;
-                document.getElementById('q-abb-int').value = 0;
-                document.getElementById('q-abb-rid').value = 0;
+                resetInputs();
             }
         } catch(e) { alert("Errore: " + e.message); }
 
-        btn.disabled = false; btn.innerText = editId ? "🔄 Aggiorna Registrazione" : "💾 Salva Registrazione";
+        btn.disabled = false; btn.innerText = editId ? "🔄 Aggiorna Registrazione" : "💾 Salva nel Database";
     };
+
+    function resetInputs() {
+        document.getElementById('q-intero').value = 0;
+        document.getElementById('q-ridotto').value = 0;
+        document.getElementById('q-gratuito').value = 0;
+        document.getElementById('q-abb-int').value = 0;
+        document.getElementById('q-abb-rid').value = 0;
+    }
 
     // --- EDIT ---
     window.startEdit = (id) => {
@@ -321,56 +344,80 @@
         editId = null;
         document.getElementById('input-card').classList.remove('editing-mode');
         document.getElementById('form-title').innerText = "Nuovo Inserimento Dati";
-        document.getElementById('form-title').style.color = "#555";
-        document.getElementById('btn-save').innerText = "💾 Salva Registrazione";
+        document.getElementById('form-title').style.color = "#666";
+        document.getElementById('btn-save').innerText = "💾 Salva nel Database";
         document.getElementById('cancel-edit').classList.add('hidden');
-        
-        // Reset inputs
-        document.querySelectorAll('.ticket-box input').forEach(i => i.value = 0);
+        resetInputs();
     };
 
     window.delItem = async (id) => {
         if(confirm("Cancellare questa riga?")) await deleteDoc(doc(db, "sessioni", id));
     };
 
-    // --- RENDER ---
+    // --- RENDER TABLE ---
     function renderTable() {
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = "";
+        
         let grandTotal = 0;
+        let tSing = 0; let tAbb = 0; let tGrat = 0;
 
         allData.forEach(d => {
             grandTotal += d.totale;
+            
+            // Calcolo parziali riga
+            const s = (d.int || 0) + (d.rid || 0);
+            const a = (d.abb_int || 0) + (d.abb_rid || 0);
+            const g = (d.grat || 0);
+            
+            // Accumulo totali globali
+            tSing += s; tAbb += a; tGrat += g;
+
             const dateFmt = d.date.split('-').reverse().join('/');
             
             tbody.innerHTML += `
                 <tr>
-                    <td>
+                    <td style="padding-left:25px">
                         <div style="font-weight:bold">${dateFmt}</div>
-                        <div style="font-size:0.8rem; color:#666">${d.meteo}</div>
+                        <div style="font-size:0.8rem; color:#888">${d.meteo}</div>
                     </td>
                     <td><span class="badge">${d.fascia}</span></td>
-                    <td class="num-cell">${d.int || '-'}</td>
-                    <td class="num-cell">${d.rid || '-'}</td>
-                    <td class="num-cell">${d.grat || '-'}</td>
-                    <td class="num-cell">${d.abb_int || '-'}</td>
-                    <td class="num-cell">${d.abb_rid || '-'}</td>
-                    <td class="tot-cell">${d.totale}</td>
-                    <td style="text-align:right">
+                    
+                    <td class="col-group-singoli">
+                        ${s}
+                        <span class="sub-detail">${d.int} Int + ${d.rid} Rid</span>
+                    </td>
+                    
+                    <td class="col-group-abb">
+                        ${a}
+                        <span class="sub-detail">${d.abb_int} Int + ${d.abb_rid} Rid</span>
+                    </td>
+                    
+                    <td class="col-group-grat">${g}</td>
+                    
+                    <td style="padding:10px">
+                        <div class="col-totalone">${d.totale}</div>
+                    </td>
+                    
+                    <td style="text-align:right; padding-right:25px">
                         <button class="btn btn-edit" onclick="startEdit('${d.id}')">✏️</button>
                         <button class="btn btn-del" onclick="delItem('${d.id}')">🗑️</button>
                     </td>
                 </tr>
             `;
         });
+
+        // Aggiorna sidebar stats
         document.getElementById('big-total').innerText = grandTotal;
+        document.getElementById('stat-singoli').innerText = tSing;
+        document.getElementById('stat-abbonamenti').innerText = tAbb;
+        document.getElementById('stat-gratuiti').innerText = tGrat;
     }
 
     // --- CHART ---
     let myChart;
     function renderChart() {
         const ctx = document.getElementById('chart1');
-        // Raggruppa per data
         const map = {};
         allData.forEach(d => {
             if(!map[d.date]) map[d.date] = 0;
@@ -382,10 +429,17 @@
 
         if(myChart) myChart.destroy();
         myChart = new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: labels.map(l => l.split('-').slice(1).reverse().join('/')),
-                datasets: [{ label: 'Ingressi Totali', data: data, backgroundColor: '#007aff', borderRadius: 4 }]
+                datasets: [{ 
+                    label: 'Andamento Totale', 
+                    data: data, 
+                    borderColor: '#007aff', 
+                    backgroundColor: 'rgba(0,122,255,0.1)', 
+                    fill: true,
+                    tension: 0.3
+                }]
             },
             options: { scales: { y: { beginAtZero: true } } }
         });
@@ -393,14 +447,16 @@
 
     // --- CSV ---
     window.downloadCSV = () => {
-        let csv = "Data;Fascia;Meteo;Intero;Ridotto;Gratuito;Abb.Int;Abb.Rid;TOTALE\n";
+        let csv = "Data;Fascia;Meteo;TOT_SINGOLI;TOT_ABB;GRATUITI;TOT_GEN;Dett_Int;Dett_Rid;Dett_AbbInt;Dett_AbbRid\n";
         allData.forEach(d => {
-            csv += `${d.date};${d.fascia};${d.meteo};${d.int};${d.rid};${d.grat};${d.abb_int};${d.abb_rid};${d.totale}\n`;
+            const s = (d.int || 0) + (d.rid || 0);
+            const a = (d.abb_int || 0) + (d.abb_rid || 0);
+            csv += `${d.date};${d.fascia};${d.meteo};${s};${a};${d.grat};${d.totale};${d.int};${d.rid};${d.abb_int};${d.abb_rid}\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "Piscina_Report.csv";
+        link.download = "Piscina_Report_Completo.csv";
         link.click();
     };
 
