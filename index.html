@@ -3,44 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Piscina Cloud</title>
+    <title>Piscina Stats</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        :root { --primary: #007aff; --bg: #f2f2f7; --card: #fff; --text: #1c1c1e; }
+        :root { --primary: #007aff; --bg: #f2f2f7; --card: #fff; --text: #1c1c1e; --danger: #ff3b30; --success: #34c759; }
         [data-theme="dark"] { --bg: #000; --card: #1c1c1e; --text: #f2f2f7; }
         
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; padding-bottom: 90px; }
         .container { max-width: 600px; margin: 0 auto; }
         
-        /* Login Styles */
+        /* Login */
         #login-screen { text-align: center; margin-top: 50px; }
         input, select, button { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #ccc; box-sizing: border-box; font-size: 1rem; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+        button:active { opacity: 0.7; }
         
-        /* App Styles */
-        .card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        /* App */
+        .card { background: var(--card); border-radius: 20px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05); }
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-box { background: var(--card); padding: 15px; border-radius: 15px; text-align: center; }
-        .val { font-size: 1.5rem; font-weight: 800; display: block; }
-        .lbl { font-size: 0.7rem; text-transform: uppercase; color: #888; }
+        .stat-box { background: var(--card); padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .val { font-size: 2rem; font-weight: 800; display: block; color: var(--primary); }
+        .lbl { font-size: 0.7rem; text-transform: uppercase; color: #888; font-weight: 600; }
         
         .row { display: flex; gap: 10px; }
         .col { flex: 1; }
         
-        .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        .del-btn { color: red; background: none; border: none; width: auto; padding: 0 0 0 10px; }
+        /* Lista */
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+        .history-item:last-child { border-bottom: none; }
+        .h-info { display: flex; flex-direction: column; gap: 4px; }
+        .h-date { font-weight: bold; font-size: 0.85rem; color: #888; }
+        .h-main { font-weight: 600; }
+        
+        .actions { display: flex; gap: 10px; }
+        .icon-btn { background: none; border: none; padding: 5px; width: auto; font-size: 1.1rem; cursor: pointer; color: #888; }
+        .btn-edit { color: var(--primary); }
+        .btn-del { color: var(--danger); }
 
-        /* Bottom Nav */
-        .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 25px; border-radius: 30px; display: flex; gap: 20px; z-index: 99; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
-        .nav-item { opacity: 0.5; cursor: pointer; font-weight: 600; }
+        /* Nav */
+        .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c1c1e; color: #fff; padding: 10px 25px; border-radius: 30px; display: flex; gap: 25px; z-index: 99; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .nav-item { opacity: 0.5; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
         .nav-item.active { opacity: 1; border-bottom: 2px solid var(--primary); }
 
         .hidden { display: none !important; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .editing-mode { border: 2px solid var(--primary); }
     </style>
 </head>
 <body>
@@ -53,31 +62,36 @@
             <input type="email" id="email" placeholder="Email">
             <input type="password" id="password" placeholder="Password">
             <button onclick="doLogin()">Accedi</button>
-            <p id="login-error" style="color:red; font-size:0.9rem"></p>
+            <p id="login-error" style="color:var(--danger); font-size:0.9rem"></p>
         </div>
     </div>
 
     <div id="app-screen" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
-            <h2 style="margin:0">Dashboard</h2>
-            <button onclick="doLogout()" style="width:auto; padding:8px 15px; background:#444; font-size:0.8rem">Esci</button>
+            <h2 style="margin:0">Statistiche</h2>
+            <button onclick="doLogout()" style="width:auto; padding:8px 15px; background:#444; font-size:0.8rem; border-radius:20px">Esci</button>
         </div>
 
         <div id="tab-insert">
             <div class="stat-grid">
                 <div class="stat-box">
-                    <span class="val" id="today-count" style="color:#007aff">0</span>
+                    <span class="val" id="today-count">0</span>
                     <span class="lbl">Ingressi Oggi</span>
                 </div>
                 <div class="stat-box">
-                    <span class="val" id="today-eur" style="color:#34c759">€ 0</span>
-                    <span class="lbl">Incasso Oggi</span>
+                    <span class="val" id="total-count-mini" style="color:var(--text)">0</span>
+                    <span class="lbl">Totale Storico</span>
                 </div>
             </div>
 
-            <div class="card">
-                <h3 style="margin-top:0; font-size:1rem; color:#888">NUOVO INGRESSO</h3>
+            <div class="card" id="input-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                    <h3 style="margin:0; font-size:0.9rem; color:#888; text-transform:uppercase" id="form-title">Nuovo Inserimento</h3>
+                    <button id="cancel-edit-btn" onclick="cancelEdit()" class="hidden" style="width:auto; background:none; color:var(--danger); padding:0; font-size:0.8rem">Annulla Modifica</button>
+                </div>
+
                 <input type="date" id="i-date">
+                
                 <div class="row">
                     <select id="i-fascia" class="col">
                         <option>Mattina</option><option>Pranzo</option><option>Pomeriggio</option><option>Sera</option>
@@ -86,45 +100,47 @@
                         <option>☀️ Sole</option><option>☁️ Nuvoloso</option><option>🌧️ Pioggia</option>
                     </select>
                 </div>
+
                 <div class="row">
-                    <select id="i-tipo" class="col" onchange="updPrice()">
+                    <select id="i-tipo" class="col" style="flex:2">
                         <option value="Intero">Intero</option>
                         <option value="Ridotto">Ridotto</option>
                         <option value="Abbonamento">Abbonamento</option>
+                        <option value="Gratuito">Gratuito</option>
                     </select>
-                    <input type="number" id="i-price" class="col" value="8.00">
+                    
+                    <div class="row" style="align-items:center; flex:2; gap:0">
+                        <button onclick="adj(-1)" style="background:#eee; color:#000; border-radius: 12px 0 0 12px;">-</button>
+                        <input type="number" id="i-qta" value="1" style="text-align:center; margin:0; border-radius:0; border-left:none; border-right:none">
+                        <button onclick="adj(1)" style="background:#eee; color:#000; border-radius: 0 12px 12px 0;">+</button>
+                    </div>
                 </div>
-                <div class="row" style="align-items:center">
-                    <button class="col" onclick="adj(-1)" style="background:#eee; color:#000">-</button>
-                    <input type="number" id="i-qta" value="1" style="text-align:center; margin:0" class="col">
-                    <button class="col" onclick="adj(1)" style="background:#eee; color:#000">+</button>
-                </div>
-                <button onclick="saveData()" style="margin-top:15px">💾 Salva nel Cloud</button>
+
+                <button id="btn-save" onclick="saveData()" style="margin-top:15px">💾 Registra Ingressi</button>
             </div>
 
             <div class="card">
                 <h3>Ultimi Inserimenti</h3>
-                <div id="history-list">
-                    <div class="loader"></div>
-                </div>
+                <div id="history-list"></div>
             </div>
         </div>
 
         <div id="tab-stats" class="hidden">
             <div class="card">
-                <h3>Andamento Mensile</h3>
+                <h3>Andamento Settimanale</h3>
                 <canvas id="chart1"></canvas>
             </div>
+            
             <div class="card">
-                <h3>Totale Generale</h3>
-                <div style="font-size:1.2rem; font-weight:bold">Ingressi: <span id="tot-all-count">0</span></div>
-                <div style="font-size:1.2rem; font-weight:bold; color:#34c759">Incasso: € <span id="tot-all-eur">0.00</span></div>
+                <h3>Export Dati</h3>
+                <p style="font-size:0.9rem; color:#888; margin-top:0">Scarica tutti i dati in formato Excel/CSV per analisi dettagliate.</p>
+                <button onclick="downloadCSV()" style="background:var(--success)">📥 Scarica Excel Completo</button>
             </div>
         </div>
 
         <div class="nav">
             <div class="nav-item active" id="nav-1" onclick="switchTab(1)">📝 Dati</div>
-            <div class="nav-item" id="nav-2" onclick="switchTab(2)">📊 Stats</div>
+            <div class="nav-item" id="nav-2" onclick="switchTab(2)">📊 Grafici</div>
         </div>
     </div>
 </div>
@@ -132,28 +148,26 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // TUA CONFIGURAZIONE FIREBASE INSERITA AUTOMATICAMENTE:
+    // -----------------------------------------------------------
+    // ⚠️ INCOLLA QUI LA TUA CONFIGURAZIONE FIREBASE ⚠️
+    // -----------------------------------------------------------
     const firebaseConfig = {
-      apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0",
-      authDomain: "piscinastats-64519.firebaseapp.com",
-      projectId: "piscinastats-64519",
-      storageBucket: "piscinastats-64519.firebasestorage.app",
-      messagingSenderId: "297663099794",
-      appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b"
+      // ... Incolla qui il codice ...
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    
     let allData = [];
+    let editId = null; // ID del documento in modifica
 
     // --- AUTH ---
     window.doLogin = async () => {
-        try {
-            await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value);
-        } catch(e) { document.getElementById('login-error').innerText = "Errore: " + e.message; }
+        try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
+        catch(e) { document.getElementById('login-error').innerText = "Errore: " + e.message; }
     };
     window.doLogout = () => signOut(auth);
 
@@ -168,7 +182,7 @@
         }
     });
 
-    // --- DB ---
+    // --- DB SYNC ---
     function startListening() {
         const q = query(collection(db, "ingressi"), orderBy("createdAt", "desc"));
         onSnapshot(q, (snapshot) => {
@@ -177,43 +191,103 @@
         });
     }
 
+    // --- SALVA / AGGIORNA ---
     window.saveData = async () => {
         const d = document.getElementById('i-date').value;
         const q = parseInt(document.getElementById('i-qta').value);
         if(!d || q < 1) return alert("Controlla i dati");
 
-        const btn = document.querySelector('button[onclick="saveData()"]');
-        btn.disabled = true; btn.innerText = "Salvataggio...";
+        const btn = document.getElementById('btn-save');
+        const originalText = btn.innerText;
+        btn.disabled = true; btn.innerText = "Attendere...";
 
         try {
-            await addDoc(collection(db, "ingressi"), {
+            const payload = {
                 date: d,
                 fascia: document.getElementById('i-fascia').value,
                 meteo: document.getElementById('i-meteo').value,
                 tipo: document.getElementById('i-tipo').value,
-                price: parseFloat(document.getElementById('i-price').value),
                 qta: q,
-                tot: parseFloat(document.getElementById('i-price').value) * q,
-                createdAt: new Date()
-            });
-            alert("Salvato nel Cloud! ☁️");
-            document.getElementById('i-qta').value = 1;
+                createdAt: editId ? allData.find(x=>x.id==editId).createdAt : new Date()
+            };
+
+            if(editId) {
+                // UPDATE
+                await updateDoc(doc(db, "ingressi", editId), payload);
+                alert("Modifica salvata! ✅");
+                cancelEdit();
+            } else {
+                // CREATE
+                await addDoc(collection(db, "ingressi"), payload);
+                alert("Salvato! ☁️");
+                document.getElementById('i-qta').value = 1;
+            }
         } catch(e) { alert("Errore: " + e.message); }
         
-        btn.disabled = false; btn.innerText = "💾 Salva nel Cloud";
+        btn.disabled = false; btn.innerText = originalText;
+    };
+
+    // --- MODIFICA / ELIMINA ---
+    window.startEdit = (id) => {
+        const item = allData.find(x => x.id === id);
+        if(!item) return;
+
+        editId = id;
+        
+        // Popola il form
+        document.getElementById('i-date').value = item.date;
+        document.getElementById('i-fascia').value = item.fascia;
+        document.getElementById('i-meteo').value = item.meteo;
+        document.getElementById('i-tipo').value = item.tipo;
+        document.getElementById('i-qta').value = item.qta;
+
+        // Cambia UI per mostrare modalità modifica
+        document.getElementById('input-card').classList.add('editing-mode');
+        document.getElementById('form-title').innerText = "Modifica Ingresso";
+        document.getElementById('form-title').style.color = "var(--primary)";
+        document.getElementById('btn-save').innerText = "🔄 Aggiorna Dati";
+        document.getElementById('btn-save').style.background = "var(--text)";
+        document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+        // Scrolla su
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.cancelEdit = () => {
+        editId = null;
+        document.getElementById('input-card').classList.remove('editing-mode');
+        document.getElementById('form-title').innerText = "Nuovo Inserimento";
+        document.getElementById('form-title').style.color = "#888";
+        document.getElementById('btn-save').innerText = "💾 Registra Ingressi";
+        document.getElementById('btn-save').style.background = "var(--primary)";
+        document.getElementById('cancel-edit-btn').classList.add('hidden');
+        document.getElementById('i-qta').value = 1;
     };
 
     window.delItem = async (id) => {
-        if(confirm("Eliminare?")) await deleteDoc(doc(db, "ingressi", id));
+        if(confirm("Eliminare definitivamente?")) await deleteDoc(doc(db, "ingressi", id));
     };
 
-    // --- UI ---
-    document.getElementById('i-date').valueAsDate = new Date();
-    
-    window.updPrice = () => {
-        const p = { "Intero": 8, "Ridotto": 5, "Abbonamento": 0 };
-        document.getElementById('i-price').value = p[document.getElementById('i-tipo').value].toFixed(2);
+    // --- EXPORT EXCEL ---
+    window.downloadCSV = () => {
+        if(allData.length === 0) return alert("Nessun dato da scaricare");
+        
+        let csv = "Data;Fascia;Meteo;Tipo;Quantita\n";
+        allData.forEach(row => {
+            csv += `${row.date};${row.fascia};${row.meteo};${row.tipo};${row.qta}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "report_piscina.csv");
+        document.body.appendChild(link);
+        link.click();
     };
+
+    // --- UI HELPERS ---
+    document.getElementById('i-date').valueAsDate = new Date();
     window.adj = (n) => {
         let el = document.getElementById('i-qta');
         let v = parseInt(el.value) + n;
@@ -221,27 +295,30 @@
     };
 
     function renderApp() {
-        // Today
+        // Stats veloci
         const today = new Date().toISOString().split('T')[0];
         const todayItems = allData.filter(x => x.date === today);
         document.getElementById('today-count').innerText = todayItems.reduce((a,b)=>a+b.qta,0);
-        document.getElementById('today-eur').innerText = "€ " + todayItems.reduce((a,b)=>a+b.tot,0).toFixed(2);
+        document.getElementById('total-count-mini').innerText = allData.reduce((a,b)=>a+b.qta,0);
 
-        // List
+        // Lista
         const list = document.getElementById('history-list');
         list.innerHTML = "";
-        allData.slice(0, 10).forEach(item => {
+        allData.slice(0, 15).forEach(item => {
+            const d = item.date.split('-').reverse().join('/'); // DD/MM/YYYY
             list.innerHTML += `
                 <div class="history-item">
-                    <div><b>${item.date}</b> | ${item.tipo} (${item.qta})</div>
-                    <div>€ ${item.tot.toFixed(2)} <button class="del-btn" onclick="delItem('${item.id}')">✕</button></div>
+                    <div class="h-info">
+                        <span class="h-date">${d} • ${item.fascia}</span>
+                        <span class="h-main">${item.qta} x ${item.tipo}</span>
+                    </div>
+                    <div class="actions">
+                        <button class="icon-btn btn-edit" onclick="startEdit('${item.id}')">✏️</button>
+                        <button class="icon-btn btn-del" onclick="delItem('${item.id}')">🗑️</button>
+                    </div>
                 </div>
             `;
         });
-
-        // Totals
-        document.getElementById('tot-all-count').innerText = allData.reduce((a,b)=>a+b.qta,0);
-        document.getElementById('tot-all-eur').innerText = allData.reduce((a,b)=>a+b.tot,0).toFixed(2);
 
         renderChart();
     }
@@ -263,9 +340,10 @@
         myChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: labels,
-                datasets: [{ label: 'Ingressi', data: data, backgroundColor: '#007aff', borderRadius: 5 }]
-            }
+                labels: labels.map(l => l.split('-').slice(1).reverse().join('/')),
+                datasets: [{ label: 'Ingressi', data: data, backgroundColor: '#007aff', borderRadius: 6 }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
         });
     }
 
