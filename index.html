@@ -2,8 +2,8 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Piscina Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Piscina Analytics V6</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -15,38 +15,34 @@
             --border: #d2d2d7;
             --success: #34c759;
             --danger: #ff3b30;
-            --warning: #ffcc00;
+            --period-a: #007aff;
+            --period-b: #ff9500;
         }
 
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 30px; }
         
-        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 30px; }
+        .container { max-width: 1500px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 30px; }
         
         /* Header */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         h1 { margin: 0; font-size: 1.8rem; font-weight: 800; color: #333; }
         
-        /* Cards */
         .card { background: var(--card); border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); }
-        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 20px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 20px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; padding-bottom: 10px; display:flex; justify-content:space-between; align-items:center; }
 
         /* INPUT SECTION */
         .input-row-main { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px; background: #fafafa; padding: 20px; border-radius: 10px; border: 1px solid #eee; }
         .input-group { display: flex; flex-direction: column; flex: 1; }
         .input-group label { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #555; }
         
-        /* Ticket Grid */
         .input-grid-tickets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 20px; }
-        .ticket-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 10px; text-align: center; transition: all 0.2s; position: relative; }
+        .ticket-box { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 10px; text-align: center; transition: all 0.2s; }
         .ticket-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0,122,255,0.1); transform: translateY(-2px); }
         .ticket-box label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 10px; color: #666; text-transform: uppercase; }
         .ticket-box input { width: 100%; font-size: 1.8rem; font-weight: 800; text-align: center; border: none; outline: none; background: transparent; color: var(--primary); }
 
-        /* Form elements */
-        select, input[type="date"] { padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff; outline: none; transition: border 0.2s; }
-        select:focus, input:focus { border-color: var(--primary); }
+        select, input[type="date"] { padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; background: #fff; outline: none; width: 100%; box-sizing: border-box; }
         
-        /* Buttons */
         .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
         .btn:hover { opacity: 0.9; }
         .btn-primary { background: var(--primary); color: white; width: 100%; }
@@ -54,25 +50,36 @@
         .btn-edit { background: #f0f0f0; color: #333; padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; margin-right: 5px; }
         .btn-del { background: #fff1f0; color: var(--danger); padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; }
 
-        /* Table */
-        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; font-size: 0.95rem; }
-        th { text-align: left; padding: 15px; border-bottom: 2px solid #eee; color: #888; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; position: sticky; top: 0; background: #fff; }
-        td { padding: 15px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
-        tr:hover td { background-color: #fcfcfc; }
+        /* TABS */
+        .tabs { display: flex; gap: 10px; margin-bottom: 0; }
+        .tab-btn { padding: 8px 16px; border-radius: 20px; background: #f0f0f0; border: none; cursor: pointer; font-weight: 600; color: #666; font-size: 0.9rem; }
+        .tab-btn.active { background: var(--text); color: #fff; }
+
+        /* Table & Filters */
+        .filter-bar { display: flex; gap: 15px; margin-bottom: 15px; background: #f0f7ff; padding: 10px; border-radius: 8px; align-items: center; }
         
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; font-size: 0.9rem; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #eee; color: #888; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; position: sticky; top: 0; background: #fff; }
+        td { padding: 12px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; background: #eef2ff; color: var(--primary); display: inline-block; }
+        .col-totalone { background-color: #333; color: #fff; font-weight: 800; text-align: center; font-size: 1rem; border-radius: 6px; padding: 4px; }
+
+        /* COMPARISON STYLES */
+        .comp-dates-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 20px; align-items: end; background: #fafafa; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee; }
+        .date-label-a { color: var(--period-a); font-weight: bold; font-size: 0.8rem; margin-bottom: 5px; display: block; text-transform: uppercase; }
+        .date-label-b { color: var(--period-b); font-weight: bold; font-size: 0.8rem; margin-bottom: 5px; display: block; text-transform: uppercase; }
         
-        /* Colonne Totali */
-        .col-group-singoli { background-color: #f9fcff; color: #0044cc; font-weight: 700; text-align: center; border-left: 2px solid #fff; }
-        .col-group-abb { background-color: #fafffa; color: #007722; font-weight: 700; text-align: center; border-left: 2px solid #fff; }
-        .col-group-grat { background-color: #fffcf2; color: #b38600; font-weight: 700; text-align: center; border-left: 2px solid #fff; }
-        .col-totalone { background-color: #333; color: #fff; font-weight: 800; text-align: center; font-size: 1.1rem; border-radius: 8px; }
+        .comp-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .comp-box { padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #eee; }
+        .comp-title { font-size: 0.8rem; text-transform: uppercase; color: #888; margin-bottom: 10px; font-weight: 600; }
+        .comp-val { font-size: 1.8rem; font-weight: 800; display: block; }
+        .comp-diff { font-size: 1rem; font-weight: 700; margin-top: 5px; display: block; }
+        .diff-pos { color: var(--success); }
+        .diff-neg { color: var(--danger); }
+        .diff-neutral { color: #888; }
 
-        .sub-detail { display: block; font-size: 0.7rem; color: #999; font-weight: 500; margin-top: 4px; }
-
-        /* Login */
-        #login-screen { max-width: 400px; margin: 80px auto; text-align: center; }
         .hidden { display: none; }
+        #login-screen { max-width: 400px; margin: 80px auto; text-align: center; }
         .editing-mode { border: 2px solid var(--primary); background-color: #f0f7ff; }
     </style>
 </head>
@@ -82,9 +89,9 @@
     <h1>🏊‍♂️ Dashboard Piscina</h1>
     <div class="card" style="margin-top:20px; text-align:left">
         <label style="font-weight:bold; font-size:0.8rem; color:#666">Email</label>
-        <input type="email" id="email" style="width:100%; box-sizing:border-box; margin-bottom:15px; margin-top:5px">
+        <input type="email" id="email" style="width:100%; margin-bottom:15px; margin-top:5px">
         <label style="font-weight:bold; font-size:0.8rem; color:#666">Password</label>
-        <input type="password" id="password" style="width:100%; box-sizing:border-box; margin-bottom:20px; margin-top:5px">
+        <input type="password" id="password" style="width:100%; margin-bottom:20px; margin-top:5px">
         <button class="btn btn-primary" onclick="doLogin()">Entra</button>
         <p id="login-error" style="color:red; margin-top:15px; text-align:center"></p>
     </div>
@@ -93,7 +100,7 @@
 <div id="app-screen" class="container hidden">
     
     <div class="header">
-        <h1>📊 Statistiche Ingressi</h1>
+        <h1>📊 Analytics Suite</h1>
         <div>
             <span id="user-display" style="margin-right:15px; font-weight:500; color:#666"></span>
             <button class="btn" style="background:#e5e5ea; padding:8px 16px" onclick="doLogout()">Esci</button>
@@ -102,9 +109,10 @@
 
     <div class="card" id="input-card">
         <div style="display:flex; justify-content:space-between; align-items:center">
-            <div class="card-title" id="form-title">Nuovo Inserimento Dati</div>
+            <div class="card-title" id="form-title" style="margin:0; border:none">Nuovo Inserimento</div>
             <button id="cancel-edit" class="btn hidden" onclick="cancelEdit()" style="background:#fff0f0; color:red; border:1px solid red; padding:6px 15px">Annulla Modifica</button>
         </div>
+        <div style="border-bottom:1px solid #eee; margin-bottom:20px"></div>
 
         <div class="input-row-main">
             <div class="input-group">
@@ -114,71 +122,59 @@
             <div class="input-group">
                 <label>Fascia Oraria</label>
                 <select id="i-fascia">
-                    <option>Mattina</option>
-                    <option>Mattina intera</option>
-                    <option>Pranzo</option>
-                    <option>Sera</option>
-                    <option>Sabato pom</option>
-                    <option>Domenica</option>
-                    <option>Festivo</option>
-                    <option>Unico</option>
+                    <option>Mattina</option><option>Mattina intera</option><option>Pranzo</option><option>Sera</option>
+                    <option>Sabato pom</option><option>Domenica</option><option>Festivo</option><option>Unico</option>
                 </select>
             </div>
             <div class="input-group">
                 <label>Meteo</label>
                 <select id="i-meteo">
-                    <option>☀️ Sole</option>
-                    <option>⛅ Nuvoloso</option>
-                    <option>🌧️ Pioggia</option>
-                    <option>❄️ Freddo</option>
+                    <option>☀️ Sole</option><option>⛅ Nuvoloso</option><option>🌧️ Pioggia</option><option>❄️ Freddo</option>
                 </select>
             </div>
         </div>
 
         <div class="input-grid-tickets">
-            <div class="ticket-box">
-                <label>Ingresso Intero</label>
-                <input type="number" id="q-intero" value="0" min="0" onfocus="this.select()">
-            </div>
-            <div class="ticket-box">
-                <label>Ingresso Ridotto</label>
-                <input type="number" id="q-ridotto" value="0" min="0" onfocus="this.select()">
-            </div>
-            <div class="ticket-box">
-                <label>Gratuito</label>
-                <input type="number" id="q-gratuito" value="0" min="0" onfocus="this.select()">
-            </div>
-            <div class="ticket-box">
-                <label>Abbonam. Intero</label>
-                <input type="number" id="q-abb-int" value="0" min="0" onfocus="this.select()">
-            </div>
-            <div class="ticket-box">
-                <label>Abbonam. Ridotto</label>
-                <input type="number" id="q-abb-rid" value="0" min="0" onfocus="this.select()">
-            </div>
+            <div class="ticket-box"><label>Intero</label><input type="number" id="q-intero" value="0" min="0" onfocus="this.select()"></div>
+            <div class="ticket-box"><label>Ridotto</label><input type="number" id="q-ridotto" value="0" min="0" onfocus="this.select()"></div>
+            <div class="ticket-box"><label>Gratuito</label><input type="number" id="q-gratuito" value="0" min="0" onfocus="this.select()"></div>
+            <div class="ticket-box"><label>Abb. Int.</label><input type="number" id="q-abb-int" value="0" min="0" onfocus="this.select()"></div>
+            <div class="ticket-box"><label>Abb. Rid.</label><input type="number" id="q-abb-rid" value="0" min="0" onfocus="this.select()"></div>
         </div>
 
         <button id="btn-save" class="btn btn-primary" onclick="saveData()">💾 Salva nel Database</button>
     </div>
 
-    <div style="display:grid; grid-template-columns: 2.5fr 1fr; gap:30px">
+    <div style="display:grid; grid-template-rows: auto 1fr; gap:0">
         
-        <div class="card" style="padding:0; overflow:hidden">
-            <div style="padding:20px 25px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee">
-                <div class="card-title" style="margin:0; border:none">Storico Registrazioni</div>
-                <button class="btn btn-success" style="padding:8px 15px; font-size:0.9rem" onclick="downloadCSV()">📥 Scarica Excel</button>
+        <div style="background:#e5e5ea; padding:5px; border-radius:12px 12px 0 0; display:flex; width:fit-content; margin-bottom:0">
+            <button class="tab-btn active" id="tab-btn-archive" onclick="switchView('archive')">📋 Archivio</button>
+            <button class="tab-btn" id="tab-btn-compare" onclick="switchView('compare')">⚖️ Confronto</button>
+        </div>
+
+        <div id="view-archive" class="card" style="border-top-left-radius:0; min-height:600px">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+                <div class="filter-bar" style="margin:0">
+                    <select id="filter-year" style="width:auto; padding:5px" onchange="applyFilters()"><option value="all">Tutti</option></select>
+                    <select id="filter-month" style="width:auto; padding:5px" onchange="applyFilters()">
+                        <option value="all">Tutto l'anno</option><option value="1">Gen</option><option value="2">Feb</option><option value="3">Mar</option>
+                        <option value="4">Apr</option><option value="5">Mag</option><option value="6">Giu</option><option value="7">Lug</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Ott</option><option value="11">Nov</option><option value="12">Dic</option>
+                    </select>
+                </div>
+                <button class="btn btn-success" style="padding:6px 12px; font-size:0.8rem" onclick="downloadCSV()">📥 Export Excel</button>
             </div>
-            <div style="overflow-x:auto;">
+            
+            <div style="overflow-y:auto; max-height:600px">
                 <table id="data-table">
                     <thead>
                         <tr>
-                            <th style="padding-left:25px">Data / Meteo</th>
+                            <th style="padding-left:10px">Data</th>
                             <th>Fascia</th>
-                            <th style="text-align:center">Ingr. Singoli</th>
-                            <th style="text-align:center">Abbonamenti</th>
-                            <th style="text-align:center">Gratuiti</th>
-                            <th style="text-align:center">TOTALE</th>
-                            <th style="text-align:right; padding-right:25px">Azioni</th>
+                            <th style="text-align:center">Sing.</th>
+                            <th style="text-align:center">Abb.</th>
+                            <th style="text-align:center">Grat.</th>
+                            <th style="text-align:center">TOT</th>
+                            <th style="text-align:right; padding-right:10px">Azioni</th>
                         </tr>
                     </thead>
                     <tbody id="table-body"></tbody>
@@ -186,28 +182,59 @@
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-title">Riepilogo (Ultimi 7gg)</div>
-            <canvas id="chart1" style="max-height:250px"></canvas>
+        <div id="view-compare" class="card hidden" style="border-top-left-radius:0; min-height:600px">
             
-            <div style="margin-top:30px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px">
-                    <span style="color:#666">Singoli</span>
-                    <span style="font-weight:bold" id="stat-singoli">0</span>
+            <div class="comp-dates-row">
+                <div>
+                    <span class="date-label-a">🟦 Periodo A (Base)</span>
+                    <div style="display:flex; gap:5px">
+                        <input type="date" id="date-a-start">
+                        <input type="date" id="date-a-end">
+                    </div>
                 </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px">
-                    <span style="color:#666">Abbonamenti</span>
-                    <span style="font-weight:bold" id="stat-abbonamenti">0</span>
+                <div>
+                    <span class="date-label-b">🟧 Periodo B (Confronto)</span>
+                    <div style="display:flex; gap:5px">
+                        <input type="date" id="date-b-start">
+                        <input type="date" id="date-b-end">
+                    </div>
                 </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:5px">
-                    <span style="color:#666">Gratuiti</span>
-                    <span style="font-weight:bold" id="stat-gratuiti">0</span>
+                <button class="btn" style="background:#333; color:white; height:100%" onclick="renderComparison()">⚡ Confronta</button>
+            </div>
+
+            <div class="comp-grid">
+                <div class="comp-box">
+                    <div class="comp-title">Totale Ingressi</div>
+                    <div style="display:flex; justify-content:space-around; align-items:end">
+                        <div style="color:var(--period-a)"><small>A:</small> <span id="comp-tot-a">0</span></div>
+                        <div style="color:var(--period-b)"><small>B:</small> <span id="comp-tot-b">0</span></div>
+                    </div>
+                    <span id="diff-tot" class="comp-diff diff-neutral">0%</span>
                 </div>
-                
-                <div style="background:#f5f5f7; padding:15px; border-radius:10px; text-align:center">
-                    <div style="font-size:0.8rem; color:#888; text-transform:uppercase; margin-bottom:5px">Totale Generale</div>
-                    <div id="big-total" style="font-size:2.5rem; font-weight:800; color:var(--text)">0</div>
+                <div class="comp-box">
+                    <div class="comp-title">Ingressi Singoli</div>
+                    <div style="display:flex; justify-content:space-around; align-items:end">
+                        <div style="color:var(--period-a)"><small>A:</small> <span id="comp-sing-a">0</span></div>
+                        <div style="color:var(--period-b)"><small>B:</small> <span id="comp-sing-b">0</span></div>
+                    </div>
+                    <span id="diff-sing" class="comp-diff diff-neutral">0%</span>
                 </div>
+                <div class="comp-box">
+                    <div class="comp-title">Abbonamenti</div>
+                    <div style="display:flex; justify-content:space-around; align-items:end">
+                        <div style="color:var(--period-a)"><small>A:</small> <span id="comp-abb-a">0</span></div>
+                        <div style="color:var(--period-b)"><small>B:</small> <span id="comp-abb-b">0</span></div>
+                    </div>
+                    <span id="diff-abb" class="comp-diff diff-neutral">0%</span>
+                </div>
+            </div>
+
+            <div style="margin-top:30px">
+                <canvas id="chartCompare" style="max-height:300px"></canvas>
+            </div>
+            
+            <div style="margin-top:20px; font-size:0.8rem; color:#666; text-align:center">
+                Media Giornaliera A: <strong id="avg-a">0</strong> vs B: <strong id="avg-b">0</strong>
             </div>
         </div>
 
@@ -220,7 +247,6 @@
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ✅ CONFIGURAZIONE FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0",
       authDomain: "piscinastats-64519.firebaseapp.com",
@@ -240,7 +266,7 @@
     // --- AUTH ---
     window.doLogin = async () => {
         try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } 
-        catch(e) { document.getElementById('login-error').innerText = "Password errata o utente non trovato"; }
+        catch(e) { document.getElementById('login-error').innerText = e.message; }
     };
     window.doLogout = () => signOut(auth);
 
@@ -261,206 +287,219 @@
         const q = query(collection(db, "sessioni"), orderBy("date", "desc"));
         onSnapshot(q, (snapshot) => {
             allData = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-            renderTable();
-            renderChart();
+            populateYearFilter();
+            applyFilters(); 
+            // Pre-fill comparison dates
+            const today = new Date();
+            const lastMonth = new Date(); lastMonth.setMonth(today.getMonth()-1);
+            document.getElementById('date-b-start').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+            document.getElementById('date-b-end').value = today.toISOString().split('T')[0];
+            document.getElementById('date-a-start').value = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1).toISOString().split('T')[0];
+            document.getElementById('date-a-end').value = new Date(lastMonth.getFullYear(), lastMonth.getMonth()+1, 0).toISOString().split('T')[0];
+            renderComparison();
         });
     }
 
-    // --- SAVE ---
-    window.saveData = async () => {
-        const date = document.getElementById('i-date').value;
-        const v1 = parseInt(document.getElementById('q-intero').value) || 0;
-        const v2 = parseInt(document.getElementById('q-ridotto').value) || 0;
-        const v3 = parseInt(document.getElementById('q-gratuito').value) || 0;
-        const v4 = parseInt(document.getElementById('q-abb-int').value) || 0;
-        const v5 = parseInt(document.getElementById('q-abb-rid').value) || 0;
+    // --- VIEW SWITCHER ---
+    window.switchView = (view) => {
+        document.getElementById('view-archive').classList.add('hidden');
+        document.getElementById('view-compare').classList.add('hidden');
+        document.getElementById('tab-btn-archive').classList.remove('active');
+        document.getElementById('tab-btn-compare').classList.remove('active');
+
+        document.getElementById(`view-${view}`).classList.remove('hidden');
+        document.getElementById(`tab-btn-${view}`).classList.add('active');
         
-        const totSing = v1 + v2;
-        const totAbb = v4 + v5;
-        const total = totSing + totAbb + v3;
-
-        if(!date) return alert("Inserisci la data.");
-        if(total === 0) return alert("Inserisci almeno un ingresso.");
-
-        const payload = {
-            date: date,
-            fascia: document.getElementById('i-fascia').value,
-            meteo: document.getElementById('i-meteo').value,
-            int: v1, rid: v2, grat: v3, abb_int: v4, abb_rid: v5,
-            totale: total,
-            lastUpdate: new Date()
-        };
-
-        const btn = document.getElementById('btn-save');
-        btn.disabled = true; btn.innerText = "Salvataggio...";
-
-        try {
-            if(editId) {
-                await updateDoc(doc(db, "sessioni", editId), payload);
-                cancelEdit();
-            } else {
-                await addDoc(collection(db, "sessioni"), payload);
-                resetInputs();
-            }
-        } catch(e) { alert("Errore: " + e.message); }
-
-        btn.disabled = false; btn.innerText = editId ? "🔄 Aggiorna Registrazione" : "💾 Salva nel Database";
+        if(view === 'compare') renderComparison();
     };
 
-    function resetInputs() {
-        document.getElementById('q-intero').value = 0;
-        document.getElementById('q-ridotto').value = 0;
-        document.getElementById('q-gratuito').value = 0;
-        document.getElementById('q-abb-int').value = 0;
-        document.getElementById('q-abb-rid').value = 0;
+    // --- ARCHIVE LOGIC ---
+    function populateYearFilter() {
+        const years = [...new Set(allData.map(d => d.date.split('-')[0]))].sort().reverse();
+        const sel = document.getElementById('filter-year');
+        const current = sel.value;
+        sel.innerHTML = '<option value="all">Tutti</option>';
+        years.forEach(y => sel.innerHTML += `<option value="${y}">${y}</option>`);
+        if(years.includes(current)) sel.value = current;
     }
 
-    // --- EDIT ---
-    window.startEdit = (id) => {
-        const item = allData.find(x => x.id === id);
-        if(!item) return;
-        editId = id;
-        
-        document.getElementById('i-date').value = item.date;
-        document.getElementById('i-fascia').value = item.fascia;
-        document.getElementById('i-meteo').value = item.meteo;
-        
-        document.getElementById('q-intero').value = item.int;
-        document.getElementById('q-ridotto').value = item.rid;
-        document.getElementById('q-gratuito').value = item.grat;
-        document.getElementById('q-abb-int').value = item.abb_int;
-        document.getElementById('q-abb-rid').value = item.abb_rid;
-
-        // UI Changes
-        document.getElementById('input-card').classList.add('editing-mode');
-        document.getElementById('form-title').innerText = "Modifica Riga";
-        document.getElementById('form-title').style.color = "var(--primary)";
-        document.getElementById('btn-save').innerText = "🔄 Aggiorna Registrazione";
-        document.getElementById('cancel-edit').classList.remove('hidden');
-        window.scrollTo({top:0, behavior:'smooth'});
+    window.applyFilters = () => {
+        const y = document.getElementById('filter-year').value;
+        const m = document.getElementById('filter-month').value;
+        const filtered = allData.filter(d => {
+            const date = new Date(d.date);
+            return ((y === 'all') || (date.getFullYear().toString() === y)) &&
+                   ((m === 'all') || ((date.getMonth() + 1).toString() === m));
+        });
+        renderTable(filtered);
     };
 
-    window.cancelEdit = () => {
-        editId = null;
-        document.getElementById('input-card').classList.remove('editing-mode');
-        document.getElementById('form-title').innerText = "Nuovo Inserimento Dati";
-        document.getElementById('form-title').style.color = "#666";
-        document.getElementById('btn-save').innerText = "💾 Salva nel Database";
-        document.getElementById('cancel-edit').classList.add('hidden');
-        resetInputs();
-    };
-
-    window.delItem = async (id) => {
-        if(confirm("Cancellare questa riga?")) await deleteDoc(doc(db, "sessioni", id));
-    };
-
-    // --- RENDER TABLE ---
-    function renderTable() {
+    function renderTable(data) {
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = "";
-        
-        let grandTotal = 0;
-        let tSing = 0; let tAbb = 0; let tGrat = 0;
-
-        allData.forEach(d => {
-            grandTotal += d.totale;
-            
-            // Calcolo parziali riga
+        data.forEach(d => {
             const s = (d.int || 0) + (d.rid || 0);
             const a = (d.abb_int || 0) + (d.abb_rid || 0);
-            const g = (d.grat || 0);
-            
-            // Accumulo totali globali
-            tSing += s; tAbb += a; tGrat += g;
-
-            const dateFmt = d.date.split('-').reverse().join('/');
-            
             tbody.innerHTML += `
                 <tr>
-                    <td style="padding-left:25px">
-                        <div style="font-weight:bold">${dateFmt}</div>
-                        <div style="font-size:0.8rem; color:#888">${d.meteo}</div>
-                    </td>
+                    <td style="padding-left:10px; font-weight:bold">${d.date.split('-').reverse().join('/')} <span style="font-weight:normal; font-size:0.8rem; color:#888">${d.meteo}</span></td>
                     <td><span class="badge">${d.fascia}</span></td>
-                    
-                    <td class="col-group-singoli">
-                        ${s}
-                        <span class="sub-detail">${d.int} Int + ${d.rid} Rid</span>
-                    </td>
-                    
-                    <td class="col-group-abb">
-                        ${a}
-                        <span class="sub-detail">${d.abb_int} Int + ${d.abb_rid} Rid</span>
-                    </td>
-                    
-                    <td class="col-group-grat">${g}</td>
-                    
-                    <td style="padding:10px">
-                        <div class="col-totalone">${d.totale}</div>
-                    </td>
-                    
-                    <td style="text-align:right; padding-right:25px">
+                    <td style="text-align:center">${s}</td>
+                    <td style="text-align:center">${a}</td>
+                    <td style="text-align:center">${d.grat || 0}</td>
+                    <td style="text-align:center"><div class="col-totalone">${d.totale}</div></td>
+                    <td style="text-align:right; padding-right:10px">
                         <button class="btn btn-edit" onclick="startEdit('${d.id}')">✏️</button>
                         <button class="btn btn-del" onclick="delItem('${d.id}')">🗑️</button>
                     </td>
                 </tr>
             `;
         });
-
-        // Aggiorna sidebar stats
-        document.getElementById('big-total').innerText = grandTotal;
-        document.getElementById('stat-singoli').innerText = tSing;
-        document.getElementById('stat-abbonamenti').innerText = tAbb;
-        document.getElementById('stat-gratuiti').innerText = tGrat;
     }
 
-    // --- CHART ---
-    let myChart;
-    function renderChart() {
-        const ctx = document.getElementById('chart1');
-        const map = {};
-        allData.forEach(d => {
-            if(!map[d.date]) map[d.date] = 0;
-            map[d.date] += d.totale;
-        });
-        
-        const labels = Object.keys(map).sort().slice(-7);
-        const data = labels.map(l => map[l]);
+    // --- COMPARISON LOGIC ---
+    window.renderComparison = () => {
+        const daS = document.getElementById('date-a-start').value;
+        const daE = document.getElementById('date-a-end').value;
+        const dbS = document.getElementById('date-b-start').value;
+        const dbE = document.getElementById('date-b-end').value;
 
-        if(myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels.map(l => l.split('-').slice(1).reverse().join('/')),
-                datasets: [{ 
-                    label: 'Andamento Totale', 
-                    data: data, 
-                    borderColor: '#007aff', 
-                    backgroundColor: 'rgba(0,122,255,0.1)', 
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: { scales: { y: { beginAtZero: true } } }
-        });
-    }
+        if(!daS || !daE || !dbS || !dbE) return;
 
-    // --- CSV ---
-    window.downloadCSV = () => {
-        let csv = "Data;Fascia;Meteo;TOT_SINGOLI;TOT_ABB;GRATUITI;TOT_GEN;Dett_Int;Dett_Rid;Dett_AbbInt;Dett_AbbRid\n";
-        allData.forEach(d => {
-            const s = (d.int || 0) + (d.rid || 0);
-            const a = (d.abb_int || 0) + (d.abb_rid || 0);
-            csv += `${d.date};${d.fascia};${d.meteo};${s};${a};${d.grat};${d.totale};${d.int};${d.rid};${d.abb_int};${d.abb_rid}\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "Piscina_Report_Completo.csv";
-        link.click();
+        const setA = allData.filter(d => d.date >= daS && d.date <= daE);
+        const setB = allData.filter(d => d.date >= dbS && d.date <= dbE);
+
+        const statsA = calcStats(setA);
+        const statsB = calcStats(setB);
+
+        // Update DOM
+        updateCompBox('tot', statsA.tot, statsB.tot);
+        updateCompBox('sing', statsA.sing, statsB.sing);
+        updateCompBox('abb', statsA.abb, statsB.abb);
+
+        // Avg
+        const daysA = new Set(setA.map(d=>d.date)).size || 1;
+        const daysB = new Set(setB.map(d=>d.date)).size || 1;
+        document.getElementById('avg-a').innerText = (statsA.tot / daysA).toFixed(1);
+        document.getElementById('avg-b').innerText = (statsB.tot / daysB).toFixed(1);
+
+        renderCompChart(statsA, statsB);
     };
 
-    // Set Data Oggi
+    function calcStats(dataset) {
+        return dataset.reduce((acc, d) => {
+            acc.tot += d.totale;
+            acc.sing += (d.int || 0) + (d.rid || 0);
+            acc.abb += (d.abb_int || 0) + (d.abb_rid || 0);
+            acc.grat += (d.grat || 0);
+            return acc;
+        }, { tot:0, sing:0, abb:0, grat:0 });
+    }
+
+    function updateCompBox(id, valA, valB) {
+        document.getElementById(`comp-${id}-a`).innerText = valA;
+        document.getElementById(`comp-${id}-b`).innerText = valB;
+        
+        const diffEl = document.getElementById(`diff-${id}`);
+        if (valA === 0) {
+            diffEl.innerText = valB > 0 ? "+100%" : "0%";
+            diffEl.className = "comp-diff diff-neutral";
+            return;
+        }
+        
+        const diff = ((valB - valA) / valA) * 100;
+        const sign = diff > 0 ? "+" : "";
+        diffEl.innerText = `${sign}${diff.toFixed(1)}%`;
+        
+        if(diff > 0) diffEl.className = "comp-diff diff-pos";
+        else if(diff < 0) diffEl.className = "comp-diff diff-neg";
+        else diffEl.className = "comp-diff diff-neutral";
+    }
+
+    let compChart;
+    function renderCompChart(sA, sB) {
+        const ctx = document.getElementById('chartCompare');
+        if(compChart) compChart.destroy();
+        
+        compChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Totale', 'Singoli', 'Abbonamenti', 'Gratuiti'],
+                datasets: [
+                    { label: 'Periodo A', data: [sA.tot, sA.sing, sA.abb, sA.grat], backgroundColor: '#007aff' },
+                    { label: 'Periodo B', data: [sB.tot, sB.sing, sB.abb, sB.grat], backgroundColor: '#ff9500' }
+                ]
+            },
+            options: { 
+                responsive: true,
+                scales: { y: { beginAtZero: true } } 
+            }
+        });
+    }
+
+    // --- SAVE LOGIC ---
+    window.saveData = async () => {
+        const date = document.getElementById('i-date').value;
+        const v1 = parseInt(document.getElementById('q-intero').value)||0;
+        const v2 = parseInt(document.getElementById('q-ridotto').value)||0;
+        const v3 = parseInt(document.getElementById('q-gratuito').value)||0;
+        const v4 = parseInt(document.getElementById('q-abb-int').value)||0;
+        const v5 = parseInt(document.getElementById('q-abb-rid').value)||0;
+        const total = v1+v2+v3+v4+v5;
+
+        if(!date || total===0) return alert("Dati incompleti");
+
+        const payload = {
+            date, fascia: document.getElementById('i-fascia').value,
+            meteo: document.getElementById('i-meteo').value,
+            int: v1, rid: v2, grat: v3, abb_int: v4, abb_rid: v5, totale: total,
+            lastUpdate: new Date()
+        };
+
+        const btn = document.getElementById('btn-save'); btn.disabled=true; btn.innerText="Wait...";
+        try {
+            if(editId) { await updateDoc(doc(db, "sessioni", editId), payload); cancelEdit(); }
+            else { await addDoc(collection(db, "sessioni"), payload); resetInputs(); }
+        } catch(e) { alert(e.message); }
+        btn.disabled=false; btn.innerText= editId ? "Aggiorna" : "💾 Salva nel Database";
+    };
+
+    function resetInputs() { document.querySelectorAll('.ticket-box input').forEach(i => i.value=0); }
+
+    // --- EDIT & DELETE ---
+    window.startEdit = (id) => {
+        const item = allData.find(x=>x.id===id); if(!item) return;
+        editId = id;
+        document.getElementById('i-date').value = item.date;
+        document.getElementById('i-fascia').value = item.fascia;
+        document.getElementById('i-meteo').value = item.meteo;
+        document.getElementById('q-intero').value = item.int;
+        document.getElementById('q-ridotto').value = item.rid;
+        document.getElementById('q-gratuito').value = item.grat;
+        document.getElementById('q-abb-int').value = item.abb_int;
+        document.getElementById('q-abb-rid').value = item.abb_rid;
+        
+        document.getElementById('input-card').classList.add('editing-mode');
+        document.getElementById('form-title').innerText = "Modifica";
+        document.getElementById('btn-save').innerText = "Aggiorna";
+        document.getElementById('cancel-edit').classList.remove('hidden');
+    };
+    window.cancelEdit = () => {
+        editId = null; document.getElementById('input-card').classList.remove('editing-mode');
+        document.getElementById('form-title').innerText="Nuovo Inserimento"; document.getElementById('btn-save').innerText="💾 Salva nel Database";
+        document.getElementById('cancel-edit').classList.add('hidden'); resetInputs();
+    };
+    window.delItem = async (id) => { if(confirm("Eliminare?")) await deleteDoc(doc(db, "sessioni", id)); };
+
+    window.downloadCSV = () => {
+        const y = document.getElementById('filter-year').value;
+        const blob = new Blob([
+            "Data;Fascia;Meteo;Singoli;Abbonamenti;Gratuiti;TOTALE\n" + 
+            allData.map(d=>`${d.date};${d.fascia};${d.meteo};${(d.int||0)+(d.rid||0)};${(d.abb_int||0)+(d.abb_rid||0)};${d.grat};${d.totale}`).join("\n")
+        ], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`Report_${y}.csv`; a.click();
+    };
+
     document.getElementById('i-date').valueAsDate = new Date();
 </script>
 
