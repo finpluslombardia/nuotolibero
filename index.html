@@ -151,10 +151,15 @@
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // -----------------------------------------------------------
-    // ⚠️ INCOLLA QUI LA TUA CONFIGURAZIONE FIREBASE ⚠️
+    // ✅ CONFIGURAZIONE FIREBASE INSERITA (NON TOCCARE)
     // -----------------------------------------------------------
     const firebaseConfig = {
-      // ... Incolla qui il codice ...
+      apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0",
+      authDomain: "piscinastats-64519.firebaseapp.com",
+      projectId: "piscinastats-64519",
+      storageBucket: "piscinastats-64519.firebasestorage.app",
+      messagingSenderId: "297663099794",
+      appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -162,7 +167,7 @@
     const db = getFirestore(app);
     
     let allData = [];
-    let editId = null; // ID del documento in modifica
+    let editId = null;
 
     // --- AUTH ---
     window.doLogin = async () => {
@@ -249,7 +254,6 @@
         document.getElementById('btn-save').style.background = "var(--text)";
         document.getElementById('cancel-edit-btn').classList.remove('hidden');
 
-        // Scrolla su
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -295,7 +299,7 @@
     };
 
     function renderApp() {
-        // Stats veloci
+        // Stats
         const today = new Date().toISOString().split('T')[0];
         const todayItems = allData.filter(x => x.date === today);
         document.getElementById('today-count').innerText = todayItems.reduce((a,b)=>a+b.qta,0);
@@ -305,7 +309,7 @@
         const list = document.getElementById('history-list');
         list.innerHTML = "";
         allData.slice(0, 15).forEach(item => {
-            const d = item.date.split('-').reverse().join('/'); // DD/MM/YYYY
+            const d = item.date.split('-').reverse().join('/'); 
             list.innerHTML += `
                 <div class="history-item">
                     <div class="h-info">
