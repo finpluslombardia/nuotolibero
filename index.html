@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Manager V23 Final</title>
+    <title>Piscina Manager V24</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -36,7 +36,7 @@
         /* MAIN CONTENT */
         .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; }
 
-        /* CONTROL BAR */
+        /* CONTROL BAR (Top Input) */
         .control-bar { 
             background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-bottom: var(--glass-border); box-shadow: 0 4px 20px rgba(0,0,0,0.03);
@@ -45,16 +45,19 @@
         .cb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
         .cb-row { display: flex; gap: 20px; align-items: stretch; }
+        
         .group-ctx { display: flex; gap: 15px; flex: 1; }
         .group-tickets { display: flex; gap: 15px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
         .group-actions { display: flex; align-items: stretch; gap: 10px; }
+        
         .inp-field { display: flex; flex-direction: column; flex: 1; }
         .inp-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
-        .inp-field input, .inp-field select, .filter-select { 
+        .inp-field input, .inp-field select { 
             padding: 0 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65);
             font-size: 0.95rem; height: 44px; color: var(--text-main); font-family: inherit; font-weight: 500; transition: all 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
         .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        
         .t-box { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .t-box label { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; text-align: center; width: 100%; opacity: 0.8; }
         .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.5rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; text-shadow: 0 1px 1px rgba(255,255,255,0.8); }
@@ -63,8 +66,40 @@
         .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
         .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
 
-        /* DASHBOARD GRID */
-        .filter-row { display: flex; justify-content: flex-start; align-items: center; gap: 15px; margin-bottom: 25px; } /* FIX ALLINEAMENTO */
+        /* --- DASHBOARD FILTERS (FIXED ALIGNMENT) --- */
+        .filter-row { 
+            display: flex; 
+            justify-content: flex-start; 
+            align-items: center; /* Vertical Center Magic */
+            gap: 15px; 
+            margin-bottom: 25px; 
+            height: 45px; /* Altezza definita per la riga */
+        }
+        .filter-label {
+            font-weight: 800; 
+            color: var(--text-muted); 
+            font-size: 0.9rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            margin: 0;
+            line-height: 1;
+        }
+        .filter-select {
+            padding: 0 15px; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255,255,255,0.8); 
+            background: rgba(255,255,255,0.65);
+            font-size: 0.95rem; 
+            height: 100%; /* Riempie la riga */
+            color: var(--text-main); 
+            font-family: inherit; 
+            font-weight: 600; 
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .filter-select:focus { border-color: var(--primary); background: #fff; }
+
+        /* KPI & CHARTS */
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
         .kpi-card { @extend .glass-card; padding: 20px; height: 130px; justify-content: center; position: relative; overflow: hidden; background: rgba(255,255,255,0.55); }
         .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
@@ -84,6 +119,7 @@
         .btn-primary { background: linear-gradient(135deg, var(--primary), #1d4ed8); color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
         .btn-danger { background: rgba(254, 202, 202, 0.4); color: #dc2626; border: 1px solid rgba(252, 165, 165, 0.5); }
         .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
+        
         .table-wrap { @extend .glass-card; padding: 0; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 18px 20px; background: rgba(255,255,255,0.5); font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
@@ -174,9 +210,9 @@
         
         <div id="view-dash">
             <div class="filter-row">
-                <span style="font-weight:800; color:var(--text-muted); font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px">PERIODO:</span>
-                <select id="dash-year" class="filter-select inp-field" style="width:auto; height:40px" onchange="renderDashboard()"><option value="all">Tutti</option></select>
-                <select id="dash-month" class="filter-select inp-field" style="width:auto; height:40px" onchange="renderDashboard()">
+                <span class="filter-label">PERIODO:</span>
+                <select id="dash-year" class="filter-select" style="width:auto" onchange="renderDashboard()"><option value="all">Tutti</option></select>
+                <select id="dash-month" class="filter-select" style="width:auto" onchange="renderDashboard()">
                     <option value="all">Tutto l'anno</option><option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option><option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option><option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option><option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
                 </select>
             </div>
@@ -343,6 +379,7 @@
         
         document.getElementById('form-title').innerText = "Modifica ID: " + id.substr(0,4);
         document.getElementById('btn-save').innerText = "AGGIORNA";
+        document.getElementById('btn-save').style.background = "#f59e0b";
         document.getElementById('cancel-edit').classList.remove('hidden');
         document.getElementById('input-bar').classList.add('editing-mode');
         window.scrollTo({top:0, behavior:'smooth'});
@@ -352,6 +389,7 @@
         editId = null; resetInputs();
         document.getElementById('form-title').innerText = "Nuova Registrazione";
         document.getElementById('btn-save').innerText = "SALVA";
+        document.getElementById('btn-save').style.background = "var(--primary)";
         document.getElementById('cancel-edit').classList.add('hidden');
         document.getElementById('input-bar').classList.remove('editing-mode');
     };
@@ -445,7 +483,7 @@
         
         const commonOptions = {
             responsive: true,
-            maintainAspectRatio: false, // FIX PER EVITARE GRAFICI GIGANTI
+            maintainAspectRatio: false, 
             plugins: { legend: { display: false } }
         };
 
@@ -471,17 +509,17 @@
         // Pie
         let s=0, a=0, g=0; data.forEach(d => { s+=(d.int||0)+(d.rid||0); a+=(d.abb_int||0)+(d.abb_rid||0); g+=(d.grat||0); });
         if(chartInstances['pie']) chartInstances['pie'].destroy();
-        chartInstances['pie'] = new Chart(document.getElementById('chartPie'), { type:'doughnut', data:{labels:['Singoli','Abbonati','Gratuiti'], datasets:[{data:[s,a,g], backgroundColor:['#3b82f6','#f59e0b','#ef4444'], borderWidth:0}]}, options: { ...commonOptions, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } } } });
+        chartInstances['pie'] = new Chart(document.getElementById('chartPie'), { type:'doughnut', data:{labels:['Singoli','Abbonati','Gratuiti'], datasets:[{data:[s,a,g], backgroundColor:['#007aff','#ff9500','#ef4444'], borderWidth:0}]}, options: { ...commonOptions, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } } } });
 
         // Meteo
         const mMap = {}; data.forEach(d => { if(!mMap[d.meteo]) mMap[d.meteo]={t:0,c:0}; mMap[d.meteo].t+=d.totale; mMap[d.meteo].c++; });
         if(chartInstances['meteo']) chartInstances['meteo'].destroy();
-        chartInstances['meteo'] = new Chart(document.getElementById('chartMeteo'), { type:'bar', data:{labels:Object.keys(mMap), datasets:[{label:'Media', data:Object.keys(mMap).map(k=>(mMap[k].t/mMap[k].c).toFixed(0)), backgroundColor:'#0ea5e9', borderRadius:6}]}, options: { ...commonOptions, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(0,0,0,0.05)' } } } } });
+        chartInstances['meteo'] = new Chart(document.getElementById('chartMeteo'), { type:'bar', data:{labels:Object.keys(mMap), datasets:[{label:'Media', data:Object.keys(mMap).map(k=>(mMap[k].t/mMap[k].c).toFixed(0)), backgroundColor:'#5ac8fa', borderRadius:6}]}, options: { ...commonOptions, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(0,0,0,0.05)' } } } } });
 
         // Week
         const wStats = [0,0,0,0,0,0,0]; data.forEach(d => wStats[new Date(d.date).getDay()] += d.totale);
         if(chartInstances['week']) chartInstances['week'].destroy();
-        chartInstances['week'] = new Chart(document.getElementById('chartWeek'), { type:'bar', data:{labels:['Dom','Lun','Mar','Mer','Gio','Ven','Sab'], datasets:[{label:'Totale', data:wStats, backgroundColor:'#8b5cf6', borderRadius:6}]}, options: { ...commonOptions, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(0,0,0,0.05)' } } } } });
+        chartInstances['week'] = new Chart(document.getElementById('chartWeek'), { type:'bar', data:{labels:['Dom','Lun','Mar','Mer','Gio','Ven','Sab'], datasets:[{label:'Totale', data:wStats, backgroundColor:'#af52de', borderRadius:6}]}, options: { ...commonOptions, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(0,0,0,0.05)' } } } } });
 
         // Fasce
         const fMap = {}; data.forEach(d => { if(!fMap[d.fascia]) fMap[d.fascia]=0; fMap[d.fascia]+=d.totale; });
