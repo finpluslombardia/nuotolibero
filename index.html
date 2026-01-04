@@ -2,106 +2,156 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Manager V18</title>
+    <title>Piscina Manager V19 Liquid Glass</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         :root { 
-            --primary: #2563eb; --primary-dark: #1e40af; 
-            --bg-body: #f1f5f9; --bg-sidebar: #0f172a; --text-sidebar: #94a3b8;
-            --card-bg: #ffffff; --text-main: #1e293b; --border: #e2e8f0;
+            --primary: #3b82f6; --primary-dark: #1d4ed8; 
+            /* Nuovi sfondi a gradiente fluido */
+            --bg-body: linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 50%, #ddd6fe 100%);
+            --text-main: #1e293b; --text-muted: #64748b;
             --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #3b82f6;
+            
+            /* Variabili Glassmorphism */
+            --glass-bg: rgba(255, 255, 255, 0.35);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            --glass-blur: blur(12px);
+            
+            --sidebar-glass: rgba(15, 23, 42, 0.75);
+            --sidebar-border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         * { box-sizing: border-box; outline: none; }
         body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-        /* --- SIDEBAR --- */
-        .sidebar { width: 240px; background: var(--bg-sidebar); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-header { padding: 25px 20px; font-size: 1.1rem; font-weight: 700; color: #fff; border-bottom: 1px solid #1e293b; display: flex; align-items: center; gap: 10px; }
+        /* --- SIDEBAR (DARK GLASS) --- */
+        .sidebar { width: 240px; background: var(--sidebar-glass); backdrop-filter: var(--glass-blur); border-right: var(--sidebar-border); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 25px 20px; font-size: 1.1rem; font-weight: 700; color: #fff; border-bottom: var(--sidebar-border); display: flex; align-items: center; gap: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .nav-links { list-style: none; padding: 20px 10px; margin: 0; flex: 1; }
-        .nav-item { padding: 12px 15px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; color: var(--text-sidebar); font-weight: 500; display: flex; align-items: center; gap: 12px; transition: all 0.2s; font-size: 0.9rem; }
-        .nav-item:hover { background: #1e293b; color: #fff; }
-        .nav-item.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-        .sidebar-footer { padding: 20px; border-top: 1px solid #1e293b; }
+        .nav-item { padding: 12px 15px; margin-bottom: 5px; border-radius: 12px; cursor: pointer; color: #cbd5e1; font-weight: 500; display: flex; align-items: center; gap: 12px; transition: all 0.2s; font-size: 0.9rem; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .nav-item.active { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; box-shadow: 0 4px 15px rgba(37,99,235,0.3); border: 1px solid rgba(255,255,255,0.2); }
+        .sidebar-footer { padding: 20px; border-top: var(--sidebar-border); }
 
         /* --- MAIN CONTENT --- */
         .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; }
 
-        /* CONTROL BAR (INPUT SEMPRE VISIBILE) */
-        .control-bar { background: #fff; padding: 20px; border-bottom: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); z-index: 10; display: flex; flex-direction: column; gap: 15px; }
+        /* CONTROL BAR (LIGHT GLASS) */
+        .control-bar { 
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            padding: 20px; z-index: 10; display: flex; flex-direction: column; gap: 15px; 
+        }
         .cb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .cb-title { font-weight: 700; color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
         
         .cb-row { display: flex; gap: 15px; align-items: stretch; }
         
-        /* Input Groups */
+        /* Input Groups (Nested Glass) */
         .group-ctx { display: flex; gap: 10px; flex: 1; }
-        .group-tickets { display: flex; gap: 10px; flex: 2; background: #f8fafc; padding: 5px; border-radius: 10px; border: 1px solid var(--border); }
+        .group-tickets { 
+            display: flex; gap: 10px; flex: 2; 
+            background: rgba(255, 255, 255, 0.3); /* Slightly darker glass area */
+            padding: 5px; border-radius: 12px; 
+            border: var(--glass-border);
+        }
         .group-actions { display: flex; align-items: stretch; gap: 10px; }
 
         .inp-field { display: flex; flex-direction: column; flex: 1; }
-        .inp-field label { font-size: 0.7rem; font-weight: 600; color: #64748b; margin-bottom: 4px; }
-        .inp-field input, .inp-field select { padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.9rem; background: #fff; height: 42px; }
-        .inp-field input:focus, .inp-field select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.1); }
+        .inp-field label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+        /* Glass Inputs */
+        .inp-field input, .inp-field select, .filter-select { 
+            padding: 10px; border-radius: 10px; 
+            border: var(--glass-border);
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(5px);
+            font-size: 0.9rem; height: 42px; color: var(--text-main); font-weight: 500;
+            transition: all 0.2s;
+        }
+        .inp-field input:focus, .inp-field select:focus { background: rgba(255,255,255,0.8); border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
 
         .t-box { text-align: center; flex: 1; }
-        .t-box label { font-size: 0.65rem; font-weight: 700; color: #64748b; display: block; margin-bottom: 2px; white-space: nowrap; }
-        .t-box input { width: 100%; text-align: center; font-weight: 700; color: var(--primary); font-size: 1.1rem; border: 1px solid transparent; background: transparent; padding: 5px; height: 35px; }
-        .t-box input:focus { background: #fff; border-color: var(--primary); border-radius: 6px; }
+        .t-box label { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 2px; white-space: nowrap; }
+        .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: 1px solid transparent; background: transparent; padding: 5px; height: 35px; text-shadow: 0 1px 2px rgba(255,255,255,0.5); }
+        .t-box input:focus { background: rgba(255,255,255,0.6); border: var(--glass-border); border-radius: 8px; }
 
         /* SCROLLABLE AREA */
         .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
 
+        /* GLASS CARDS (Common Style) */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
         /* DASHBOARD GRID */
         .filter-row { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .filter-select { background: #fff; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; }
 
-        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-        .kpi-card { background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.03); }
-        .kpi-head { font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; }
-        .kpi-val { font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 5px 0; }
-        .kpi-sub { font-size: 0.8rem; font-weight: 500; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; margin-bottom: 30px; }
+        .kpi-card { @extend .glass-card; padding: 20px; position: relative; overflow: hidden; }
+        .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-val { font-size: 2rem; font-weight: 900; color: var(--text-main); margin: 8px 0; text-shadow: 0 2px 10px rgba(255,255,255,0.5); }
+        .kpi-sub { font-size: 0.85rem; font-weight: 600; }
         
-        .charts-main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .charts-sub { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .chart-card { background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border); height: 320px; display: flex; flex-direction: column; }
-        .chart-card.small { height: 250px; }
-        .chart-title { font-weight: 700; color: #334155; margin-bottom: 15px; font-size: 0.95rem; }
+        .charts-main { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 25px; }
+        .charts-sub { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
+        .chart-card { @extend .glass-card; height: 340px; display: flex; flex-direction: column; }
+        .chart-card.small { height: 260px; }
+        .chart-title { font-weight: 800; color: var(--text-main); margin-bottom: 20px; font-size: 1rem; }
 
-        /* BUTTONS */
-        .btn { padding: 0 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.1s; height: 42px; }
-        .btn:active { transform: translateY(1px); }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 5px rgba(37,99,235,0.2); }
-        .btn-primary:hover { background: var(--primary-dark); }
-        .btn-danger { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-        .btn-icon { padding: 6px; width: 30px; height: 30px; border-radius: 6px; }
+        /* BUTTONS (Glassy) */
+        .btn { padding: 0 24px; border-radius: 12px; font-weight: 700; cursor: pointer; border: var(--glass-border); font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; height: 42px; backdrop-filter: blur(5px); }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; box-shadow: 0 4px 15px rgba(37,99,235,0.3); border: 1px solid rgba(255,255,255,0.2); }
+        .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 6px 20px rgba(37,99,235,0.4); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .btn-icon { padding: 8px; width: 34px; height: 34px; border-radius: 10px; }
 
-        /* TABLE */
-        .table-wrap { background: #fff; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        /* TABLE (Glassy) */
+        .table-wrap { @extend .glass-card; padding: 0; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px; background: #f8fafc; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 1px solid var(--border); }
-        td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; vertical-align: middle; }
-        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-        .badge-summer { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
-        .badge-std { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+        th { text-align: left; padding: 18px; background: rgba(255,255,255,0.4); font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: var(--glass-border); }
+        td { padding: 15px 18px; border-bottom: 1px solid rgba(255,255,255,0.3); font-size: 0.9rem; vertical-align: middle; font-weight: 500; }
+        tr:hover td { background: rgba(255,255,255,0.4); }
+        
+        .badge { padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; display: inline-block; backdrop-filter: blur(5px); }
+        .badge-summer { background: rgba(255, 237, 213, 0.8); color: #c2410c; border: 1px solid rgba(251, 146, 60, 0.3); }
+        .badge-std { background: rgba(219, 234, 254, 0.8); color: #1d4ed8; border: 1px solid rgba(96, 165, 250, 0.3); }
 
         .hidden { display: none !important; }
-        .editing-mode { border: 2px solid var(--warning) !important; background: #fffbeb !important; }
+        /* Glassy editing mode */
+        .editing-mode { 
+            background: rgba(254, 249, 195, 0.6) !important; 
+            border-bottom: 2px solid rgba(234, 179, 8, 0.5) !important;
+            box-shadow: 0 10px 40px -10px rgba(234, 179, 8, 0.3) !important;
+        }
         
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        #login-box { @extend .glass-card; width: 380px; text-align: center; padding: 40px; }
     </style>
 </head>
 <body>
 
 <div id="login-screen">
-    <div style="width: 320px; text-align: center;">
-        <h2 style="color:#0f172a; margin-bottom: 20px;">🔐 Accesso Piscina</h2>
-        <input type="email" id="email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #cbd5e1; border-radius:8px;">
-        <input type="password" id="password" placeholder="Password" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #cbd5e1; border-radius:8px;">
-        <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Entra</button>
-        <p id="login-error" style="color:var(--danger); font-size:0.85rem; margin-top:15px"></p>
+    <div id="login-box" class="glass-card">
+        <h2 style="color:var(--text-main); margin-bottom: 25px; font-weight: 900;">🔐 Accesso Piscina</h2>
+        <div class="inp-field" style="margin-bottom:15px">
+            <input type="email" id="email" placeholder="Email">
+        </div>
+        <div class="inp-field" style="margin-bottom:25px">
+            <input type="password" id="password" placeholder="Password">
+        </div>
+        <button class="btn btn-primary" style="width:100%; height:45px; font-size:1rem" onclick="doLogin()">Entra nel Gestionale</button>
+        <p id="login-error" style="color:var(--danger); font-size:0.85rem; margin-top:20px; font-weight:600"></p>
     </div>
 </div>
 
@@ -112,8 +162,8 @@
         <li class="nav-item" id="nav-list" onclick="switchView('list')">📋 Archivio Dati</li>
     </ul>
     <div class="sidebar-footer">
-        <div style="font-size:0.8rem; margin-bottom:10px; color:#64748b" id="user-display">User</div>
-        <button class="btn" style="width:100%; background:transparent; border:1px solid #334155; color:#94a3b8; font-size:0.8rem" onclick="doLogout()">Disconnetti</button>
+        <div style="font-size:0.85rem; margin-bottom:15px; color:#cbd5e1; font-weight:600" id="user-display">User</div>
+        <button class="btn" style="width:100%; background:rgba(255,255,255,0.1); border:var(--sidebar-border); color:#fff; font-size:0.8rem" onclick="doLogout()">Disconnetti</button>
     </div>
 </div>
 
@@ -122,7 +172,7 @@
     <div class="control-bar" id="input-bar">
         <div class="cb-header">
             <span class="cb-title" id="form-title">Nuova Registrazione</span>
-            <button id="cancel-edit" class="btn btn-danger hidden" style="height:30px; font-size:0.75rem" onclick="cancelEdit()">Annulla Modifica</button>
+            <button id="cancel-edit" class="btn btn-danger hidden" style="height:32px; font-size:0.75rem; padding:0 15px" onclick="cancelEdit()">Annulla Modifica</button>
         </div>
         <div class="cb-row">
             <div class="group-ctx">
@@ -171,7 +221,7 @@
             </div>
 
             <div class="group-actions">
-                <button id="btn-save" class="btn btn-primary" style="height:100%; min-width:100px" onclick="saveData()">SALVA</button>
+                <button id="btn-save" class="btn btn-primary" style="height:100%; min-width:110px; font-size:1rem" onclick="saveData()">SALVA</button>
             </div>
         </div>
     </div>
@@ -181,31 +231,31 @@
         <div id="view-dash">
             
             <div class="filter-row">
-                <span style="font-weight:600; color:#64748b; font-size:0.9rem">Analisi Periodo:</span>
-                <select id="dash-year" class="filter-select" onchange="renderDashboard()"><option value="all">Tutti gli Anni</option></select>
-                <select id="dash-month" class="filter-select" onchange="renderDashboard()">
+                <span style="font-weight:700; color:var(--text-muted); font-size:0.9rem; text-transform:uppercase">Analisi Periodo:</span>
+                <select id="dash-year" class="filter-select inp-field" style="width:auto" onchange="renderDashboard()"><option value="all">Tutti gli Anni</option></select>
+                <select id="dash-month" class="filter-select inp-field" style="width:auto" onchange="renderDashboard()">
                     <option value="all">Tutto l'anno</option><option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option>
                     <option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option><option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option><option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
                 </select>
             </div>
 
             <div class="kpi-grid">
-                <div class="kpi-card">
+                <div class="kpi-card glass-card">
                     <div class="kpi-head">Media Giornaliera</div>
                     <div class="kpi-val" id="kpi-avg">0</div>
                     <div class="kpi-sub">persone / giorno</div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card glass-card">
                     <div class="kpi-head">Vs Mese Precedente</div>
                     <div class="kpi-val" id="kpi-mom">0%</div>
                     <div class="kpi-sub" id="kpi-mom-label">-</div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card glass-card">
                     <div class="kpi-head">Vs Anno Precedente</div>
                     <div class="kpi-val" id="kpi-yoy">0%</div>
                     <div class="kpi-sub" id="kpi-yoy-label">-</div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card glass-card">
                     <div class="kpi-head">Proiezione Mese</div>
                     <div class="kpi-val" id="kpi-forecast" style="color:var(--info)">-</div>
                     <div class="kpi-sub" id="kpi-forecast-sub">stimata</div>
@@ -213,29 +263,29 @@
             </div>
 
             <div class="charts-main">
-                <div class="chart-card">
+                <div class="chart-card glass-card">
                     <div class="chart-title">Andamento Stagionale (Confronto Anni)</div>
                     <canvas id="chartYoY"></canvas>
                 </div>
-                <div class="chart-card" style="justify-content:center; text-align:center">
+                <div class="chart-card glass-card" style="justify-content:center; text-align:center">
                     <div class="chart-title">Composizione</div>
                     <canvas id="chartPie" style="max-height:180px"></canvas>
-                    <div style="margin-top:20px; font-size:0.9rem">
-                        Totale: <strong id="deep-total" style="color:var(--primary); font-size:1.2rem">0</strong>
+                    <div style="margin-top:25px; font-size:0.95rem">
+                        Totale: <strong id="deep-total" style="color:var(--primary); font-size:1.4rem; font-weight:900">0</strong>
                     </div>
                 </div>
             </div>
 
             <div class="charts-sub">
-                <div class="chart-card small">
+                <div class="chart-card small glass-card">
                     <div class="chart-title">Impatto Meteo</div>
                     <canvas id="chartMeteo"></canvas>
                 </div>
-                <div class="chart-card small">
+                <div class="chart-card small glass-card">
                     <div class="chart-title">Trend Settimanale</div>
                     <canvas id="chartWeek"></canvas>
                 </div>
-                <div class="chart-card small">
+                <div class="chart-card small glass-card">
                     <div class="chart-title">Fasce Orarie</div>
                     <canvas id="chartFasce"></canvas>
                 </div>
@@ -243,10 +293,10 @@
         </div>
 
         <div id="view-list" class="hidden">
-            <div class="table-wrap">
-                <div style="padding:15px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between">
-                    <h3 style="margin:0; font-size:1.1rem; color:#334155">Archivio Completo</h3>
-                    <button class="btn btn-primary" style="height:35px; font-size:0.8rem" onclick="downloadCSV()">Scarica Excel</button>
+            <div class="table-wrap glass-card">
+                <div style="padding:20px; border-bottom:var(--glass-border); display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.2)">
+                    <h3 style="margin:0; font-size:1.1rem; color:var(--text-main); font-weight:800">Archivio Completo</h3>
+                    <button class="btn btn-primary" style="height:38px; font-size:0.85rem" onclick="downloadCSV()">Scarica Excel</button>
                 </div>
                 <div style="overflow-x:auto;">
                     <table id="data-table">
@@ -352,7 +402,7 @@
         
         document.getElementById('form-title').innerText = "Modifica ID: " + id.substr(0,4);
         document.getElementById('btn-save').innerText = "AGGIORNA";
-        document.getElementById('btn-save').style.backgroundColor = "var(--warning)";
+        document.getElementById('btn-save').style.background = "linear-gradient(135deg, var(--warning), #d97706)";
         document.getElementById('cancel-edit').classList.remove('hidden');
         document.getElementById('input-bar').classList.add('editing-mode');
         window.scrollTo({top:0, behavior:'smooth'});
@@ -362,7 +412,7 @@
         editId = null; resetInputs();
         document.getElementById('form-title').innerText = "Nuova Registrazione";
         document.getElementById('btn-save').innerText = "SALVA";
-        document.getElementById('btn-save').style.backgroundColor = "var(--primary)";
+        document.getElementById('btn-save').style.background = "linear-gradient(135deg, var(--primary), var(--primary-dark))";
         document.getElementById('cancel-edit').classList.add('hidden');
         document.getElementById('input-bar').classList.remove('editing-mode');
     };
@@ -444,52 +494,55 @@
         if(prevTotal > 0) {
             const diff = ((curr - prevTotal)/prevTotal)*100;
             el.innerText = (diff>0?"+":"") + diff.toFixed(1) + "%";
-            el.className = diff>=0 ? "kpi-val trend-up" : "kpi-val trend-down";
+            el.style.color = diff>=0 ? "var(--success)" : "var(--danger)";
             lbl.innerText = txt;
-        } else { el.innerText = "N/A"; el.className = "kpi-val"; lbl.innerText = "No dati storici"; }
+        } else { el.innerText = "N/A"; el.style.color = "var(--text-main)"; lbl.innerText = "No dati storici"; }
     }
 
     let chartInstances = {};
     function renderCharts(data, y, m) {
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
         // YoY
         const ctxYoY = document.getElementById('chartYoY');
         const labels = m !== 'all' ? Array.from({length:31},(_,i)=>i+1) : ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
         const currData = new Array(labels.length).fill(0);
         data.forEach(d => currData[(m!=='all' ? new Date(d.date).getDate()-1 : new Date(d.date).getMonth())] += d.totale);
         
-        let datasets = [{ label: y==='all'?'Totale':y, data: currData, borderColor: '#2563eb', backgroundColor:'rgba(37,99,235,0.1)', fill:true, tension:0.4 }];
+        let datasets = [{ label: y==='all'?'Totale':y, data: currData, borderColor: '#3b82f6', backgroundColor:'rgba(59, 130, 246, 0.15)', fill:true, tension:0.4, borderWidth: 3 }];
         
         if(y!=='all') {
             const prevY = (parseInt(y)-1).toString();
             const prevDataArr = new Array(labels.length).fill(0);
             allData.filter(d => d.date.startsWith(prevY) && (m==='all' || (new Date(d.date).getMonth()+1)==m))
                    .forEach(d => prevDataArr[(m!=='all' ? new Date(d.date).getDate()-1 : new Date(d.date).getMonth())] += d.totale);
-            datasets.push({ label: prevY, data: prevDataArr, borderColor: '#9ca3af', borderDash:[5,5], tension:0.4, pointRadius:0, fill:false });
+            datasets.push({ label: prevY, data: prevDataArr, borderColor: '#94a3b8', borderDash:[6,6], tension:0.4, pointRadius:0, fill:false, borderWidth: 2 });
         }
 
         if(chartInstances['yoy']) chartInstances['yoy'].destroy();
-        chartInstances['yoy'] = new Chart(ctxYoY, { type: 'line', data: { labels, datasets }, options: { responsive:true, maintainAspectRatio:false, scales:{y:{beginAtZero:true}} } });
+        chartInstances['yoy'] = new Chart(ctxYoY, { type: 'line', data: { labels, datasets }, options: { responsive:true, maintainAspectRatio:false, scales:{y:{beginAtZero:true, grid:{color:'rgba(255,255,255,0.1)'}}, x:{grid:{display:false}}} } });
 
         // Pie
         let s=0, a=0, g=0; data.forEach(d => { s+=(d.int||0)+(d.rid||0); a+=(d.abb_int||0)+(d.abb_rid||0); g+=(d.grat||0); });
         if(chartInstances['pie']) chartInstances['pie'].destroy();
-        chartInstances['pie'] = new Chart(document.getElementById('chartPie'), { type:'doughnut', data:{labels:['Singoli','Abbonati','Gratuiti'], datasets:[{data:[s,a,g], backgroundColor:['#3b82f6','#f59e0b','#ef4444']}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right'}}} });
+        chartInstances['pie'] = new Chart(document.getElementById('chartPie'), { type:'doughnut', data:{labels:['Singoli','Abbonati','Gratuiti'], datasets:[{data:[s,a,g], backgroundColor:['#3b82f6','#f59e0b','#ef4444'], borderWidth:0}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{padding:20, usePointStyle:true}}}} });
 
         // Meteo
         const mMap = {}; data.forEach(d => { if(!mMap[d.meteo]) mMap[d.meteo]={t:0,c:0}; mMap[d.meteo].t+=d.totale; mMap[d.meteo].c++; });
         if(chartInstances['meteo']) chartInstances['meteo'].destroy();
-        chartInstances['meteo'] = new Chart(document.getElementById('chartMeteo'), { type:'bar', data:{labels:Object.keys(mMap), datasets:[{label:'Media', data:Object.keys(mMap).map(k=>(mMap[k].t/mMap[k].c).toFixed(0)), backgroundColor:'#0ea5e9'}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}} });
+        chartInstances['meteo'] = new Chart(document.getElementById('chartMeteo'), { type:'bar', data:{labels:Object.keys(mMap), datasets:[{label:'Media', data:Object.keys(mMap).map(k=>(mMap[k].t/mMap[k].c).toFixed(0)), backgroundColor:'#0ea5e9', borderRadius:6}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.1)'}}} } });
 
         // Week
         const wStats = [0,0,0,0,0,0,0]; data.forEach(d => wStats[new Date(d.date).getDay()] += d.totale);
         if(chartInstances['week']) chartInstances['week'].destroy();
-        chartInstances['week'] = new Chart(document.getElementById('chartWeek'), { type:'bar', data:{labels:['Dom','Lun','Mar','Mer','Gio','Ven','Sab'], datasets:[{label:'Totale', data:wStats, backgroundColor:'#8b5cf6', borderRadius:4}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}} });
+        chartInstances['week'] = new Chart(document.getElementById('chartWeek'), { type:'bar', data:{labels:['Dom','Lun','Mar','Mer','Gio','Ven','Sab'], datasets:[{label:'Totale', data:wStats, backgroundColor:'#8b5cf6', borderRadius:6}]}, options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{display:false}}, y:{grid:{color:'rgba(255,255,255,0.1)'}}} } });
 
         // Fasce
         const fMap = {}; data.forEach(d => { if(!fMap[d.fascia]) fMap[d.fascia]=0; fMap[d.fascia]+=d.totale; });
         const fSort = Object.entries(fMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
         if(chartInstances['fasce']) chartInstances['fasce'].destroy();
-        chartInstances['fasce'] = new Chart(document.getElementById('chartFasce'), { type:'bar', data:{labels:fSort.map(x=>x[0]), datasets:[{label:'', data:fSort.map(x=>x[1]), backgroundColor:'#f59e0b', borderRadius:4}]}, options:{responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}} });
+        chartInstances['fasce'] = new Chart(document.getElementById('chartFasce'), { type:'bar', data:{labels:fSort.map(x=>x[0]), datasets:[{label:'', data:fSort.map(x=>x[1]), backgroundColor:'#f59e0b', borderRadius:6}]}, options:{responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{grid:{color:'rgba(255,255,255,0.1)'}}, y:{grid:{display:false}}} } });
     }
 
     function renderList() {
@@ -506,21 +559,21 @@
             const badge = isSum ? 'badge badge-summer' : 'badge badge-std';
             const s = (d.int||0)+(d.rid||0); const a = (d.abb_int||0)+(d.abb_rid||0);
             tbody.innerHTML += `<tr>
-                <td><span style="font-weight:600">${d.date.split('-').reverse().join('/')}</span></td>
+                <td><span style="font-weight:700; color:var(--text-main)">${d.date.split('-').reverse().join('/')}</span></td>
                 <td><span class="${badge}">${d.fascia}</span></td>
-                <td style="font-size:0.85rem; color:#64748b">${d.meteo}</td>
+                <td style="font-size:0.9rem; color:var(--text-muted)">${d.meteo}</td>
                 <td style="text-align:center">${s}</td><td style="text-align:center">${a}</td><td style="text-align:center">${d.grat}</td>
-                <td style="font-weight:800; color:var(--primary); text-align:center">${d.totale}</td>
+                <td style="font-weight:900; color:var(--primary); text-align:center; font-size:1.1rem">${d.totale}</td>
                 <td style="text-align:right">
-                    <button class="btn btn-icon" style="color:#3b82f6; background:#eff6ff" onclick="window.editItem('${d.id}')">✏️</button>
-                    <button class="btn btn-icon" style="color:#ef4444; background:#fef2f2" onclick="window.delItem('${d.id}')">🗑️</button>
+                    <button class="btn btn-icon" style="color:var(--primary); background:rgba(59,130,246,0.1)" onclick="window.editItem('${d.id}')">✏️</button>
+                    <button class="btn btn-icon" style="color:var(--danger); background:rgba(239,68,68,0.1)" onclick="window.delItem('${d.id}')">🗑️</button>
                 </td></tr>`;
         });
     }
 
     window.downloadCSV = () => {
         const blob = new Blob([ "Data;Fascia;Meteo;Singoli;Abbonamenti;Gratuiti;TOTALE\n" + allData.map(d=>`${d.date};${d.fascia};${d.meteo};${(d.int||0)+(d.rid||0)};${(d.abb_int||0)+(d.abb_rid||0)};${d.grat};${d.totale}`).join("\n")], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="Report.csv"; a.click();
+        const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="Report_Piscina.csv"; a.click();
     };
 
     document.getElementById('i-date').valueAsDate = new Date();
