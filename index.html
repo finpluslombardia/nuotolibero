@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V63 Stability Fix</title>
+    <title>Piscina Facility Suite V64 Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -83,16 +83,17 @@
         .multi-option:hover { background: rgba(37,99,235,0.1); }
         .multi-option input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
         .multi-option span { font-size: 0.9rem; font-weight: 500; color: var(--text-main); flex: 1; }
+        
         .benchmark-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; background: rgba(255,255,255,0.5); padding: 0 15px; height: 40px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.6); user-select: none; transition: all 0.2s; }
         .benchmark-toggle:hover { background: #fff; }
         .benchmark-toggle input { width: 18px; height: 18px; accent-color: #64748b; cursor: pointer; }
         .benchmark-toggle span { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); }
         
-        /* EXCLUDE TOGGLE (RED) */
-        .exclude-toggle { @extend .benchmark-toggle; border: 1px solid #fca5a5; background: #fef2f2; display:flex; align-items:center; gap:8px; padding:0 15px; height:44px; border-radius:12px; cursor:pointer; }
+        /* EXCLUDE TOGGLE (FIXED CSS) */
+        .exclude-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 0 15px; height: 40px; border-radius: 12px; user-select: none; transition: all 0.2s; border: 1px solid #fca5a5; background: #fef2f2; }
         .exclude-toggle:hover { background: #fee2e2; }
-        .exclude-toggle input { accent-color: #ef4444; width:18px; height:18px; }
-        .exclude-toggle span { color: #b91c1c; font-weight:700; font-size:0.8rem; }
+        .exclude-toggle input { width: 18px; height: 18px; accent-color: #ef4444; cursor: pointer; }
+        .exclude-toggle span { color: #b91c1c; font-weight: 700; font-size: 0.8rem; }
 
         /* KPI & CHARTS LAYOUT */
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
@@ -177,7 +178,7 @@
             </div>
             <div class="cb-row">
                 <div class="group-ctx">
-                    <div class="inp-field" style="flex:0.8"><label>Data</label><input type="date" id="i-date"></div>
+                    <div class="inp-field" style="flex:0.8"><label>Data</label><input type="date" id="i-date" onchange="renderOverview()"></div>
                     <div class="inp-field" style="flex:1"><label>Tipo Giorno</label>
                         <select id="i-type"><option value="standard">🏢 Standard</option><option value="festivo">🔴 Festivo</option><option value="evento">🏆 Gara/Evento</option><option value="extra">⚠️ Straordinario</option></select>
                     </div>
@@ -355,7 +356,7 @@
     function startListening() {
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
-        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
+        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
     }
 
     function refreshCurrentView(){ 
@@ -387,26 +388,22 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (V63: FIXED SYNTAX & LOGIC)
+    // RENDER STATS
     window.renderStats = () => {
         const m = document.getElementById('dash-month').value;
         const mode = document.getElementById('stat-mode').value; 
         const showHistory = document.getElementById('show-history').checked;
         const dayTypeFilter = document.getElementById('day-type-filter').value; 
         
-        // GLOBAL FILTERING + EXCLUSION CHECK
         const f = dataIngressi.filter(d => {
-            if(d.exclude) return false; 
-
+            if(d.exclude) return false;
             const dt = new Date(d.date);
             const yMatch = selectedYears.length === 0 || selectedYears.includes(dt.getFullYear().toString());
             const mMatch = m === 'all' || (dt.getMonth() + 1).toString() === m;
-            
             const type = d.type || 'standard'; 
             let typeMatch = true;
             if(dayTypeFilter === 'standard') typeMatch = (type === 'standard');
             if(dayTypeFilter === 'special') typeMatch = (type !== 'standard'); 
-
             return yMatch && mMatch && typeMatch;
         });
 
@@ -546,7 +543,6 @@
     window.saveIngressi = async () => { 
         const date = document.getElementById('i-date').value; if(!date) return showToast("Data mancante","error"); 
         
-        // SAFELY GET VALUES
         const type = document.getElementById('i-type').value;
         const exclude = document.getElementById('i-exclude').checked;
 
