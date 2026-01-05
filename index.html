@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V44 Historical</title>
+    <title>Piscina Facility Suite V45 Data Mode</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -48,6 +48,7 @@
         .cb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
         .cb-row { display: flex; gap: 20px; align-items: stretch; }
+        
         .inp-field { display: flex; flex-direction: column; flex: 1; }
         .inp-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
         .inp-field input, .inp-field select { padding: 0 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); font-size: 0.95rem; height: 44px; color: var(--text-main); font-family: inherit; font-weight: 500; transition: all 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
@@ -57,6 +58,7 @@
         .group-tickets { display: flex; gap: 15px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
         .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
         .group-actions { display: flex; align-items: stretch; gap: 10px; }
+
         .t-box { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .t-box label { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; text-align: center; width: 100%; opacity: 0.8; }
         .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.3rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; text-shadow: 0 1px 1px rgba(255,255,255,0.8); }
@@ -72,9 +74,10 @@
         .btn-danger { background: rgba(254, 202, 202, 0.4); color: #dc2626; border: 1px solid rgba(252, 165, 165, 0.5); }
         .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
 
-        /* FILTERS & MULTI-SELECT */
+        /* FILTERS */
         .filter-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; justify-content: flex-end; }
         .filter-select { padding: 0 15px; border-radius: 12px; height: 40px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); }
+        
         .multi-select-container { position: relative; display: inline-block; }
         .multi-select-btn { padding: 0 20px; height: 40px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); font-size: 0.9rem; font-weight: 600; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 10px; min-width: 120px; justify-content: space-between; }
         .multi-select-dropdown { position: absolute; top: 110%; right: 0; width: 200px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 10px; z-index: 100; display: none; }
@@ -121,6 +124,7 @@
         #login-box { @extend .glass-card; width: 400px; padding: 40px; text-align: center; }
         .archive-toolbar { display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.4); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: var(--glass-border); }
         .arch-input, .arch-select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-size: 0.85rem; color: var(--text-main); font-weight: 600; }
+        
         .trend-up { color: #16a34a; } .trend-down { color: #dc2626; }
     </style>
 </head>
@@ -201,6 +205,11 @@
 
             <div id="sub-stats" class="hidden">
                 <div class="filter-row" style="justify-content:flex-end">
+                    <select id="stat-mode" class="filter-select" onchange="renderStats()" style="font-weight:700">
+                        <option value="avg">📊 Media</option>
+                        <option value="total">∑ Totale</option>
+                    </select>
+                    
                     <div class="multi-select-container">
                         <div class="multi-select-btn" onclick="toggleMultiYear()">
                             📅 Anni <span id="year-count" style="font-size:0.8rem; background:rgba(0,0,0,0.1); padding:2px 6px; border-radius:4px; margin-left:5px">Tutti</span> 
@@ -225,8 +234,8 @@
                     </div>
                 </div>
                 <div class="charts-grid-3">
-                    <div class="chart-card small glass-card"><div class="chart-header">Media Ingressi per Meteo</div><div class="chart-wrapper"><canvas id="chartMeteo"></canvas></div></div>
-                    <div class="chart-card small glass-card"><div class="chart-header">Media Ingressi Settimanale</div><div class="chart-wrapper"><canvas id="chartWeek"></canvas></div></div>
+                    <div class="chart-card small glass-card"><div class="chart-header">Performance Meteo</div><div class="chart-wrapper"><canvas id="chartMeteo"></canvas></div></div>
+                    <div class="chart-card small glass-card"><div class="chart-header">Performance Settimanale</div><div class="chart-wrapper"><canvas id="chartWeek"></canvas></div></div>
                     <div class="chart-card small glass-card"><div class="chart-header">Popolarità Fasce Orarie</div><div class="chart-wrapper"><canvas id="chartFasce"></canvas></div></div>
                 </div>
             </div>
@@ -310,7 +319,7 @@
         onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
     }
 
-    // MULTI-SELECT YEAR LOGIC (FIXED)
+    // MULTI-SELECT YEAR LOGIC
     let selectedYears = [];
     window.toggleMultiYear = () => { document.getElementById('year-dropdown').classList.toggle('show'); };
     window.updateSelectedYears = () => {
@@ -333,9 +342,11 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (HISTORICAL AVERAGE)
+    // RENDER STATS (V45: Data Mode Support)
     window.renderStats = () => {
-        const m=document.getElementById('dash-month').value;
+        const m = document.getElementById('dash-month').value;
+        const mode = document.getElementById('stat-mode').value; // 'avg' or 'total'
+        
         const f = dataIngressi.filter(d => {
             const dt = new Date(d.date);
             const yMatch = selectedYears.length === 0 || selectedYears.includes(dt.getFullYear().toString());
@@ -346,10 +357,9 @@
         document.getElementById('deep-total').innerText = f.reduce((a,b)=>a+b.totale,0).toLocaleString();
         const colors = ['#2563eb', '#a855f7', '#f59e0b', '#10b981', '#ef4444'];
         
-        // 1. SMART TREND CHART
+        // 1. SMART TREND (UNCHANGED)
         let labels=[], sets=[];
         if(selectedYears.length > 0) {
-            // SPECIFIC COMPARISON MODE
             document.getElementById('yoy-title').innerText = "Confronto Annuale";
             labels = m !== 'all' ? Array.from({length:31},(_,i)=>i+1) : ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
             selectedYears.forEach((year, idx) => {
@@ -359,29 +369,26 @@
                 sets.push({ label: year, data: yd, borderColor: colors[idx % colors.length], backgroundColor: colors[idx % colors.length]+'20', fill: false, tension: 0.4 });
             });
         } else {
-            // HISTORICAL AVERAGE (ALL YEARS)
             document.getElementById('yoy-title').innerText = "Media Storica (Tutti gli Anni)";
             labels=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
             const monthlyTotals = new Array(12).fill(0);
             const uniqueYears = new Set(dataIngressi.map(d=>d.date.split('-')[0])).size;
-            
             dataIngressi.forEach(d => { monthlyTotals[new Date(d.date).getMonth()] += d.totale; });
             const avgData = monthlyTotals.map(t => uniqueYears > 0 ? t/uniqueYears : 0);
-
             sets=[{label:'Media Storica', data:avgData, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', fill:true, tension:0.4}];
         }
         renderChart('chartYoY', 'line', labels, sets);
 
-        // 2. PIE
+        // 2. PIE (ALWAYS TOTALS)
         let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
         f.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
         renderPie('chartPie', Object.keys(t), Object.values(t));
 
-        // HELPERS FOR MULTI-SERIES BAR
-        const buildMultiSeries = (extractor, calcType='avg', sortLabels=false) => {
+        // HELPERS FOR MULTI-SERIES BAR (UPDATED for MODE)
+        const buildMultiSeries = (extractor, sortLabels=false) => {
             let yearsToUse = selectedYears.length > 0 ? selectedYears : [new Date().getFullYear().toString()];
-            // If No selection (All Years), we want a single dataset representing ALL history
             if(selectedYears.length === 0) {
+                // HISTORICAL AGGREGATE
                 let allLabels = new Set();
                 dataIngressi.forEach(d => allLabels.add(extractor(d).key));
                 let sortedL = Array.from(allLabels); if(sortLabels) sortedL.sort();
@@ -389,12 +396,12 @@
                     let subset = dataIngressi.filter(d => extractor(d).key === l && (m==='all'||(new Date(d.date).getMonth()+1)==m));
                     if(subset.length===0) return 0;
                     let sum = subset.reduce((a,b) => a + extractor(b).val, 0);
-                    return calcType==='avg' ? (sum/subset.length).toFixed(0) : sum;
+                    return mode==='avg' ? (sum/subset.length).toFixed(0) : sum;
                 });
                 return { labels: sortedL, datasets: [{ label: 'Storico', data: dataPoints, backgroundColor: '#2563eb', borderRadius:4 }] };
             }
 
-            // Normal Multi-Year Logic
+            // MULTI-YEAR COMPARISON
             let allLabels = new Set();
             yearsToUse.forEach(y => { dataIngressi.filter(d => d.date.startsWith(y)).forEach(d => allLabels.add(extractor(d).key)); });
             let sortedL = Array.from(allLabels); if(sortLabels) sortedL.sort(); 
@@ -404,36 +411,43 @@
                     let subset = dataIngressi.filter(d => d.date.startsWith(y) && extractor(d).key === l && (m==='all'||(new Date(d.date).getMonth()+1)==m));
                     if(subset.length===0) return 0;
                     let sum = subset.reduce((a,b) => a + extractor(b).val, 0);
-                    return calcType==='avg' ? (sum/subset.length).toFixed(0) : sum;
+                    return mode==='avg' ? (sum/subset.length).toFixed(0) : sum;
                 });
                 datasets.push({ label: y, data: dataPoints, backgroundColor: colors[idx % colors.length], borderRadius:4 });
             });
             return { labels: sortedL, datasets };
         };
 
-        const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}), 'avg');
+        // 3. Meteo (Mode Aware)
+        const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}));
         renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
 
+        // 4. Week (Mode Aware)
         const weekLabels = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
         let weekSets = [];
         if(selectedYears.length === 0) {
              let dataP = weekLabels.map((dayName, dayIdx) => {
                 let subset = dataIngressi.filter(d => new Date(d.date).getDay() === dayIdx && (m==='all'||(new Date(d.date).getMonth()+1)==m));
-                return subset.length ? (subset.reduce((a,b)=>a+b.totale,0)/subset.length).toFixed(0) : 0;
+                if(subset.length===0) return 0;
+                let sum = subset.reduce((a,b)=>a+b.totale,0);
+                return mode==='avg' ? (sum/subset.length).toFixed(0) : sum;
             });
             weekSets.push({ label: 'Storico', data: dataP, backgroundColor: '#8b5cf6', borderRadius:4 });
         } else {
             selectedYears.forEach((y, idx) => {
                 let dataP = weekLabels.map((dayName, dayIdx) => {
                     let subset = dataIngressi.filter(d => d.date.startsWith(y) && new Date(d.date).getDay() === dayIdx && (m==='all'||(new Date(d.date).getMonth()+1)==m));
-                    return subset.length ? (subset.reduce((a,b)=>a+b.totale,0)/subset.length).toFixed(0) : 0;
+                    if(subset.length===0) return 0;
+                    let sum = subset.reduce((a,b)=>a+b.totale,0);
+                    return mode==='avg' ? (sum/subset.length).toFixed(0) : sum;
                 });
                 weekSets.push({ label: y, data: dataP, backgroundColor: colors[idx % colors.length], borderRadius:4 });
             });
         }
         renderMultiBar('chartWeek', weekLabels, weekSets);
 
-        const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}), 'total', true);
+        // 5. Fasce (Mode Aware)
+        const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}), true);
         renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
     };
 
