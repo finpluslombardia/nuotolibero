@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V64 Fixed</title>
+    <title>Piscina Facility Suite V65 REPAIR</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -62,7 +62,10 @@
         .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.3rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; text-shadow: 0 1px 1px rgba(255,255,255,0.8); }
 
         .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
+        
+        /* GLASS CARD FIXED - NO @EXTEND */
         .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
+        
         .page-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
 
         /* BUTTONS */
@@ -97,19 +100,19 @@
 
         /* KPI & CHARTS LAYOUT */
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-        .kpi-card { @extend .glass-card; padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); }
+        .kpi-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); display: flex; flex-direction: column; }
         .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
         .kpi-val { font-size: 2.4rem; font-weight: 800; color: var(--text-main); line-height: 1; margin-bottom: 5px; }
         .kpi-sub { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px; }
         
-        .chart-card { @extend .glass-card; height: 360px; }
+        .chart-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; height: 360px; }
         .chart-wrapper { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
         
         .charts-row-main { display: grid; grid-template-columns: 1fr; gap: 25px; margin-bottom: 25px; } 
         .charts-row-split { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; } 
 
         /* TABLE */
-        .table-wrap { @extend .glass-card; padding: 0; overflow: hidden; }
+        .table-wrap { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 0; overflow: hidden; display: flex; flex-direction: column; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th { text-align: left; padding: 18px 12px; background: rgba(255,255,255,0.5); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.9rem; vertical-align: middle; font-weight: 500; }
@@ -133,7 +136,7 @@
 
         .hidden { display: none !important; }
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        #login-box { @extend .glass-card; width: 400px; padding: 40px; text-align: center; }
+        #login-box { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 40px; display: flex; flex-direction: column; width: 400px; text-align: center; }
         .archive-toolbar { display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.4); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: var(--glass-border); flex-wrap: wrap; }
         .arch-input, .arch-select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-size: 0.85rem; color: var(--text-main); font-weight: 600; }
         .trend-up { color: #16a34a; } .trend-down { color: #dc2626; }
@@ -144,10 +147,10 @@
 <div id="toast-container"></div>
 
 <div id="login-screen">
-    <div id="login-box" class="glass-card">
+    <div id="login-box">
         <h2 style="color:var(--text-main); margin-bottom: 25px; font-weight: 900; font-size: 1.5rem;">🔐 Accesso</h2>
         <div class="inp-field" style="margin-bottom:15px"><input type="email" id="email" placeholder="Email"></div>
-        <div class="inp-field" style="margin-bottom:25px"><input type="password" id="password" placeholder="Password"></div>
+        <div class="inp-field" style="margin-bottom:25px"><input type="password" id="password" placeholder="Password" onkeydown="if(event.key==='Enter') doLogin()"></div>
         <button class="btn btn-primary" style="width:100%; font-size:1rem; height:48px;" onclick="doLogin()">Entra nel Gestionale</button>
         <p id="login-error" style="color:#dc2626; font-size:0.85rem; margin-top:20px; font-weight:600"></p>
     </div>
@@ -334,6 +337,12 @@
 </div>
 
 <script type="module">
+    // STARTUP SAFETY CHECK
+    window.onerror = function(msg, url, line) {
+        alert("Errore caricamento: " + msg + "\nLinea: " + line);
+        return false;
+    };
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -543,6 +552,7 @@
     window.saveIngressi = async () => { 
         const date = document.getElementById('i-date').value; if(!date) return showToast("Data mancante","error"); 
         
+        // SAFELY GET VALUES
         const type = document.getElementById('i-type').value;
         const exclude = document.getElementById('i-exclude').checked;
 
