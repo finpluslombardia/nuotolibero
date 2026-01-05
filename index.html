@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V46 Benchmark</title>
+    <title>Piscina Facility Suite V46 Dual-Trend</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -72,7 +72,7 @@
         .btn-danger { background: rgba(254, 202, 202, 0.4); color: #dc2626; border: 1px solid rgba(252, 165, 165, 0.5); }
         .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
 
-        /* FILTERS */
+        /* FILTERS & MULTI-SELECT */
         .filter-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
         .filter-select { padding: 0 15px; border-radius: 12px; height: 40px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); }
         
@@ -202,11 +202,13 @@
                     <div class="kpi-card glass-card"><div class="kpi-head">Vs Anno Prec.</div><div class="kpi-val" id="ov-yoy">0%</div><div class="kpi-sub" id="ov-yoy-label">-</div></div>
                     <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub" id="ov-forecast-sub">proiezione</div></div>
                 </div>
-                <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
+                <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec.</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
+                <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Andamento Ultimi 12 Mesi vs Anno Prec.</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
             </div>
 
             <div id="sub-stats" class="hidden">
                 <div class="filter-row" style="justify-content:flex-end">
+                    
                     <label class="benchmark-toggle">
                         <input type="checkbox" id="show-history" onchange="renderStats()">
                         <span>Confronta con Storico</span>
@@ -221,7 +223,8 @@
                         <div class="multi-select-btn" onclick="toggleMultiYear()">
                             📅 Anni <span id="year-count" style="font-size:0.8rem; background:rgba(0,0,0,0.1); padding:2px 6px; border-radius:4px; margin-left:5px">Tutti</span> 
                         </div>
-                        <div class="multi-select-dropdown" id="year-dropdown"></div>
+                        <div class="multi-select-dropdown" id="year-dropdown">
+                            </div>
                     </div>
                     <select id="dash-month" class="filter-select" onchange="renderStats()"><option value="all">Tutto l'anno</option><option value="1">Gen</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">Mag</option><option value="6">Giu</option><option value="7">Lug</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Ott</option><option value="11">Nov</option><option value="12">Dic</option></select>
                 </div>
@@ -325,7 +328,7 @@
         onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
     }
 
-    // MULTI-SELECT & FILTERS
+    // MULTI-SELECT YEAR LOGIC (FIXED HTML)
     let selectedYears = [];
     window.toggleMultiYear = () => { document.getElementById('year-dropdown').classList.toggle('show'); };
     window.updateSelectedYears = () => {
@@ -348,7 +351,7 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (V46: BENCHMARK)
+    // RENDER STATS
     window.renderStats = () => {
         const m = document.getElementById('dash-month').value;
         const mode = document.getElementById('stat-mode').value; 
@@ -367,13 +370,15 @@
         // 1. CHART YoY (Line)
         let labels=[], sets=[];
         
-        // CALCULATE HISTORICAL AVG DATASET (Reusable)
+        // CALCULATE HISTORICAL AVG DATASET
         const avgMonthlyTotals = new Array(12).fill(0);
         const uniqueYears = new Set(dataIngressi.map(d=>d.date.split('-')[0])).size;
         dataIngressi.forEach(d => { avgMonthlyTotals[new Date(d.date).getMonth()] += d.totale; });
+        const avgData = avgMonthlyTotals.map(t => uniqueYears > 0 ? t/uniqueYears : 0);
+        
         const historyDataset = {
             label: 'Media Storica',
-            data: avgMonthlyTotals.map(t => uniqueYears > 0 ? t/uniqueYears : 0),
+            data: avgData,
             borderColor: '#9ca3af', borderDash: [5,5], borderWidth: 2, pointRadius: 0, fill: false, tension: 0.4
         };
 
@@ -381,17 +386,13 @@
             // MULTI-YEAR COMPARISON
             document.getElementById('yoy-title').innerText = "Confronto Annuale";
             labels = m !== 'all' ? Array.from({length:31},(_,i)=>i+1) : ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
-            
             selectedYears.forEach((year, idx) => {
                 const yd = new Array(labels.length).fill(0);
                 dataIngressi.filter(d => d.date.startsWith(year) && (m==='all' || (new Date(d.date).getMonth()+1)==m))
                             .forEach(d => yd[m!=='all' ? new Date(d.date).getDate()-1 : new Date(d.date).getMonth()] += d.totale);
                 sets.push({ label: year, data: yd, borderColor: colors[idx % colors.length], backgroundColor: colors[idx % colors.length]+'20', fill: false, tension: 0.4 });
             });
-
-            // ADD HISTORY IF REQUESTED (Only makes sense for Month View All)
-            if(showHistory && m === 'all') { sets.push(historyDataset); }
-
+            if(showHistory && m === 'all') { sets.push(historyDataset); } // Add Benchmark
         } else {
             // NO SELECTION: SHOW ONLY HISTORY (Default)
             document.getElementById('yoy-title').innerText = "Media Storica (Tutti gli Anni)";
@@ -413,8 +414,8 @@
             let sortedL = Array.from(allLabels); if(sortLabels) sortedL.sort();
             let datasets = [];
 
-            // IF NO YEARS SELECTED (OR "ALL"), SHOW AGGREGATE
             if(yearsToUse.length === 0) {
+                // HISTORICAL AGGREGATE
                 let dataPoints = sortedL.map(l => {
                     let subset = dataIngressi.filter(d => extractor(d).key === l && (m==='all'||(new Date(d.date).getMonth()+1)==m));
                     if(subset.length===0) return 0;
@@ -483,14 +484,34 @@
     window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
     function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
 
-    function renderOverview() { const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m}); const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; const l30=new Date(); l30.setDate(l30.getDate()-30); const rd=dataIngressi.filter(x=>new Date(x.date)>=l30).sort((a,b)=>new Date(a.date)-new Date(b.date)); const dm={}; rd.forEach(x=>{const k=x.date.split('-').slice(1).reverse().join('/'); if(!dm[k])dm[k]=0; dm[k]+=x.totale;}); renderLineChart('chartRecent30', Object.keys(dm), Object.values(dm), '#2563eb'); }
+    function renderOverview() { const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m}); const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; 
+        // 30 Days Dual Trend (V46)
+        const today=new Date(); const l30=[], l30_prev=[], dates=[];
+        for(let i=29; i>=0; i--) {
+            const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; dates.push(dt.getDate()+'/'+(dt.getMonth()+1));
+            const dtPrev=new Date(dt); dtPrev.setFullYear(dt.getFullYear()-1); const dtPrevStr=dtPrev.toISOString().split('T')[0];
+            l30.push(dataIngressi.filter(x=>x.date===dtStr).reduce((a,b)=>a+b.totale,0));
+            l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr).reduce((a,b)=>a+b.totale,0));
+        }
+        renderLineChart('chartRecent30', dates, [{data:l30, borderColor:'#2563eb', fill:true},{data:l30_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
+
+        // 12 Months Dual Trend (V46)
+        const m12=[], m12_prev=[], m_labels=[];
+        for(let i=11; i>=0; i--) {
+            const d=new Date(today.getFullYear(), today.getMonth()-i, 1); m_labels.push(d.toLocaleString('it-IT',{month:'short'}));
+            m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear()}).reduce((a,b)=>a+b.totale,0));
+            m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1)}).reduce((a,b)=>a+b.totale,0));
+        }
+        renderLineChart('chartRecent12M', m_labels, [{data:m12, borderColor:'#2563eb', fill:true},{data:m12_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
+    }
+
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
     function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; [...dataDae].sort((a,b)=>new Date(b.date+' '+b.time)-new Date(a.date+' '+a.time)).forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
     function renderIngressiArchive() { const s=document.getElementById('arch-sort').value; const f=dataIngressi.filter(d=>true); /* Filter logic in helper */ f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return s==='desc'?db-da:da-db}); const t=document.getElementById('tbody-ingressi'); t.innerHTML=""; const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b><br><small style="color:#64748b">${d.meteo}</small></td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`; }); }); }
 
     // CHART HELPERS
     let ch={}; const opts={responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}};
-    function renderLineChart(id,l,d,c) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'line',data:{labels:l,datasets:[{data:d,borderColor:c,fill:true,backgroundColor:c+'20',tension:0.4}]},options:opts}); }
+    function renderLineChart(id,l,sets) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'line',data:{labels:l,datasets:sets.map(s=>({...s, tension:0.4, backgroundColor:s.fill?s.borderColor+'20':undefined}))},options:opts}); }
     function renderBar(id,l,d,c,ax='x') { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:[{data:d,backgroundColor:c,borderRadius:6}]},options:{...opts,indexAxis:ax}}); }
     function renderPie(id,l,d) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#f59e0b','#ef4444'],borderWidth:0}]},options:{...opts,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
     function renderChart(id,t,l,ds) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:t,data:{labels:l,datasets:ds},options:{...opts,plugins:{legend:{display:true}}}}); }
