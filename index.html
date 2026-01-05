@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V58 Weekday Align</title>
+    <title>Piscina Facility Suite V58 KPI Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -168,7 +168,7 @@
             </div>
             <div class="cb-row">
                 <div class="group-ctx">
-                    <div class="inp-field" style="flex:0.8"><label>Data</label><input type="date" id="i-date"></div>
+                    <div class="inp-field" style="flex:0.8"><label>Data</label><input type="date" id="i-date" onchange="renderOverview()"></div>
                     <div class="inp-field" style="flex:1.2"><label>Fascia</label>
                         <select id="i-fascia"><optgroup label="🏊 Vasca Interna"><option value="Mattina">Mattina</option><option value="Mattina intera">Mattina intera</option><option value="Pranzo">Pranzo</option><option value="Sera">Sera</option><option value="Sabato pom">Sabato pom</option><option value="Domenica">Domenica</option><option value="Festivo">Festivo</option><option value="Unico">Unico</option></optgroup><optgroup label="☀️ Vasca Esterna"><option value="Estiva - Mattina">Estiva - Mattina</option><option value="Estiva - Pomeriggio">Estiva - Pomeriggio</option><option value="Estiva - Unico">Estiva - Unico</option></optgroup></select>
                     </div>
@@ -319,27 +319,15 @@
     const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
     let dataIngressi=[], dataVasca=[], dataDae=[]; let editIdIngressi=null, editIdVasca=null;
 
-    // GLOBAL EXPORTS
+    window.showToast = (msg, type='success') => { const c = document.getElementById('toast-container'); const e = document.createElement('div'); e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); };
     window.doLogin = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch(e) { document.getElementById('login-error').innerText = e.message; } };
     window.doLogout = () => signOut(auth);
-    window.showToast = (msg, type='success') => { const c = document.getElementById('toast-container'); const e = document.createElement('div'); e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); };
-    
-    // NAVIGATION EXPORTS
-    window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')refreshCurrentView(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); };
-    window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
-
     onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen').classList.add('hidden'); document.getElementById('user-display').innerText=u.email.split('@')[0]; startListening(); } else { document.getElementById('login-screen').classList.remove('hidden'); } });
 
     function startListening() {
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
-        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
-    }
-
-    function refreshCurrentView(){ 
-        if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); 
-        if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); 
-        if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); 
+        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
     }
 
     // MULTI-SELECT YEAR LOGIC
@@ -355,16 +343,29 @@
         const y=[...new Set(dataIngressi.map(d=>d.date.split('-')[0]))].sort().reverse(); 
         const container = document.getElementById('year-dropdown');
         container.innerHTML = '';
-        y.forEach(year => { container.innerHTML += `<label class="multi-option"><input type="checkbox" class="year-checkbox" value="${year}" onchange="updateSelectedYears()"><span>${year}</span></label>`; });
+        y.forEach(year => {
+            container.innerHTML += `
+                <label class="multi-option">
+                    <input type="checkbox" class="year-checkbox" value="${year}" onchange="updateSelectedYears()">
+                    <span>${year}</span>
+                </label>`;
+        });
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (V58 WEEKDAY ALIGNMENT)
+    // RENDER STATS
     window.renderStats = () => {
         const m = document.getElementById('dash-month').value;
         const mode = document.getElementById('stat-mode').value; 
         const showHistory = document.getElementById('show-history').checked;
-        const f = dataIngressi.filter(d => { const dt = new Date(d.date); const yMatch = selectedYears.length === 0 || selectedYears.includes(dt.getFullYear().toString()); const mMatch = m === 'all' || (dt.getMonth() + 1).toString() === m; return yMatch && mMatch; });
+        
+        const f = dataIngressi.filter(d => {
+            const dt = new Date(d.date);
+            const yMatch = selectedYears.length === 0 || selectedYears.includes(dt.getFullYear().toString());
+            const mMatch = m === 'all' || (dt.getMonth() + 1).toString() === m;
+            return yMatch && mMatch;
+        });
+
         document.getElementById('deep-total').innerText = f.reduce((a,b)=>a+b.totale,0).toLocaleString();
         const colors = ['#2563eb', '#a855f7', '#f59e0b', '#10b981', '#ef4444'];
         
@@ -397,7 +398,14 @@
         let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
         f.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
         let totalVal = f.reduce((a,b)=>a+b.totale,0); let displayTotal = totalVal; let pieData = Object.values(t);
-        if(mode === 'avg') { const uniqueDays = new Set(f.map(d => d.date)).size || 1; displayTotal = (totalVal / uniqueDays).toFixed(0); pieData = pieData.map(v => (v / uniqueDays).toFixed(1)); document.getElementById('pie-label-text').innerText = "MEDIA GIORNALIERA"; } else { document.getElementById('pie-label-text').innerText = "TOTALE SELEZIONE"; }
+        if(mode === 'avg') {
+            const uniqueDays = new Set(f.map(d => d.date)).size || 1;
+            displayTotal = (totalVal / uniqueDays).toFixed(0);
+            pieData = pieData.map(v => (v / uniqueDays).toFixed(1));
+            document.getElementById('pie-label-text').innerText = "MEDIA GIORNALIERA";
+        } else {
+            document.getElementById('pie-label-text').innerText = "TOTALE SELEZIONE";
+        }
         document.getElementById('deep-total').innerText = parseFloat(displayTotal).toLocaleString();
         renderPie('chartPie', Object.keys(t), pieData);
 
@@ -415,8 +423,11 @@
                 return mode==='avg' ? (sum/subset.length).toFixed(0) : sum;
             });
             const historyBarSet = { label: 'Media Storica', data: historyDataPoints, backgroundColor: '#cbd5e1', borderRadius:4 };
+
             let datasets = [];
-            if(yearsToUse.length === 0) { datasets.push({ ...historyBarSet, backgroundColor: '#2563eb' }); } else {
+            if(yearsToUse.length === 0) {
+                datasets.push({ ...historyBarSet, backgroundColor: '#2563eb' });
+            } else {
                 yearsToUse.forEach((y, idx) => {
                     let dataPoints = sortedL.map(l => {
                         let subset = dataIngressi.filter(d => d.date.startsWith(y) && extractor(d).key === l && (m==='all'||(new Date(d.date).getMonth()+1)==m));
@@ -482,31 +493,62 @@
     window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
     function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
 
-    function renderOverview() { const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m}); const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; 
-    // V58 FIX: ALIGN 30D CHART BY WEEKDAY (52 WEEKS AGO)
-    const today=new Date(); const dates=[], l30=[], l30_prev=[];
-    for(let i=29; i>=0; i--) {
-        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; dates.push(dt.getDate()+'/'+(dt.getMonth()+1));
-        
-        // PREV YEAR: SHIFT 364 DAYS (52 Weeks) to align Mon-Mon, Sun-Sun
-        const dtPrev=new Date(dt); dtPrev.setDate(dt.getDate() - 364); const dtPrevStr=dtPrev.toISOString().split('T')[0];
-        
-        l30.push(dataIngressi.filter(x=>x.date===dtStr).reduce((a,b)=>a+b.totale,0));
-        l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr).reduce((a,b)=>a+b.totale,0));
-    }
-    renderLineChart('chartRecent30', dates, [{label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', fill:true},{label:'Anno Prec. (Stesso Giorno)', data:l30_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
+    function renderOverview() { 
+        // 1. Determine Reference Date based on Input
+        const dateInput = document.getElementById('i-date').value;
+        const refDate = dateInput ? new Date(dateInput) : new Date();
+        const y = refDate.getFullYear(); const m = refDate.getMonth() + 1;
 
-    const m12=[], m12_prev=[], m_labels=[];
-    for(let i=11; i>=0; i--) {
-        const d=new Date(today.getFullYear(), today.getMonth()-i, 1); m_labels.push(d.toLocaleString('it-IT',{month:'short'}));
-        m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear()}).reduce((a,b)=>a+b.totale,0));
-        m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1)}).reduce((a,b)=>a+b.totale,0));
+        // 2. Current Month Stats (Calculated on INPUT YEAR, not Today)
+        const d = dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m}); 
+        const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; 
+        const currAvg = days>0?(t/days):0;
+        document.getElementById('ov-avg').innerText = currAvg.toFixed(0); 
+
+        // 3. Comparisons (Prev Month & Prev Year)
+        // Prev Month:
+        const pmDate = new Date(y, m-2, 1); const pm = pmDate.getMonth()+1; const py = pmDate.getFullYear();
+        const prevMData = dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===py && (dt.getMonth()+1)===pm});
+        const prevMDays = new Set(prevMData.map(x=>x.date)).size;
+        const prevMAvg = prevMDays>0?(prevMData.reduce((a,b)=>a+b.totale,0)/prevMDays):0;
+
+        // Prev Year:
+        const prevYData = dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y-1 && (dt.getMonth()+1)===m});
+        const prevYDays = new Set(prevYData.map(x=>x.date)).size;
+        const prevYAvg = prevYDays>0?(prevYData.reduce((a,b)=>a+b.totale,0)/prevYDays):0;
+
+        // Update Trend UI
+        const setTrend=(id,curr,prev)=>{ const el=document.getElementById(id); if(prev>0){const diff=((curr-prev)/prev)*100; el.innerText=(diff>0?"+":"")+diff.toFixed(1)+"%"; el.className=diff>=0?"kpi-val trend-up":"kpi-val trend-down";}else{el.innerText="-";el.className="kpi-val";} };
+        setTrend('ov-mom', currAvg, prevMAvg); 
+        setTrend('ov-yoy', currAvg, prevYAvg);
+        
+        // Forecast
+        const dim=new Date(y,m,0).getDate(); 
+        document.getElementById('ov-forecast').innerText = currAvg>0?Math.round(currAvg*dim).toLocaleString():"-";
+
+        // Charts
+        const today=new Date(); const dates=[], l30=[], l30_prev=[];
+        for(let i=29; i>=0; i--) {
+            const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; dates.push(dt.getDate()+'/'+(dt.getMonth()+1));
+            const dtPrev=new Date(dt); dtPrev.setFullYear(dt.getFullYear()-1); const dtPrevStr=dtPrev.toISOString().split('T')[0];
+            l30.push(dataIngressi.filter(x=>x.date===dtStr).reduce((a,b)=>a+b.totale,0));
+            l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr).reduce((a,b)=>a+b.totale,0));
+        }
+        renderLineChart('chartRecent30', dates, [{label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', fill:true},{label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
+
+        const m12=[], m12_prev=[], m_labels=[];
+        for(let i=11; i>=0; i--) {
+            const d=new Date(today.getFullYear(), today.getMonth()-i, 1); m_labels.push(d.toLocaleString('it-IT',{month:'short'}));
+            m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear()}).reduce((a,b)=>a+b.totale,0));
+            m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1)}).reduce((a,b)=>a+b.totale,0));
+        }
+        renderLineChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
     }
-    renderLineChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
-    }
+
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
     function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; const sortedDae = [...dataDae].sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time)); sortedDae.forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
     
+    // ARCHIVE RENDER (UPDATED)
     window.renderIngressiArchive = () => { 
         const start = document.getElementById('arch-date-start').value;
         const end = document.getElementById('arch-date-end').value;
