@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V41 Multi-Compare</title>
+    <title>Piscina Facility Suite V42 Smart Trend</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -48,15 +48,18 @@
         .cb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
         .cb-row { display: flex; gap: 20px; align-items: stretch; }
+        
         .inp-field { display: flex; flex-direction: column; flex: 1; }
         .inp-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
         .inp-field input, .inp-field select { padding: 0 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); font-size: 0.95rem; height: 44px; color: var(--text-main); font-family: inherit; font-weight: 500; transition: all 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
         .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; border: 1px solid rgba(0,0,0,0.1) !important; }
+
         .group-ctx { display: flex; gap: 15px; flex: 1; }
         .group-tickets { display: flex; gap: 15px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
         .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
         .group-actions { display: flex; align-items: stretch; gap: 10px; }
+
         .t-box { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .t-box label { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; text-align: center; width: 100%; opacity: 0.8; }
         .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.3rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; text-shadow: 0 1px 1px rgba(255,255,255,0.8); }
@@ -103,17 +106,19 @@
         th { text-align: left; padding: 18px 12px; background: rgba(255,255,255,0.5); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.9rem; vertical-align: middle; font-weight: 500; }
         tr:hover td { background: rgba(255,255,255,0.3); }
-        .col-detail { color: var(--text-muted); font-size: 0.85rem; text-align: center; }
-        .col-subtot { font-weight: 700; text-align: center; background: rgba(255,255,255,0.2); }
-        .col-total { font-weight: 900; color: var(--text-main); text-align: center; font-size: 1.1rem; }
-        .bg-sub-blue { background-color: rgba(59, 130, 246, 0.05); }
-        .bg-sub-purp { background-color: rgba(168, 85, 247, 0.05); }
-        
+        tr.day-end td { border-bottom: 2px solid rgba(0,0,0,0.1) !important; }
+
         .badge { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: inline-block; backdrop-filter: blur(4px); }
         .badge-summer { background: rgba(255, 237, 213, 0.7); color: #ea580c; border: 1px solid rgba(253, 186, 116, 0.4); }
         .badge-std { background: rgba(219, 234, 254, 0.7); color: #2563eb; border: 1px solid rgba(147, 197, 253, 0.4); }
         .badge-ok { background: rgba(167, 243, 208, 0.7); color: #065f46; border: 1px solid rgba(16, 185, 129, 0.3); }
         .badge-ko { background: rgba(254, 202, 202, 0.7); color: #991b1b; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .col-detail { color: var(--text-muted); font-size: 0.85rem; text-align: center; }
+        .col-subtot { font-weight: 700; text-align: center; background: rgba(255,255,255,0.2); }
+        .col-total { font-weight: 900; color: var(--text-main); text-align: center; font-size: 1.1rem; }
+        .bg-sub-blue { background-color: rgba(59, 130, 246, 0.05); }
+        .bg-sub-purp { background-color: rgba(168, 85, 247, 0.05); }
 
         .hidden { display: none !important; }
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 9999; display: flex; align-items: center; justify-content: center; }
@@ -307,7 +312,7 @@
     function startListening() {
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
-        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
+        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); }));
     }
 
     // MULTI-SELECT YEAR LOGIC
@@ -330,14 +335,12 @@
                     <label>${year}</label>
                 </div>`;
         });
-        // Default: Empty means "All" / Rolling
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (MULTI-SERIES)
+    // RENDER STATS (SMART TREND LOGIC V42)
     window.renderStats = () => {
         const m=document.getElementById('dash-month').value;
-        // Filter Data by Multi-Year & Month
         const f = dataIngressi.filter(d => {
             const dt = new Date(d.date);
             const yMatch = selectedYears.length === 0 || selectedYears.includes(dt.getFullYear().toString());
@@ -346,12 +349,12 @@
         });
 
         document.getElementById('deep-total').innerText = f.reduce((a,b)=>a+b.totale,0).toLocaleString();
-
         const colors = ['#2563eb', '#a855f7', '#f59e0b', '#10b981', '#ef4444'];
         
-        // 1. YoY (Line)
+        // 1. SMART TREND CHART
         let labels=[], sets=[];
         if(selectedYears.length > 0) {
+            // SPECIFIC COMPARISON MODE
             document.getElementById('yoy-title').innerText = "Confronto Annuale";
             labels = m !== 'all' ? Array.from({length:31},(_,i)=>i+1) : ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
             selectedYears.forEach((year, idx) => {
@@ -361,18 +364,25 @@
                 sets.push({ label: year, data: yd, borderColor: colors[idx % colors.length], backgroundColor: colors[idx % colors.length]+'20', fill: false, tension: 0.4 });
             });
         } else {
-            // Rolling 12 Months
+            // ROLLING TREND MODE (Default)
             document.getElementById('yoy-title').innerText = "Trend Ultimi 12 Mesi";
             const today=new Date(); const currD=[], prevD=[];
             for(let i=11; i>=0; i--) {
                 const d=new Date(today.getFullYear(), today.getMonth()-i, 1);
+                const prevDObj = new Date(today.getFullYear()-1, today.getMonth()-i, 1);
+                
                 labels.push(d.toLocaleString('it-IT',{month:'short'}));
+                
                 const cVal = dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear()}).reduce((a,b)=>a+b.totale,0);
                 currD.push(cVal);
-                const pVal = dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1)}).reduce((a,b)=>a+b.totale,0);
+                
+                const pVal = dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===prevDObj.getMonth() && xd.getFullYear()===prevDObj.getFullYear()}).reduce((a,b)=>a+b.totale,0);
                 prevD.push(pVal);
             }
-            sets=[{label:'Corrente', data:currD, borderColor:'#2563eb', fill:true, tension:0.4}, {label:'Anno Prec.', data:prevD, borderColor:'#94a3b8', borderDash:[5,5], fill:false, tension:0.4}];
+            sets=[
+                {label:'Ultimi 12 Mesi', data:currD, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', fill:true, tension:0.4},
+                {label:'12 Mesi Precedenti', data:prevD, borderColor:'#94a3b8', borderDash:[5,5], fill:false, tension:0.4}
+            ];
         }
         renderChart('chartYoY', 'line', labels, sets);
 
@@ -383,17 +393,10 @@
 
         // HELPERS FOR MULTI-SERIES BAR
         const buildMultiSeries = (extractor, calcType='avg', sortLabels=false) => {
-            let yearsToUse = selectedYears.length > 0 ? selectedYears : [new Date().getFullYear().toString()]; // Default current year if none
+            let yearsToUse = selectedYears.length > 0 ? selectedYears : [new Date().getFullYear().toString()];
             let allLabels = new Set();
-            
-            // Collect all unique labels first
-            yearsToUse.forEach(y => {
-                dataIngressi.filter(d => d.date.startsWith(y)).forEach(d => allLabels.add(extractor(d).key));
-            });
-            let sortedL = Array.from(allLabels);
-            if(sortLabels) sortedL.sort(); 
-            // Custom sort for days? (Week chart needs special sort)
-            
+            yearsToUse.forEach(y => { dataIngressi.filter(d => d.date.startsWith(y)).forEach(d => allLabels.add(extractor(d).key)); });
+            let sortedL = Array.from(allLabels); if(sortLabels) sortedL.sort(); 
             let datasets = [];
             yearsToUse.forEach((y, idx) => {
                 let dataPoints = sortedL.map(l => {
@@ -447,12 +450,13 @@
     function renderOverview() { const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m}); const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; const l30=new Date(); l30.setDate(l30.getDate()-30); const rd=dataIngressi.filter(x=>new Date(x.date)>=l30).sort((a,b)=>new Date(a.date)-new Date(b.date)); const dm={}; rd.forEach(x=>{const k=x.date.split('-').slice(1).reverse().join('/'); if(!dm[k])dm[k]=0; dm[k]+=x.totale;}); renderLineChart('chartRecent30', Object.keys(dm), Object.values(dm), '#2563eb'); }
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
     function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; [...dataDae].sort((a,b)=>new Date(b.date+' '+b.time)-new Date(a.date+' '+a.time)).forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
-    function renderIngressiArchive() { const s=document.getElementById('arch-sort').value; const f=dataIngressi.filter(d=>true); /* Filter logic in helper */ f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return s==='desc'?db-da:da-db}); const t=document.getElementById('tbody-ingressi'); t.innerHTML=""; const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b><br><small style="color:#64748b">${d.meteo}</small></td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`; }); }); }
+    function renderIngressiArchive() { const s=document.getElementById('arch-sort').value; const f=dataIngressi.filter(d=>true); /* Filter logic in helper */ f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return s==='desc'?db-da:da-db}); const t=document.getElementById('tbody-ingressi'); t.innerHTML=""; const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b><br><small style="color:#64748b">${d.meteo}</small></td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`; }); }); }
 
     // CHART HELPERS
     let ch={}; const opts={responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}};
     function renderLineChart(id,l,d,c) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'line',data:{labels:l,datasets:[{data:d,borderColor:c,fill:true,backgroundColor:c+'20',tension:0.4}]},options:opts}); }
-    function renderPie(id,l,d) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#f59e0b','#ef4444'],borderWidth:0}]},options:{...opts,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
+    function renderBar(id,l,d,c,ax='x') { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:[{data:d,backgroundColor:c,borderRadius:6}]},options:{...opts,indexAxis:ax}}); }
+    function renderPie(id,l,d) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#ef4444'],borderWidth:0}]},options:{...opts,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
     function renderChart(id,t,l,ds) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:t,data:{labels:l,datasets:ds},options:{...opts,plugins:{legend:{display:true}}}}); }
     function renderMultiBar(id,l,ds,ax='x') { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:ds},options:{...opts,indexAxis:ax,plugins:{legend:{display:true}}}}); }
 
