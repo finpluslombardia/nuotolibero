@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V37 Full Analytics</title>
+    <title>Piscina Facility Suite V38 Clean</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -110,16 +110,12 @@
         .kpi-card { @extend .glass-card; padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); }
         .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
         .kpi-val { font-size: 2.4rem; font-weight: 800; color: var(--text-main); line-height: 1; margin-bottom: 5px; }
-        .kpi-sub { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px; }
-        
-        .chart-card { @extend .glass-card; height: 360px; min-height: 360px; }
-        .chart-card.small { height: 300px; min-height: 300px; }
+        .chart-card { @extend .glass-card; height: 360px; }
         .chart-wrapper { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
         .filter-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
         .filter-select { padding: 0 15px; border-radius: 12px; height: 40px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); }
         .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 25px; }
         .charts-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
-        
         .trend-up { color: #16a34a; } .trend-down { color: #dc2626; }
     </style>
 </head>
@@ -221,10 +217,6 @@
                     <div class="chart-card small glass-card"><div class="chart-header">Impatto Meteo</div><div class="chart-wrapper"><canvas id="chartMeteo"></canvas></div></div>
                     <div class="chart-card small glass-card"><div class="chart-header">Trend Settimanale</div><div class="chart-wrapper"><canvas id="chartWeek"></canvas></div></div>
                     <div class="chart-card small glass-card"><div class="chart-header">Fasce Orarie</div><div class="chart-wrapper"><canvas id="chartFasce"></canvas></div></div>
-                </div>
-                <div class="chart-card glass-card" style="margin-top:25px; height:300px; min-height:300px">
-                    <div class="chart-header">Dettaglio Tipologia Ingressi</div>
-                    <div class="chart-wrapper"><canvas id="chartTickets"></canvas></div>
                 </div>
             </div>
 
@@ -435,11 +427,6 @@
         const fm={}; f.forEach(d=>{if(!fm[d.fascia])fm[d.fascia]=0; fm[d.fascia]+=d.totale});
         const fs=Object.entries(fm).sort((a,b)=>b[1]-a[1]).slice(0,6);
         renderBar('chartFasce', fs.map(x=>x[0]), fs.map(x=>x[1]), '#f59e0b', 'y');
-
-        // 6. Ticket Types (NEW)
-        let tTypes = { 'Intero':0, 'Ridotto':0, 'Abb Per.':0, 'Abb 11':0, 'Gratis':0 };
-        f.forEach(d => { tTypes['Intero']+=d.int||0; tTypes['Ridotto']+=d.rid||0; tTypes['Abb Per.']+=d.abb_int||0; tTypes['Abb 11']+=d.abb_rid||0; tTypes['Gratis']+=d.grat||0; });
-        renderBar('chartTickets', Object.keys(tTypes), Object.values(tTypes), '#10b981');
     };
 
     window.renderIngressiArchive = () => {
