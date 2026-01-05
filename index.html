@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V35 Fixed</title>
+    <title>Piscina Facility Suite V36</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -117,6 +117,8 @@
         .badge { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: inline-block; backdrop-filter: blur(4px); }
         .badge-summer { background: rgba(255, 237, 213, 0.7); color: #ea580c; border: 1px solid rgba(253, 186, 116, 0.4); }
         .badge-std { background: rgba(219, 234, 254, 0.7); color: #2563eb; border: 1px solid rgba(147, 197, 253, 0.4); }
+        .badge-ok { background: rgba(167, 243, 208, 0.7); color: #065f46; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-ko { background: rgba(254, 202, 202, 0.7); color: #991b1b; border: 1px solid rgba(239, 68, 68, 0.3); }
 
         .col-detail { color: var(--text-muted); font-size: 0.85rem; text-align: center; }
         .col-subtot { font-weight: 700; text-align: center; background: rgba(255,255,255,0.2); }
@@ -311,6 +313,12 @@
                 <div class="group-ctx">
                     <div class="inp-field" style="flex:0.5"><label>Data</label><input type="date" id="d-date" class="inp-locked" readonly></div>
                     <div class="inp-field" style="flex:0.5"><label>Ora Controllo</label><input type="text" id="d-time" class="inp-locked" readonly></div>
+                    <div class="inp-field" style="flex:0.8"><label>Stato</label>
+                        <select id="d-status">
+                            <option value="OK">✅ Funzionante</option>
+                            <option value="GUASTO">❌ Guasto / Anomalie</option>
+                        </select>
+                    </div>
                     <div class="inp-field" style="flex:1"><label>Assistente Bagnanti</label><input type="text" id="d-ass" placeholder="Nome Cognome"></div>
                     <div class="inp-field" style="flex:1"><label>Operatore Segreteria</label><input type="text" id="d-op" placeholder="Nome Cognome"></div>
                 </div>
@@ -323,7 +331,7 @@
             <div class="table-wrap glass-card">
                 <div style="overflow-x:auto;">
                     <table id="table-dae">
-                        <thead><tr><th>Data</th><th>Ora</th><th>Assistente Bagnanti</th><th>Operatore Segreteria</th><th style="text-align:right"></th></tr></thead>
+                        <thead><tr><th>Data</th><th>Ora</th><th>Stato</th><th>Assistente Bagnanti</th><th>Operatore Segreteria</th><th style="text-align:right"></th></tr></thead>
                         <tbody id="tbody-dae"></tbody>
                     </table>
                 </div>
@@ -390,9 +398,8 @@
             dataVasca = snap.docs.map(d => ({id: d.id, ...d.data()}));
             if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca();
         });
-        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => {
+        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc")), (snap) => {
             dataDae = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            // Always refresh DAE if active to show changes
             if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae();
         });
     }
@@ -542,39 +549,50 @@
         });
     }
 
-    // --- 3. DAE (FIXED RENDER) ---
+    // --- 3. DAE (FIXED RENDER & STATUS) ---
     setInterval(() => {
         const now = new Date();
         const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
         const el = document.getElementById('d-time'); const elV = document.getElementById('v-time');
         if(el) el.value = timeStr;
-        if(elV && !elV.value && !editIdVasca) elV.value = timeStr; // Only autofill if not editing
+        if(elV && !elV.value && !editIdVasca) elV.value = timeStr; 
     }, 1000);
 
     window.saveDae = async () => {
-        // FORCE CURRENT DATE IF READONLY IS EMPTY
+        // FORCE DATE
         const rawDate = document.getElementById('d-date').value;
         const date = rawDate || new Date().toISOString().split('T')[0];
         
-        const ass = document.getElementById('d-ass').value; const op = document.getElementById('d-op').value;
+        const ass = document.getElementById('d-ass').value; 
+        const op = document.getElementById('d-op').value;
+        const status = document.getElementById('d-status').value;
+
         if(!ass || !op) return showToast("Compila i nomi", "error");
         
-        await addDoc(collection(db, "dae_log"), {
-            date, time: new Date().toLocaleTimeString(), ass, op
-        });
-        document.getElementById('d-ass').value = ""; document.getElementById('d-op').value = "";
-        showToast("DAE Registrato!");
+        try {
+            await addDoc(collection(db, "dae_log"), {
+                date, time: new Date().toLocaleTimeString(), ass, op, status
+            });
+            document.getElementById('d-ass').value = ""; document.getElementById('d-op').value = "";
+            showToast("DAE Registrato!");
+        } catch(e) { showToast(e.message, "error"); }
     };
 
     function renderDae() {
         const tbody = document.getElementById('tbody-dae');
         tbody.innerHTML = "";
-        if(!dataDae.length) { tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px'>Nessun controllo registrato.</td></tr>"; return; }
         
-        dataDae.forEach(d => {
+        // Sort DAE data by date desc
+        const sortedDae = [...dataDae].sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
+
+        if(!sortedDae.length) { tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px'>Nessun controllo registrato.</td></tr>"; return; }
+        
+        sortedDae.forEach(d => {
+            const badge = d.status === 'OK' ? '<span class="badge badge-ok">✅ OK</span>' : '<span class="badge badge-ko">❌ GUASTO</span>';
             tbody.innerHTML += `<tr>
                 <td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td>
                 <td style="color:var(--primary); font-weight:600">${d.time}</td>
+                <td>${badge}</td>
                 <td>${d.ass}</td>
                 <td>${d.op}</td>
                 <td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td>
@@ -617,7 +635,7 @@
     // --- INGRESSI RENDER LOGIC ---
     function renderIngressiArchive() {
         const sortOrder = document.getElementById('arch-sort').value;
-        const filtered = getFilteredArchiveData(); // Same filter function from V33
+        const filtered = getFilteredArchiveData(); 
         filtered.sort((a, b) => { const dateA = new Date(a.date); const dateB = new Date(b.date); return sortOrder === 'desc' ? dateB - dateA : dateA - dateB; });
 
         const tbody = document.getElementById('tbody-ingressi'); tbody.innerHTML = "";
