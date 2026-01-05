@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V43 Fixed</title>
+    <title>Piscina Facility Suite V44 Historical</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -72,20 +72,14 @@
         .btn-danger { background: rgba(254, 202, 202, 0.4); color: #dc2626; border: 1px solid rgba(252, 165, 165, 0.5); }
         .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
 
-        /* FILTERS & MULTI-SELECT (FIXED) */
+        /* FILTERS & MULTI-SELECT */
         .filter-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; justify-content: flex-end; }
         .filter-select { padding: 0 15px; border-radius: 12px; height: 40px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); }
-        
         .multi-select-container { position: relative; display: inline-block; }
         .multi-select-btn { padding: 0 20px; height: 40px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); font-size: 0.9rem; font-weight: 600; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 10px; min-width: 120px; justify-content: space-between; }
         .multi-select-dropdown { position: absolute; top: 110%; right: 0; width: 200px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 10px; z-index: 100; display: none; }
         .multi-select-dropdown.show { display: block; animation: fadeIn 0.2s; }
-        
-        /* Updated Option Style: Uses label for reliable clicking */
-        .multi-option { 
-            padding: 8px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 8px; transition: background 0.1s; 
-            user-select: none; /* Prevents text highlighting */
-        }
+        .multi-option { padding: 8px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 8px; transition: background 0.1s; user-select: none; }
         .multi-option:hover { background: rgba(37,99,235,0.1); }
         .multi-option input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
         .multi-option span { font-size: 0.9rem; font-weight: 500; color: var(--text-main); flex: 1; }
@@ -316,7 +310,7 @@
         onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
     }
 
-    // MULTI-SELECT YEAR LOGIC (FIXED HTML)
+    // MULTI-SELECT YEAR LOGIC (FIXED)
     let selectedYears = [];
     window.toggleMultiYear = () => { document.getElementById('year-dropdown').classList.toggle('show'); };
     window.updateSelectedYears = () => {
@@ -330,7 +324,6 @@
         const container = document.getElementById('year-dropdown');
         container.innerHTML = '';
         y.forEach(year => {
-            // USING LABEL FOR RELIABLE CLICKING
             container.innerHTML += `
                 <label class="multi-option">
                     <input type="checkbox" class="year-checkbox" value="${year}" onchange="updateSelectedYears()">
@@ -340,7 +333,7 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (V42 Smart Trend)
+    // RENDER STATS (HISTORICAL AVERAGE)
     window.renderStats = () => {
         const m=document.getElementById('dash-month').value;
         const f = dataIngressi.filter(d => {
@@ -366,25 +359,16 @@
                 sets.push({ label: year, data: yd, borderColor: colors[idx % colors.length], backgroundColor: colors[idx % colors.length]+'20', fill: false, tension: 0.4 });
             });
         } else {
-            // ROLLING TREND MODE (Default)
-            document.getElementById('yoy-title').innerText = "Trend Ultimi 12 Mesi";
-            const today=new Date(); const currD=[], prevD=[];
-            for(let i=11; i>=0; i--) {
-                const d=new Date(today.getFullYear(), today.getMonth()-i, 1);
-                const prevDObj = new Date(today.getFullYear()-1, today.getMonth()-i, 1);
-                
-                labels.push(d.toLocaleString('it-IT',{month:'short'}));
-                
-                const cVal = dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear()}).reduce((a,b)=>a+b.totale,0);
-                currD.push(cVal);
-                
-                const pVal = dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===prevDObj.getMonth() && xd.getFullYear()===prevDObj.getFullYear()}).reduce((a,b)=>a+b.totale,0);
-                prevD.push(pVal);
-            }
-            sets=[
-                {label:'Ultimi 12 Mesi', data:currD, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', fill:true, tension:0.4},
-                {label:'12 Mesi Precedenti', data:prevD, borderColor:'#94a3b8', borderDash:[5,5], fill:false, tension:0.4}
-            ];
+            // HISTORICAL AVERAGE (ALL YEARS)
+            document.getElementById('yoy-title').innerText = "Media Storica (Tutti gli Anni)";
+            labels=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+            const monthlyTotals = new Array(12).fill(0);
+            const uniqueYears = new Set(dataIngressi.map(d=>d.date.split('-')[0])).size;
+            
+            dataIngressi.forEach(d => { monthlyTotals[new Date(d.date).getMonth()] += d.totale; });
+            const avgData = monthlyTotals.map(t => uniqueYears > 0 ? t/uniqueYears : 0);
+
+            sets=[{label:'Media Storica', data:avgData, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', fill:true, tension:0.4}];
         }
         renderChart('chartYoY', 'line', labels, sets);
 
@@ -396,6 +380,21 @@
         // HELPERS FOR MULTI-SERIES BAR
         const buildMultiSeries = (extractor, calcType='avg', sortLabels=false) => {
             let yearsToUse = selectedYears.length > 0 ? selectedYears : [new Date().getFullYear().toString()];
+            // If No selection (All Years), we want a single dataset representing ALL history
+            if(selectedYears.length === 0) {
+                let allLabels = new Set();
+                dataIngressi.forEach(d => allLabels.add(extractor(d).key));
+                let sortedL = Array.from(allLabels); if(sortLabels) sortedL.sort();
+                let dataPoints = sortedL.map(l => {
+                    let subset = dataIngressi.filter(d => extractor(d).key === l && (m==='all'||(new Date(d.date).getMonth()+1)==m));
+                    if(subset.length===0) return 0;
+                    let sum = subset.reduce((a,b) => a + extractor(b).val, 0);
+                    return calcType==='avg' ? (sum/subset.length).toFixed(0) : sum;
+                });
+                return { labels: sortedL, datasets: [{ label: 'Storico', data: dataPoints, backgroundColor: '#2563eb', borderRadius:4 }] };
+            }
+
+            // Normal Multi-Year Logic
             let allLabels = new Set();
             yearsToUse.forEach(y => { dataIngressi.filter(d => d.date.startsWith(y)).forEach(d => allLabels.add(extractor(d).key)); });
             let sortedL = Array.from(allLabels); if(sortLabels) sortedL.sort(); 
@@ -417,13 +416,21 @@
 
         const weekLabels = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
         let weekSets = [];
-        (selectedYears.length>0?selectedYears:[new Date().getFullYear().toString()]).forEach((y, idx) => {
-            let dataP = weekLabels.map((dayName, dayIdx) => {
-                let subset = dataIngressi.filter(d => d.date.startsWith(y) && new Date(d.date).getDay() === dayIdx && (m==='all'||(new Date(d.date).getMonth()+1)==m));
+        if(selectedYears.length === 0) {
+             let dataP = weekLabels.map((dayName, dayIdx) => {
+                let subset = dataIngressi.filter(d => new Date(d.date).getDay() === dayIdx && (m==='all'||(new Date(d.date).getMonth()+1)==m));
                 return subset.length ? (subset.reduce((a,b)=>a+b.totale,0)/subset.length).toFixed(0) : 0;
             });
-            weekSets.push({ label: y, data: dataP, backgroundColor: colors[idx % colors.length], borderRadius:4 });
-        });
+            weekSets.push({ label: 'Storico', data: dataP, backgroundColor: '#8b5cf6', borderRadius:4 });
+        } else {
+            selectedYears.forEach((y, idx) => {
+                let dataP = weekLabels.map((dayName, dayIdx) => {
+                    let subset = dataIngressi.filter(d => d.date.startsWith(y) && new Date(d.date).getDay() === dayIdx && (m==='all'||(new Date(d.date).getMonth()+1)==m));
+                    return subset.length ? (subset.reduce((a,b)=>a+b.totale,0)/subset.length).toFixed(0) : 0;
+                });
+                weekSets.push({ label: y, data: dataP, backgroundColor: colors[idx % colors.length], borderRadius:4 });
+            });
+        }
         renderMultiBar('chartWeek', weekLabels, weekSets);
 
         const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}), 'total', true);
