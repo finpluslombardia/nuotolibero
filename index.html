@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V51 Stable</title>
+    <title>Piscina Facility Suite V52 Line Week</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -223,8 +223,8 @@
 
                 <div class="charts-row-main">
                     <div class="chart-card glass-card">
-                        <div class="chart-header">Performance Settimanale</div>
-                        <div class="chart-wrapper" style="padding:0 10px"><canvas id="chartWeek"></canvas></div>
+                        <div class="chart-header">Performance Settimanale (Lunedì - Domenica)</div>
+                        <div class="chart-wrapper" style="padding:0 15px"><canvas id="chartWeek"></canvas></div>
                     </div>
                 </div>
 
@@ -354,7 +354,7 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (V51: FIXED PADDING & TIMEZONE)
+    // RENDER STATS (V52: LINE CHART FOR WEEK & PADDING FIX)
     window.renderStats = () => {
         const m = document.getElementById('dash-month').value;
         const mode = document.getElementById('stat-mode').value; 
@@ -448,14 +448,12 @@
         const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}));
         renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
 
-        // 4. WEEK (FIXED ORDER: LUN-DOM, TIMEZONE SAFE)
+        // 4. WEEK (V52: SWITCHED TO LINE CHART + CORRECT DAY MAPPING)
         const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
         const getJsDay = (i) => (i + 1) % 7; 
-        // V51 FIX: Force Noon to avoid timezone shifts (e.g. Fri 23:00 instead of Sat)
         const getDayFromDate = (dateStr) => new Date(dateStr + 'T12:00:00').getDay();
 
         let weekSets = [];
-        
         let historyWeekData = weekLabels.map((_, i) => {
              let subset = dataIngressi.filter(d => getDayFromDate(d.date) === getJsDay(i) && (m==='all'||(new Date(d.date).getMonth()+1)==m));
              if(subset.length===0) return 0;
@@ -463,8 +461,11 @@
              return mode==='avg' ? (sum/subset.length).toFixed(0) : sum;
         });
 
+        // Config for line chart appearance
+        const commonLineConfig = { fill: true, tension: 0.4, borderWidth: 3 };
+
         if(selectedYears.length === 0) {
-            weekSets.push({ label: 'Media Storica', data: historyWeekData, backgroundColor: '#8b5cf6', borderRadius:4 });
+            weekSets.push({ ...commonLineConfig, label: 'Media Storica', data: historyWeekData, borderColor: '#8b5cf6', backgroundColor: '#8b5cf620' });
         } else {
             selectedYears.forEach((y, idx) => {
                 let dataP = weekLabels.map((_, i) => {
@@ -473,11 +474,13 @@
                     let sum = subset.reduce((a,b)=>a+b.totale,0);
                     return mode==='avg' ? (sum/subset.length).toFixed(0) : sum;
                 });
-                weekSets.push({ label: y, data: dataP, backgroundColor: colors[idx % colors.length], borderRadius:4 });
+                weekSets.push({ ...commonLineConfig, label: y, data: dataP, borderColor: colors[idx % colors.length], backgroundColor: colors[idx % colors.length]+'20' });
             });
-            if(showHistory) weekSets.push({ label: 'Media Storica', data: historyWeekData, backgroundColor: '#cbd5e1', borderRadius:4 });
+            if(showHistory) weekSets.push({ ...commonLineConfig, label: 'Media Storica', data: historyWeekData, borderColor: '#cbd5e1', borderDash: [5,5], fill: false });
         }
-        renderMultiBar('chartWeek', weekLabels, weekSets);
+        
+        // RENDER AS LINE CHART
+        renderChart('chartWeek', 'line', weekLabels, weekSets);
 
         const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}), true);
         renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
@@ -499,24 +502,24 @@
     window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
     function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
 
-    function renderOverview() { const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m}); const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; 
-        // V51 FIX: Correctly structure 30D/12M Charts
-        const today=new Date(); const l30=[], l30_prev=[], dates=[];
-        for(let i=29; i>=0; i--) {
-            const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; dates.push(dt.getDate()+'/'+(dt.getMonth()+1));
-            const dtPrev=new Date(dt); dtPrev.setFullYear(dt.getFullYear()-1); const dtPrevStr=dtPrev.toISOString().split('T')[0];
-            l30.push(dataIngressi.filter(x=>x.date===dtStr).reduce((a,b)=>a+b.totale,0));
-            l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr).reduce((a,b)=>a+b.totale,0));
-        }
-        renderLineChart('chartRecent30', dates, [{label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', fill:true},{label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
+    function renderOverview() { const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m}); const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; const l30=new Date(); l30.setDate(l30.getDate()-30); const rd=dataIngressi.filter(x=>new Date(x.date)>=l30).sort((a,b)=>new Date(a.date)-new Date(b.date)); const dm={}; rd.forEach(x=>{const k=x.date.split('-').slice(1).reverse().join('/'); if(!dm[k])dm[k]=0; dm[k]+=x.totale;}); 
+    // V51 FIX: Correctly structure 30D/12M Charts
+    const today=new Date(); const dates=[], l30=[], l30_prev=[];
+    for(let i=29; i>=0; i--) {
+        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; dates.push(dt.getDate()+'/'+(dt.getMonth()+1));
+        const dtPrev=new Date(dt); dtPrev.setFullYear(dt.getFullYear()-1); const dtPrevStr=dtPrev.toISOString().split('T')[0];
+        l30.push(dataIngressi.filter(x=>x.date===dtStr).reduce((a,b)=>a+b.totale,0));
+        l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr).reduce((a,b)=>a+b.totale,0));
+    }
+    renderLineChart('chartRecent30', dates, [{label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', fill:true},{label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
 
-        const m12=[], m12_prev=[], m_labels=[];
-        for(let i=11; i>=0; i--) {
-            const date=new Date(today.getFullYear(), today.getMonth()-i, 1); m_labels.push(date.toLocaleString('it-IT',{month:'short'}));
-            m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===date.getMonth() && xd.getFullYear()===date.getFullYear()}).reduce((a,b)=>a+b.totale,0));
-            m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===date.getMonth() && xd.getFullYear()===(date.getFullYear()-1)}).reduce((a,b)=>a+b.totale,0));
-        }
-        renderLineChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
+    const m12=[], m12_prev=[], m_labels=[];
+    for(let i=11; i>=0; i--) {
+        const date=new Date(today.getFullYear(), today.getMonth()-i, 1); m_labels.push(date.toLocaleString('it-IT',{month:'short'}));
+        m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===date.getMonth() && xd.getFullYear()===date.getFullYear()}).reduce((a,b)=>a+b.totale,0));
+        m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===date.getMonth() && xd.getFullYear()===(date.getFullYear()-1)}).reduce((a,b)=>a+b.totale,0));
+    }
+    renderLineChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
     }
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
     function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; [...dataDae].sort((a,b)=>new Date(b.date+' '+b.time)-new Date(a.date+' '+a.time)).forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
