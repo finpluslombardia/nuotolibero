@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V53 Stable</title>
+    <title>Piscina Facility Suite V54 Emergency Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -72,7 +72,7 @@
         .btn-danger { background: rgba(254, 202, 202, 0.4); color: #dc2626; border: 1px solid rgba(252, 165, 165, 0.5); }
         .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
 
-        /* FILTERS */
+        /* FILTERS & MULTI-SELECT */
         .filter-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
         .filter-select { padding: 0 15px; border-radius: 12px; height: 40px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); }
         .multi-select-container { position: relative; display: inline-block; }
@@ -319,22 +319,19 @@
     const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
     let dataIngressi=[], dataVasca=[], dataDae=[]; let editIdIngressi=null, editIdVasca=null;
 
-    // EXPOSE LOGIN/LOGOUT GLOBALLY
+    window.showToast = (msg, type='success') => { const c = document.getElementById('toast-container'); const e = document.createElement('div'); e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); };
     window.doLogin = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch(e) { document.getElementById('login-error').innerText = e.message; } };
     window.doLogout = () => signOut(auth);
-    window.showToast = (msg, type='success') => { const c = document.getElementById('toast-container'); const e = document.createElement('div'); e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); };
-
     onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen').classList.add('hidden'); document.getElementById('user-display').innerText=u.email.split('@')[0]; startListening(); } else { document.getElementById('login-screen').classList.remove('hidden'); } });
 
     function startListening() {
-        try {
-            onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
-            onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
-            onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
-        } catch(e) { console.error("Listener Error", e); }
+        onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
+        onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
+        // Simplified DAE query to avoid index errors
+        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
     }
 
-    // MULTI-SELECT
+    // MULTI-SELECT YEAR LOGIC
     let selectedYears = [];
     window.toggleMultiYear = () => { document.getElementById('year-dropdown').classList.toggle('show'); };
     window.updateSelectedYears = () => {
@@ -347,11 +344,17 @@
         const y=[...new Set(dataIngressi.map(d=>d.date.split('-')[0]))].sort().reverse(); 
         const container = document.getElementById('year-dropdown');
         container.innerHTML = '';
-        y.forEach(year => { container.innerHTML += `<label class="multi-option"><input type="checkbox" class="year-checkbox" value="${year}" onchange="updateSelectedYears()"><span>${year}</span></label>`; });
+        y.forEach(year => {
+            container.innerHTML += `
+                <label class="multi-option">
+                    <input type="checkbox" class="year-checkbox" value="${year}" onchange="updateSelectedYears()">
+                    <span>${year}</span>
+                </label>`;
+        });
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (V53: FIXED)
+    // RENDER STATS
     window.renderStats = () => {
         const m = document.getElementById('dash-month').value;
         const mode = document.getElementById('stat-mode').value; 
@@ -373,7 +376,8 @@
             labels = m !== 'all' ? Array.from({length:31},(_,i)=>i+1) : ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
             selectedYears.forEach((year, idx) => {
                 const yd = new Array(labels.length).fill(0);
-                dataIngressi.filter(d => d.date.startsWith(year) && (m==='all' || (new Date(d.date).getMonth()+1)==m)).forEach(d => yd[m!=='all' ? new Date(d.date).getDate()-1 : new Date(d.date).getMonth()] += d.totale);
+                dataIngressi.filter(d => d.date.startsWith(year) && (m==='all' || (new Date(d.date).getMonth()+1)==m))
+                            .forEach(d => yd[m!=='all' ? new Date(d.date).getDate()-1 : new Date(d.date).getMonth()] += d.totale);
                 sets.push({ label: year, data: yd, borderColor: colors[idx % colors.length], backgroundColor: colors[idx % colors.length]+'20', fill: false, tension: 0.4 });
             });
             if(showHistory && m === 'all') { sets.push(historyDataset); }
@@ -392,12 +396,13 @@
         document.getElementById('deep-total').innerText = parseFloat(displayTotal).toLocaleString();
         renderPie('chartPie', Object.keys(t), pieData);
 
-        // HELPER BUILDER
+        // HELPERS FOR MULTI-SERIES BAR
         const buildMultiSeries = (extractor, sortLabels=false) => {
             let yearsToUse = selectedYears.length > 0 ? selectedYears : [];
             let allLabels = new Set();
             dataIngressi.forEach(d => allLabels.add(extractor(d).key));
             let sortedL = Array.from(allLabels); if(sortLabels) sortedL.sort();
+            
             let historyDataPoints = sortedL.map(l => {
                 let subset = dataIngressi.filter(d => extractor(d).key === l && (m==='all'||(new Date(d.date).getMonth()+1)==m));
                 if(subset.length===0) return 0;
@@ -427,7 +432,7 @@
         // 4. WEEK (LINE + SAFE DAY MAPPING)
         const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
         const getJsDay = (i) => (i + 1) % 7; 
-        const getDayFromDate = (dateStr) => new Date(dateStr + 'T12:00:00').getDay(); // FORCE NOON TO AVOID TIMEZONE SHIFT
+        const getDayFromDate = (dateStr) => new Date(dateStr + 'T12:00:00').getDay();
         let weekSets = [];
         let historyWeekData = weekLabels.map((_, i) => {
              let subset = dataIngressi.filter(d => getDayFromDate(d.date) === getJsDay(i) && (m==='all'||(new Date(d.date).getMonth()+1)==m));
@@ -456,7 +461,7 @@
         renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
     };
 
-    // SAVE & EDIT
+    // ... (SAVE LOGIC) ...
     window.saveIngressi = async () => { const date = document.getElementById('i-date').value; if(!date) return showToast("Data mancante","error"); const payload = { date, fascia:document.getElementById('i-fascia').value, meteo:document.getElementById('i-meteo').value, int:parseInt(document.getElementById('q-intero').value)||0, rid:parseInt(document.getElementById('q-ridotto').value)||0, grat:parseInt(document.getElementById('q-gratuito').value)||0, abb_int:parseInt(document.getElementById('q-abb-int').value)||0, abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0, totale:(parseInt(document.getElementById('q-intero').value)||0)+(parseInt(document.getElementById('q-ridotto').value)||0)+(parseInt(document.getElementById('q-gratuito').value)||0)+(parseInt(document.getElementById('q-abb-int').value)||0)+(parseInt(document.getElementById('q-abb-rid').value)||0) }; if(payload.totale===0) return showToast("Inserisci dati","error"); try { if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), payload); showToast("Aggiornato"); cancelEditIngressi(); } else { await addDoc(collection(db,"sessioni"), payload); showToast("Salvato"); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); } } catch(e){ showToast(e.message,"error"); } };
     window.editIngressi = (id) => { const d = dataIngressi.find(x=>x.id===id); if(!d) return; editIdIngressi = id; document.getElementById('i-date').value=d.date; document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo; document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid; document.getElementById('q-gratuito').value=d.grat; document.getElementById('q-abb-int').value=d.abb_int; document.getElementById('q-abb-rid').value=d.abb_rid; document.getElementById('title-ingressi').innerText="Modifica Ingressi"; document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; document.getElementById('btn-save-ingressi').style.background="#f59e0b"; document.getElementById('cancel-ingressi').classList.remove('hidden'); document.getElementById('cb-ingressi').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
     window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); };
@@ -473,7 +478,7 @@
     function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
 
     function renderOverview() { const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m}); const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; 
-    // FIX OVERVIEW CHARTS: Correct logic for dual lines
+    // FIX CHART INIT
     const today=new Date(); const dates=[], l30=[], l30_prev=[];
     for(let i=29; i>=0; i--) {
         const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; dates.push(dt.getDate()+'/'+(dt.getMonth()+1));
@@ -491,9 +496,14 @@
     }
     renderLineChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
     }
+
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
-    function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; [...dataDae].sort((a,b)=>new Date(b.date+' '+b.time)-new Date(a.date+' '+a.time)).forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
-    function renderIngressiArchive() { const s=document.getElementById('arch-sort').value; const f=dataIngressi.filter(d=>true); /* Filter logic in helper */ f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return s==='desc'?db-da:da-db}); const t=document.getElementById('tbody-ingressi'); t.innerHTML=""; const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b><br><small style="color:#64748b">${d.meteo}</small></td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`; }); }); }
+    function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; 
+        // JS SORTING to fix DB index issue
+        const sortedDae = [...dataDae].sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
+        sortedDae.forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); 
+    }
+    function renderIngressiArchive() { const s=document.getElementById('arch-sort').value; const f=dataIngressi.filter(d=>true); f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return s==='desc'?db-da:da-db}); const t=document.getElementById('tbody-ingressi'); t.innerHTML=""; const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b><br><small style="color:#64748b">${d.meteo}</small></td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`; }); }); }
 
     // CHART HELPERS
     let ch={}; const opts={responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, layout:{padding:25}};
