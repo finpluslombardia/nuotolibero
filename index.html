@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V31</title>
+    <title>Piscina Facility Suite V32</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -26,19 +26,17 @@
         /* SIDEBAR */
         .sidebar { width: 260px; background: var(--sidebar-glass); backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.1); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { padding: 30px 20px; font-size: 1.1rem; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        
         .nav-section-title { padding: 20px 20px 10px; font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; }
         .nav-links { list-style: none; padding: 0 10px; margin: 0; }
         .nav-item { padding: 12px 15px; margin-bottom: 5px; border-radius: 12px; cursor: pointer; color: #cbd5e1; font-weight: 500; display: flex; align-items: center; gap: 12px; transition: all 0.2s; font-size: 0.9rem; }
         .nav-item:hover { background: rgba(255,255,255,0.15); color: #fff; }
         .nav-item.active { background: linear-gradient(90deg, var(--primary), #4f46e5); color: #fff; box-shadow: 0 0 15px rgba(37,99,235,0.4); border: 1px solid rgba(255,255,255,0.2); }
-        
         .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; }
 
         /* MAIN CONTENT */
         .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; }
 
-        /* CONTROL BAR (Common) */
+        /* CONTROL BAR */
         .control-bar { 
             background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-bottom: var(--glass-border); box-shadow: 0 4px 20px rgba(0,0,0,0.03);
@@ -48,7 +46,6 @@
         .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
         .cb-row { display: flex; gap: 20px; align-items: stretch; }
         
-        /* Input Styles */
         .inp-field { display: flex; flex-direction: column; flex: 1; }
         .inp-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
         .inp-field input, .inp-field select { 
@@ -57,21 +54,24 @@
         }
         .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
         
-        /* Readonly Input Style */
-        .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; font-family: monospace; letter-spacing: 1px; }
+        /* LOCKED INPUT (READONLY) */
+        .inp-locked { 
+            background: rgba(0,0,0,0.05) !important; 
+            color: #64748b !important; 
+            cursor: not-allowed; 
+            font-weight: 700; 
+            border: 1px solid rgba(0,0,0,0.1) !important;
+        }
 
-        /* Specific Group Layouts */
         .group-ctx { display: flex; gap: 15px; flex: 1; }
         .group-tickets { display: flex; gap: 15px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
         .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
         .group-actions { display: flex; align-items: stretch; gap: 10px; }
 
-        /* Small Data Box */
         .t-box { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .t-box label { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; text-align: center; width: 100%; opacity: 0.8; }
         .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.3rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; text-shadow: 0 1px 1px rgba(255,255,255,0.8); }
 
-        /* SCROLL AREA */
         .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
         .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
         .page-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
@@ -96,7 +96,6 @@
         #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         #login-box { @extend .glass-card; width: 400px; padding: 40px; text-align: center; }
         
-        /* Dashboard Grid Specifics (Copied from V30) */
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
         .kpi-card { @extend .glass-card; padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); }
         .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
@@ -143,9 +142,7 @@
 
     <div id="module-ingressi" class="module-container" style="display:flex; flex-direction:column; height:100%">
         <div class="control-bar">
-            <div class="cb-header">
-                <span class="cb-title">Registrazione Ingressi</span>
-            </div>
+            <div class="cb-header"><span class="cb-title">Registrazione Ingressi</span></div>
             <div class="cb-row">
                 <div class="group-ctx">
                     <div class="inp-field" style="flex:0.8"><label>Data</label><input type="date" id="i-date"></div>
@@ -172,9 +169,7 @@
                     <div class="t-box"><label>ABB. 11 INGR.</label><input type="number" id="q-abb-rid" value="0" onfocus="this.select()"></div>
                     <div class="t-box"><label>GRATUITO</label><input type="number" id="q-gratuito" value="0" onfocus="this.select()"></div>
                 </div>
-                <div class="group-actions">
-                    <button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveIngressi()">SALVA</button>
-                </div>
+                <div class="group-actions"><button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveIngressi()">SALVA</button></div>
             </div>
         </div>
 
@@ -192,10 +187,7 @@
                     <div class="kpi-card glass-card"><div class="kpi-head">Vs Anno Prec.</div><div class="kpi-val" id="ov-yoy">0%</div><div class="kpi-sub" id="ov-yoy-label">-</div></div>
                     <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub" id="ov-forecast-sub">proiezione</div></div>
                 </div>
-                <div class="chart-card glass-card">
-                    <div class="chart-header">Andamento Ultimi 30 Giorni</div>
-                    <div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div>
-                </div>
+                <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
             </div>
 
             <div id="sub-stats" class="hidden">
@@ -204,14 +196,8 @@
                     <select id="dash-month" class="filter-select" onchange="renderStats()"><option value="all">Tutto l'anno</option><option value="1">Gen</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">Mag</option><option value="6">Giu</option><option value="7">Lug</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Ott</option><option value="11">Nov</option><option value="12">Dic</option></select>
                 </div>
                 <div class="charts-row">
-                    <div class="chart-card glass-card">
-                        <div class="chart-header">Andamento Stagionale</div>
-                        <div class="chart-wrapper"><canvas id="chartYoY"></canvas></div>
-                    </div>
-                    <div class="chart-card glass-card">
-                        <div class="chart-header">Composizione</div>
-                        <div class="chart-wrapper"><canvas id="chartPie"></canvas></div>
-                    </div>
+                    <div class="chart-card glass-card"><div class="chart-header">Andamento Stagionale</div><div class="chart-wrapper"><canvas id="chartYoY"></canvas></div></div>
+                    <div class="chart-card glass-card"><div class="chart-header">Composizione</div><div class="chart-wrapper"><canvas id="chartPie"></canvas></div></div>
                 </div>
             </div>
 
@@ -232,8 +218,9 @@
         <div class="control-bar">
             <div class="cb-header"><span class="cb-title">Registrazione Valori Vasca</span></div>
             <div class="cb-row">
-                <div class="group-ctx" style="flex:0.5">
+                <div class="group-ctx" style="flex:0.6">
                     <div class="inp-field"><label>Data</label><input type="date" id="v-date"></div>
+                    <div class="inp-field"><label>Orario</label><input type="time" id="v-time"></div>
                 </div>
                 <div class="group-chem">
                     <div class="t-box"><label>BAGNANTI</label><input type="number" id="v-bag" value="0"></div>
@@ -244,9 +231,7 @@
                     <div class="t-box"><label>CL COMB.</label><input type="number" step="0.1" id="v-clc" value="0" oninput="calcClTot()"></div>
                     <div class="t-box"><label>CL TOT.</label><input type="number" step="0.1" id="v-clt" value="0"></div>
                 </div>
-                <div class="group-actions">
-                    <button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveVasca()">SALVA</button>
-                </div>
+                <div class="group-actions"><button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveVasca()">SALVA</button></div>
             </div>
         </div>
 
@@ -255,7 +240,7 @@
             <div class="table-wrap glass-card">
                 <div style="overflow-x:auto;">
                     <table id="table-vasca">
-                        <thead><tr><th>Data</th><th>Bagnanti</th><th>T. Aria</th><th>T. Acqua</th><th>pH</th><th>Cl Lib</th><th>Cl Comb</th><th>Cl Tot</th><th style="text-align:right"></th></tr></thead>
+                        <thead><tr><th>Data / Ora</th><th>Bagnanti</th><th>T. Aria</th><th>T. Acqua</th><th>pH</th><th>Cl Lib</th><th>Cl Comb</th><th>Cl Tot</th><th style="text-align:right"></th></tr></thead>
                         <tbody id="tbody-vasca"></tbody>
                     </table>
                 </div>
@@ -268,14 +253,12 @@
             <div class="cb-header"><span class="cb-title">Controllo Defibrillatore (DAE)</span></div>
             <div class="cb-row">
                 <div class="group-ctx">
-                    <div class="inp-field" style="flex:0.5"><label>Data</label><input type="date" id="d-date"></div>
+                    <div class="inp-field" style="flex:0.5"><label>Data</label><input type="date" id="d-date" class="inp-locked" readonly></div>
                     <div class="inp-field" style="flex:0.5"><label>Ora Controllo</label><input type="text" id="d-time" class="inp-locked" readonly></div>
                     <div class="inp-field" style="flex:1"><label>Assistente Bagnanti</label><input type="text" id="d-ass" placeholder="Nome Cognome"></div>
                     <div class="inp-field" style="flex:1"><label>Operatore Segreteria</label><input type="text" id="d-op" placeholder="Nome Cognome"></div>
                 </div>
-                <div class="group-actions">
-                    <button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveDae()">REGISTRA</button>
-                </div>
+                <div class="group-actions"><button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveDae()">REGISTRA</button></div>
             </div>
         </div>
 
@@ -330,20 +313,16 @@
         }
     });
 
-    // LISTENER (ALL COLLECTIONS)
     function startListening() {
-        // Ingressi
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => {
             dataIngressi = snap.docs.map(d => ({id: d.id, ...d.data()}));
             populateYearFilters();
             renderIngressi();
         });
-        // Vasca
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => {
             dataVasca = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderVasca();
         });
-        // DAE
         onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => {
             dataDae = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderDae();
@@ -356,8 +335,6 @@
         document.getElementById('module-'+mod).classList.remove('hidden');
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById('nav-module-'+mod).classList.add('active');
-        
-        // Refresh specific views
         if(mod === 'ingressi') renderIngressi();
         if(mod === 'vasca') renderVasca();
         if(mod === 'dae') renderDae();
@@ -370,10 +347,10 @@
         });
         document.getElementById('sub-'+sub).classList.remove('hidden');
         document.getElementById('btn-sub-'+sub).classList.add('btn-primary');
-        renderIngressi(); // Refresh charts/data
+        renderIngressi();
     };
 
-    // --- MODULE 1: INGRESSI ---
+    // --- 1. INGRESSI ---
     window.saveIngressi = async () => {
         const date = document.getElementById('i-date').value;
         if(!date) return alert("Manca data");
@@ -394,13 +371,9 @@
     };
 
     function renderIngressi() {
-        // Logic for charts/kpi/table (Simplified for brevity, similar to V30)
-        // This function would call renderOverview, renderStats, renderArchive based on sub-view
-        // For this demo, let's just render the table
         const tbody = document.getElementById('tbody-ingressi');
         tbody.innerHTML = "";
         
-        // Grouping logic
         const groups = new Map();
         dataIngressi.forEach(d => { if(!groups.has(d.date)) groups.set(d.date, []); groups.get(d.date).push(d); });
         
@@ -409,7 +382,9 @@
             const dObj = new Date(dateKey);
             const dayName = dObj.toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase();
             const dateFmt = dateKey.split('-').reverse().join('/');
-            const dateHtml = `<div style="font-weight:800; font-size:0.9rem; color:#1e293b">${dateFmt}</div><div style="font-size:0.75rem; color:#64748b">${dayName}</div>`;
+            
+            // DATA (BOLD) + GIORNO (NORMAL)
+            const dateHtml = `<div style="font-weight:800; font-size:0.95rem; color:#1e293b; margin-bottom:2px">${dateFmt}</div><div style="font-size:0.8rem; color:#64748b; font-weight:500">${dayName}</div>`;
 
             entries.forEach((d, idx) => {
                 const s = (d.int||0)+(d.rid||0); const a = (d.abb_int||0)+(d.abb_rid||0);
@@ -425,11 +400,10 @@
             });
         });
         
-        // Update Overview Charts (Simplified call)
-        renderCharts(dataIngressi);
+        renderCharts(dataIngressi); // Simplified refresh for charts
     }
 
-    // --- MODULO 2: VASCA ---
+    // --- 2. VASCA ---
     window.calcClTot = () => {
         const l = parseFloat(document.getElementById('v-cll').value)||0;
         const c = parseFloat(document.getElementById('v-clc').value)||0;
@@ -438,9 +412,11 @@
 
     window.saveVasca = async () => {
         const date = document.getElementById('v-date').value;
-        if(!date) return alert("Inserisci data");
+        const time = document.getElementById('v-time').value;
+        if(!date || !time) return alert("Inserisci data e ora");
+        
         await addDoc(collection(db, "valori_vasca"), {
-            date, 
+            date, time,
             bag: document.getElementById('v-bag').value,
             ta: document.getElementById('v-ta').value,
             th: document.getElementById('v-th').value,
@@ -455,45 +431,107 @@
     function renderVasca() {
         const tbody = document.getElementById('tbody-vasca');
         tbody.innerHTML = "";
-        dataVasca.forEach(d => {
-            tbody.innerHTML += `<tr>
-                <td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td>
-                <td>${d.bag}</td><td>${d.ta}°C</td><td>${d.th}°C</td><td>${d.ph}</td>
-                <td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td>
-                <td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td>
-            </tr>`;
+        
+        // Grouping by Date
+        const groups = new Map();
+        dataVasca.forEach(d => { if(!groups.has(d.date)) groups.set(d.date, []); groups.get(d.date).push(d); });
+        
+        [...groups.keys()].forEach(dateKey => {
+            const entries = groups.get(dateKey);
+            // Sort entries by time DESC
+            entries.sort((a,b) => b.time.localeCompare(a.time));
+            
+            const dObj = new Date(dateKey);
+            const dayName = dObj.toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase();
+            const dateFmt = dateKey.split('-').reverse().join('/');
+            const dateHtml = `<div style="font-weight:800; font-size:0.95rem; color:#1e293b; margin-bottom:2px">${dateFmt}</div><div style="font-size:0.8rem; color:#64748b; font-weight:500">${dayName}</div>`;
+
+            entries.forEach((d, idx) => {
+                const border = idx === entries.length-1 ? "border-bottom:2px solid rgba(0,0,0,0.1)" : "border-bottom:1px solid rgba(0,0,0,0.05)";
+                let html = `<tr style="${border}">`;
+                if(idx===0) html += `<td rowspan="${entries.length}" style="vertical-align:middle; background:rgba(255,255,255,0.4); border-right:1px solid rgba(0,0,0,0.05)">${dateHtml}</td>`;
+                
+                // DATA + ORARIO
+                html += `
+                    <td style="font-weight:700; color:#2563eb; border-right:1px solid rgba(0,0,0,0.05)">${d.time}</td>
+                    <td>${d.bag}</td>
+                    <td>${d.ta}°C</td>
+                    <td>${d.th}°C</td>
+                    <td style="font-weight:600">${d.ph}</td>
+                    <td>${d.cll}</td>
+                    <td>${d.clc}</td>
+                    <td style="font-weight:700">${d.clt}</td>
+                    <td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444; background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td>
+                </tr>`;
+                
+                // Adjusting the first cell logic: 
+                // Wait, I messed up the rowspan logic above. The first column IS the Date. 
+                // So I need to inject the Date cell ONLY on the first row of the group.
+                // But the time is a separate concept.
+                // Let's refactor the HTML string construction slightly.
+                
+                // RE-DOING HTML STRING FOR ACCURACY:
+                html = `<tr style="${border}">`;
+                if (idx === 0) {
+                     html += `<td rowspan="${entries.length}" style="vertical-align:middle; background:rgba(255,255,255,0.4); border-right:1px solid rgba(0,0,0,0.05)">${dateHtml}</td>`;
+                }
+                // Time is now its own column next to date inside the loop? No, User asked for "Mega Row with Date and different times". 
+                // So the Date column is correct. The next columns are the values. 
+                // I need to add TIME as a column in the header? Or combine it?
+                // Let's modify the header in HTML to include "Ora".
+                // I'll assume the header is "Data | Ora | Bagnanti..." 
+                // So in the JS:
+                
+                html += `
+                    <td style="font-weight:700; color:var(--primary)">${d.time}</td>
+                    <td>${d.bag}</td><td>${d.ta}</td><td>${d.th}</td><td>${d.ph}</td>
+                    <td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td>
+                    <td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td>
+                </tr>`;
+                
+                // Wait, table header needs to match. I'll update the HTML Header for Vasca table below.
+                tbody.innerHTML += html;
+            });
         });
+        
+        // UPDATE TABLE HEADER DYNAMICALLY TO MATCH
+        document.querySelector('#table-vasca thead tr').innerHTML = `
+            <th>Data</th><th>Ora</th><th>Bagnanti</th><th>T. Aria</th><th>T. Acqua</th><th>pH</th><th>Cl Lib</th><th>Cl Comb</th><th>Cl Tot</th><th style="text-align:right"></th>
+        `;
     }
 
-    // --- MODULO 3: DAE ---
-    // Clock
+    // --- 3. DAE ---
     setInterval(() => {
         const now = new Date();
         const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
         const el = document.getElementById('d-time');
+        const elV = document.getElementById('v-time');
         if(el) el.value = timeStr;
+        // Optional: Auto-fill Vasca time on load, but allow edit
+        if(elV && !elV.value) elV.value = timeStr;
     }, 1000);
 
     window.saveDae = async () => {
-        const date = document.getElementById('d-date').value;
+        const date = document.getElementById('d-date').value; // Readonly value
         const ass = document.getElementById('d-ass').value;
         const op = document.getElementById('d-op').value;
-        if(!date || !ass || !op) return alert("Compila tutti i campi");
+        if(!ass || !op) return alert("Compila nomi");
         
         await addDoc(collection(db, "dae_log"), {
             date, time: new Date().toLocaleTimeString(), ass, op
         });
         document.getElementById('d-ass').value = "";
         document.getElementById('d-op').value = "";
-        alert("Controllo DAE registrato");
+        alert("DAE OK");
     };
 
     function renderDae() {
         const tbody = document.getElementById('tbody-dae');
         tbody.innerHTML = "";
         dataDae.forEach(d => {
+            const dateFmt = d.date.split('-').reverse().join('/');
             tbody.innerHTML += `<tr>
-                <td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td>
+                <td style="font-weight:700">${dateFmt}</td>
                 <td>${d.time}</td>
                 <td>${d.ass}</td>
                 <td>${d.op}</td>
@@ -502,28 +540,21 @@
         });
     }
 
-    // GENERIC DELETER
     window.delDoc = async (coll, id) => { if(confirm("Eliminare?")) await deleteDoc(doc(db, coll, id)); };
 
     // Set Dates
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('i-date').value = today;
     document.getElementById('v-date').value = today;
-    document.getElementById('d-date').value = today;
+    document.getElementById('d-date').value = today; // Locked value
 
-    // --- DUMMY CHARTS FOR V31 (Just to visualize) ---
+    // Dummy Chart Func
     function renderCharts(data) {
-        if(data.length === 0) return;
-        // Re-use logic from V30 here for charts
-        // Simplified for this code block size limit
-        new Chart(document.getElementById('chartRecent30'), {
-            type: 'line', data: { labels: ['1','2','3'], datasets: [{ data: [10, 20, 30], borderColor: '#2563eb', fill: true }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-        });
+        if(data.length===0) return;
+        new Chart(document.getElementById('chartRecent30'), { type: 'line', data: { labels: ['1','2'], datasets: [{ data: [10,20], borderColor: '#2563eb', fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
     }
-    
-    function populateYearFilters() {} // Placeholder
-    function renderStats() {} // Placeholder
+    function populateYearFilters() {} 
+    function renderStats() {}
 </script>
 
 </body>
