@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V42 Smart Trend</title>
+    <title>Piscina Facility Suite V43 Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -48,18 +48,15 @@
         .cb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
         .cb-row { display: flex; gap: 20px; align-items: stretch; }
-        
         .inp-field { display: flex; flex-direction: column; flex: 1; }
         .inp-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
         .inp-field input, .inp-field select { padding: 0 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); font-size: 0.95rem; height: 44px; color: var(--text-main); font-family: inherit; font-weight: 500; transition: all 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
         .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; border: 1px solid rgba(0,0,0,0.1) !important; }
-
         .group-ctx { display: flex; gap: 15px; flex: 1; }
         .group-tickets { display: flex; gap: 15px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
         .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
         .group-actions { display: flex; align-items: stretch; gap: 10px; }
-
         .t-box { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .t-box label { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; text-align: center; width: 100%; opacity: 0.8; }
         .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.3rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; text-shadow: 0 1px 1px rgba(255,255,255,0.8); }
@@ -75,18 +72,23 @@
         .btn-danger { background: rgba(254, 202, 202, 0.4); color: #dc2626; border: 1px solid rgba(252, 165, 165, 0.5); }
         .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
 
-        /* FILTERS & MULTI-SELECT */
+        /* FILTERS & MULTI-SELECT (FIXED) */
         .filter-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; justify-content: flex-end; }
         .filter-select { padding: 0 15px; border-radius: 12px; height: 40px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); }
+        
         .multi-select-container { position: relative; display: inline-block; }
         .multi-select-btn { padding: 0 20px; height: 40px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); font-size: 0.9rem; font-weight: 600; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 10px; min-width: 120px; justify-content: space-between; }
         .multi-select-dropdown { position: absolute; top: 110%; right: 0; width: 200px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.5); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 10px; z-index: 100; display: none; }
         .multi-select-dropdown.show { display: block; animation: fadeIn 0.2s; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
-        .multi-option { padding: 8px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 8px; transition: background 0.1s; }
+        
+        /* Updated Option Style: Uses label for reliable clicking */
+        .multi-option { 
+            padding: 8px 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 8px; transition: background 0.1s; 
+            user-select: none; /* Prevents text highlighting */
+        }
         .multi-option:hover { background: rgba(37,99,235,0.1); }
-        .multi-option input { width: 16px; height: 16px; cursor: pointer; }
-        .multi-option label { font-size: 0.9rem; font-weight: 500; color: var(--text-main); cursor: pointer; flex: 1; }
+        .multi-option input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+        .multi-option span { font-size: 0.9rem; font-weight: 500; color: var(--text-main); flex: 1; }
 
         /* KPI & CHARTS */
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
@@ -125,7 +127,6 @@
         #login-box { @extend .glass-card; width: 400px; padding: 40px; text-align: center; }
         .archive-toolbar { display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.4); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: var(--glass-border); }
         .arch-input, .arch-select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-size: 0.85rem; color: var(--text-main); font-weight: 600; }
-        
         .trend-up { color: #16a34a; } .trend-down { color: #dc2626; }
     </style>
 </head>
@@ -312,10 +313,10 @@
     function startListening() {
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
-        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); }));
+        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
     }
 
-    // MULTI-SELECT YEAR LOGIC
+    // MULTI-SELECT YEAR LOGIC (FIXED HTML)
     let selectedYears = [];
     window.toggleMultiYear = () => { document.getElementById('year-dropdown').classList.toggle('show'); };
     window.updateSelectedYears = () => {
@@ -329,16 +330,17 @@
         const container = document.getElementById('year-dropdown');
         container.innerHTML = '';
         y.forEach(year => {
+            // USING LABEL FOR RELIABLE CLICKING
             container.innerHTML += `
-                <div class="multi-option" onclick="this.children[0].click()">
+                <label class="multi-option">
                     <input type="checkbox" class="year-checkbox" value="${year}" onchange="updateSelectedYears()">
-                    <label>${year}</label>
-                </div>`;
+                    <span>${year}</span>
+                </label>`;
         });
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (SMART TREND LOGIC V42)
+    // RENDER STATS (V42 Smart Trend)
     window.renderStats = () => {
         const m=document.getElementById('dash-month').value;
         const f = dataIngressi.filter(d => {
@@ -386,7 +388,7 @@
         }
         renderChart('chartYoY', 'line', labels, sets);
 
-        // 2. PIE DETAILED (V40)
+        // 2. PIE
         let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
         f.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
         renderPie('chartPie', Object.keys(t), Object.values(t));
@@ -410,11 +412,9 @@
             return { labels: sortedL, datasets };
         };
 
-        // 3. Meteo (Multi) - Avg
         const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}), 'avg');
         renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
 
-        // 4. Week (Multi) - Avg - Fixed Labels
         const weekLabels = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
         let weekSets = [];
         (selectedYears.length>0?selectedYears:[new Date().getFullYear().toString()]).forEach((y, idx) => {
@@ -426,7 +426,6 @@
         });
         renderMultiBar('chartWeek', weekLabels, weekSets);
 
-        // 5. Fasce (Multi) - Total
         const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}), 'total', true);
         renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
     };
@@ -456,7 +455,7 @@
     let ch={}; const opts={responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}};
     function renderLineChart(id,l,d,c) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'line',data:{labels:l,datasets:[{data:d,borderColor:c,fill:true,backgroundColor:c+'20',tension:0.4}]},options:opts}); }
     function renderBar(id,l,d,c,ax='x') { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:[{data:d,backgroundColor:c,borderRadius:6}]},options:{...opts,indexAxis:ax}}); }
-    function renderPie(id,l,d) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#ef4444'],borderWidth:0}]},options:{...opts,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
+    function renderPie(id,l,d) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#f59e0b','#ef4444'],borderWidth:0}]},options:{...opts,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
     function renderChart(id,t,l,ds) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:t,data:{labels:l,datasets:ds},options:{...opts,plugins:{legend:{display:true}}}}); }
     function renderMultiBar(id,l,ds,ax='x') { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:ds},options:{...opts,indexAxis:ax,plugins:{legend:{display:true}}}}); }
 
