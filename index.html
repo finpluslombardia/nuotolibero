@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V36</title>
+    <title>Piscina Facility Suite V37 Full Analytics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -24,23 +24,10 @@
         }
 
         /* TOAST NOTIFICATION */
-        #toast-container {
-            position: fixed; bottom: 30px; right: 30px; z-index: 10000;
-            display: flex; flex-direction: column; gap: 10px; pointer-events: none;
-        }
-        .toast {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 10px 40px rgba(37, 99, 235, 0.15);
-            padding: 15px 25px; border-radius: 16px;
-            color: var(--text-main); font-weight: 700; font-size: 0.9rem;
-            display: flex; align-items: center; gap: 10px;
-            transform: translateY(20px); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        #toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 10px 40px rgba(37, 99, 235, 0.15); padding: 15px 25px; border-radius: 16px; color: var(--text-main); font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; transform: translateY(20px); opacity: 0; transition: all 0.3s; }
         .toast.show { transform: translateY(0); opacity: 1; }
-        .toast-success { border-left: 5px solid #10b981; }
-        .toast-error { border-left: 5px solid #ef4444; }
+        .toast-success { border-left: 5px solid #10b981; } .toast-error { border-left: 5px solid #ef4444; }
 
         /* SIDEBAR */
         .sidebar { width: 250px; background: var(--sidebar-glass); backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.1); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
@@ -56,23 +43,15 @@
         .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; }
 
         /* CONTROL BAR */
-        .control-bar { 
-            background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border-bottom: var(--glass-border); box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            padding: 20px; z-index: 10; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; transition: background 0.3s;
-        }
+        .control-bar { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(15px); border-bottom: var(--glass-border); box-shadow: 0 4px 20px rgba(0,0,0,0.03); padding: 20px; z-index: 10; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; transition: background 0.3s; }
         .control-bar.editing { background: rgba(254, 243, 199, 0.9); border-bottom: 2px solid #f59e0b; }
-        
         .cb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
         .cb-row { display: flex; gap: 20px; align-items: stretch; }
         
         .inp-field { display: flex; flex-direction: column; flex: 1; }
         .inp-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; }
-        .inp-field input, .inp-field select { 
-            padding: 0 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65);
-            font-size: 0.95rem; height: 44px; color: var(--text-main); font-family: inherit; font-weight: 500; transition: all 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-        }
+        .inp-field input, .inp-field select { padding: 0 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); font-size: 0.95rem; height: 44px; color: var(--text-main); font-family: inherit; font-weight: 500; transition: all 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
         .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; border: 1px solid rgba(0,0,0,0.1) !important; }
 
@@ -86,14 +65,11 @@
         .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.3rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; text-shadow: 0 1px 1px rgba(255,255,255,0.8); }
 
         .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
-        .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
+        .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
         .page-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
 
-        /* TOOLBAR ARCHIVIO */
-        .archive-toolbar { 
-            display: flex; gap: 10px; align-items: center; flex-wrap: nowrap;
-            background: rgba(255,255,255,0.4); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: var(--glass-border);
-        }
+        /* TOOLBAR */
+        .archive-toolbar { display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.4); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: var(--glass-border); }
         .arch-group { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.5); padding: 5px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.5); }
         .arch-label { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
         .arch-input, .arch-select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-size: 0.85rem; color: var(--text-main); font-weight: 600; }
@@ -134,10 +110,16 @@
         .kpi-card { @extend .glass-card; padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); }
         .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
         .kpi-val { font-size: 2.4rem; font-weight: 800; color: var(--text-main); line-height: 1; margin-bottom: 5px; }
-        .chart-card { @extend .glass-card; height: 360px; }
+        .kpi-sub { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+        
+        .chart-card { @extend .glass-card; height: 360px; min-height: 360px; }
+        .chart-card.small { height: 300px; min-height: 300px; }
         .chart-wrapper { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
         .filter-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
         .filter-select { padding: 0 15px; border-radius: 12px; height: 40px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); }
+        .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 25px; }
+        .charts-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
+        
         .trend-up { color: #16a34a; } .trend-down { color: #dc2626; }
     </style>
 </head>
@@ -157,18 +139,13 @@
 
 <div class="sidebar">
     <div class="sidebar-header">🏊‍♂️ Facility Manager</div>
-    
     <div class="nav-section-title">Ingressi</div>
-    <ul class="nav-links">
-        <li class="nav-item active" id="nav-module-ingressi" onclick="switchModule('ingressi')">🎫 Nuoto Libero</li>
-    </ul>
-
+    <ul class="nav-links"><li class="nav-item active" id="nav-module-ingressi" onclick="switchModule('ingressi')">🎫 Nuoto Libero</li></ul>
     <div class="nav-section-title" style="margin-top:20px">Impianto</div>
     <ul class="nav-links">
         <li class="nav-item" id="nav-module-vasca" onclick="switchModule('vasca')">💧 Valori Vasca</li>
         <li class="nav-item" id="nav-module-dae" onclick="switchModule('dae')">⚡ Controllo DAE</li>
     </ul>
-
     <div class="sidebar-footer">
         <div style="font-size:0.85rem; margin-bottom:15px; color:#cbd5e1; font-weight:600" id="user-display">User</div>
         <button class="btn" style="width:100%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:0.8rem; height:38px" onclick="doLogout()">Disconnetti</button>
@@ -187,19 +164,10 @@
                 <div class="group-ctx">
                     <div class="inp-field" style="flex:0.8"><label>Data</label><input type="date" id="i-date"></div>
                     <div class="inp-field" style="flex:1.2"><label>Fascia</label>
-                        <select id="i-fascia">
-                            <optgroup label="🏊 Vasca Interna">
-                                <option value="Mattina">Mattina</option><option value="Mattina intera">Mattina intera</option><option value="Pranzo">Pranzo</option><option value="Sera">Sera</option><option value="Sabato pom">Sabato pom</option><option value="Domenica">Domenica</option><option value="Festivo">Festivo</option><option value="Unico">Unico</option>
-                            </optgroup>
-                            <optgroup label="☀️ Vasca Esterna">
-                                <option value="Estiva - Mattina">Estiva - Mattina</option><option value="Estiva - Pomeriggio">Estiva - Pomeriggio</option><option value="Estiva - Unico">Estiva - Unico</option>
-                            </optgroup>
-                        </select>
+                        <select id="i-fascia"><optgroup label="🏊 Vasca Interna"><option value="Mattina">Mattina</option><option value="Mattina intera">Mattina intera</option><option value="Pranzo">Pranzo</option><option value="Sera">Sera</option><option value="Sabato pom">Sabato pom</option><option value="Domenica">Domenica</option><option value="Festivo">Festivo</option><option value="Unico">Unico</option></optgroup><optgroup label="☀️ Vasca Esterna"><option value="Estiva - Mattina">Estiva - Mattina</option><option value="Estiva - Pomeriggio">Estiva - Pomeriggio</option><option value="Estiva - Unico">Estiva - Unico</option></optgroup></select>
                     </div>
                     <div class="inp-field" style="flex:1"><label>Meteo</label>
-                        <select id="i-meteo">
-                            <option value="☀️ Sole">☀️ Sole</option><option value="🔥 Sole + Caldo">🔥 Sole + Caldo</option><option value="❄️ Sole + Freddo">❄️ Sole + Freddo</option><option value="☁️ Nuvoloso">☁️ Nuvoloso</option><option value="🌥️ Nuv + Freddo">🌥️ Nuv + Freddo</option><option value="🌧️ Pioggia">🌧️ Pioggia</option><option value="🌨️ Piog + Freddo">🌨️ Piog + Freddo</option><option value="⛈️ Temporale">⛈️ Temporale</option><option value="❓ N/D">❓ N/D</option>
-                        </select>
+                        <select id="i-meteo"><option value="☀️ Sole">☀️ Sole</option><option value="🔥 Sole + Caldo">🔥 Sole + Caldo</option><option value="❄️ Sole + Freddo">❄️ Sole + Freddo</option><option value="☁️ Nuvoloso">☁️ Nuvoloso</option><option value="🌥️ Nuv + Freddo">🌥️ Nuv + Freddo</option><option value="🌧️ Pioggia">🌧️ Pioggia</option><option value="🌨️ Piog + Freddo">🌨️ Piog + Freddo</option><option value="⛈️ Temporale">⛈️ Temporale</option><option value="❓ N/D">❓ N/D</option></select>
                     </div>
                 </div>
                 <div class="group-tickets">
@@ -236,8 +204,27 @@
                     <select id="dash-month" class="filter-select" onchange="renderStats()"><option value="all">Tutto l'anno</option><option value="1">Gen</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">Mag</option><option value="6">Giu</option><option value="7">Lug</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Ott</option><option value="11">Nov</option><option value="12">Dic</option></select>
                 </div>
                 <div class="charts-row">
-                    <div class="chart-card glass-card"><div class="chart-header">Andamento Stagionale</div><div class="chart-wrapper"><canvas id="chartYoY"></canvas></div></div>
-                    <div class="chart-card glass-card"><div class="chart-header">Composizione</div><div class="chart-wrapper"><canvas id="chartPie"></canvas></div></div>
+                    <div class="chart-card glass-card">
+                        <div class="chart-header">Andamento Stagionale (YoY)</div>
+                        <div class="chart-wrapper"><canvas id="chartYoY"></canvas></div>
+                    </div>
+                    <div class="chart-card glass-card" style="justify-content:center; text-align:center">
+                        <div class="chart-header" style="width:100%; text-align:left">Composizione Clientela</div>
+                        <div class="chart-wrapper" style="max-height:220px; display:flex; justify-content:center"><canvas id="chartPie"></canvas></div>
+                        <div style="margin-top:auto; width:100%; padding-top:15px; border-top:1px solid rgba(0,0,0,0.05)">
+                            <div style="font-size:0.8rem; color:#64748b; margin-bottom:5px; font-weight:700">TOTALE SELEZIONE</div>
+                            <div id="deep-total" style="color:var(--primary); font-size:1.8rem; font-weight:900">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="charts-grid-3">
+                    <div class="chart-card small glass-card"><div class="chart-header">Impatto Meteo</div><div class="chart-wrapper"><canvas id="chartMeteo"></canvas></div></div>
+                    <div class="chart-card small glass-card"><div class="chart-header">Trend Settimanale</div><div class="chart-wrapper"><canvas id="chartWeek"></canvas></div></div>
+                    <div class="chart-card small glass-card"><div class="chart-header">Fasce Orarie</div><div class="chart-wrapper"><canvas id="chartFasce"></canvas></div></div>
+                </div>
+                <div class="chart-card glass-card" style="margin-top:25px; height:300px; min-height:300px">
+                    <div class="chart-header">Dettaglio Tipologia Ingressi</div>
+                    <div class="chart-wrapper"><canvas id="chartTickets"></canvas></div>
                 </div>
             </div>
 
@@ -271,38 +258,18 @@
 
     <div id="module-vasca" class="module-container hidden" style="display:flex; flex-direction:column; height:100%">
         <div class="control-bar" id="cb-vasca">
-            <div class="cb-header">
-                <span class="cb-title" id="title-vasca">Registrazione Valori Vasca</span>
-                <button class="btn btn-danger hidden" id="cancel-vasca" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditVasca()">Annulla Modifica</button>
-            </div>
+            <div class="cb-header"><span class="cb-title" id="title-vasca">Registrazione Valori Vasca</span><button class="btn btn-danger hidden" id="cancel-vasca" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditVasca()">Annulla Modifica</button></div>
             <div class="cb-row">
-                <div class="group-ctx" style="flex:0.6">
-                    <div class="inp-field"><label>Data</label><input type="date" id="v-date"></div>
-                    <div class="inp-field"><label>Orario</label><input type="time" id="v-time"></div>
-                </div>
+                <div class="group-ctx" style="flex:0.6"><div class="inp-field"><label>Data</label><input type="date" id="v-date"></div><div class="inp-field"><label>Orario</label><input type="time" id="v-time"></div></div>
                 <div class="group-chem">
-                    <div class="t-box"><label>BAGNANTI</label><input type="number" id="v-bag" value="0"></div>
-                    <div class="t-box"><label>T. ARIA</label><input type="number" step="0.1" id="v-ta" value="0"></div>
-                    <div class="t-box"><label>T. H2O</label><input type="number" step="0.1" id="v-th" value="0"></div>
-                    <div class="t-box"><label>pH</label><input type="number" step="0.1" id="v-ph" value="0"></div>
-                    <div class="t-box"><label>CL LIB.</label><input type="number" step="0.1" id="v-cll" value="0" oninput="calcClTot()"></div>
-                    <div class="t-box"><label>CL COMB.</label><input type="number" step="0.1" id="v-clc" value="0" oninput="calcClTot()"></div>
-                    <div class="t-box"><label>CL TOT.</label><input type="number" step="0.1" id="v-clt" value="0"></div>
+                    <div class="t-box"><label>BAGNANTI</label><input type="number" id="v-bag" value="0"></div><div class="t-box"><label>T. ARIA</label><input type="number" step="0.1" id="v-ta" value="0"></div><div class="t-box"><label>T. H2O</label><input type="number" step="0.1" id="v-th" value="0"></div><div class="t-box"><label>pH</label><input type="number" step="0.1" id="v-ph" value="0"></div><div class="t-box"><label>CL LIB.</label><input type="number" step="0.1" id="v-cll" value="0" oninput="calcClTot()"></div><div class="t-box"><label>CL COMB.</label><input type="number" step="0.1" id="v-clc" value="0" oninput="calcClTot()"></div><div class="t-box"><label>CL TOT.</label><input type="number" step="0.1" id="v-clt" value="0"></div>
                 </div>
                 <div class="group-actions"><button id="btn-save-vasca" class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveVasca()">SALVA</button></div>
             </div>
         </div>
-
         <div class="scroll-area">
             <h2 class="page-title">💧 Diario Vasca</h2>
-            <div class="table-wrap glass-card">
-                <div style="overflow-x:auto;">
-                    <table id="table-vasca">
-                        <thead><tr><th>Data</th><th>Ora</th><th>Bagnanti</th><th>T. Aria</th><th>T. Acqua</th><th>pH</th><th>Cl Lib</th><th>Cl Comb</th><th>Cl Tot</th><th style="text-align:right"></th></tr></thead>
-                        <tbody id="tbody-vasca"></tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-vasca"><thead><tr><th>Data</th><th>Ora</th><th>Bagnanti</th><th>T. Aria</th><th>T. Acqua</th><th>pH</th><th>Cl Lib</th><th>Cl Comb</th><th>Cl Tot</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-vasca"></tbody></table></div></div>
         </div>
     </div>
 
@@ -311,31 +278,16 @@
             <div class="cb-header"><span class="cb-title">Controllo Defibrillatore (DAE)</span></div>
             <div class="cb-row">
                 <div class="group-ctx">
-                    <div class="inp-field" style="flex:0.5"><label>Data</label><input type="date" id="d-date" class="inp-locked" readonly></div>
-                    <div class="inp-field" style="flex:0.5"><label>Ora Controllo</label><input type="text" id="d-time" class="inp-locked" readonly></div>
-                    <div class="inp-field" style="flex:0.8"><label>Stato</label>
-                        <select id="d-status">
-                            <option value="OK">✅ Funzionante</option>
-                            <option value="GUASTO">❌ Guasto / Anomalie</option>
-                        </select>
-                    </div>
-                    <div class="inp-field" style="flex:1"><label>Assistente Bagnanti</label><input type="text" id="d-ass" placeholder="Nome Cognome"></div>
-                    <div class="inp-field" style="flex:1"><label>Operatore Segreteria</label><input type="text" id="d-op" placeholder="Nome Cognome"></div>
+                    <div class="inp-field" style="flex:0.5"><label>Data</label><input type="date" id="d-date" class="inp-locked" readonly></div><div class="inp-field" style="flex:0.5"><label>Ora Controllo</label><input type="text" id="d-time" class="inp-locked" readonly></div>
+                    <div class="inp-field" style="flex:0.8"><label>Stato</label><select id="d-status"><option value="OK">✅ Funzionante</option><option value="GUASTO">❌ Guasto / Anomalie</option></select></div>
+                    <div class="inp-field" style="flex:1"><label>Assistente Bagnanti</label><input type="text" id="d-ass" placeholder="Nome Cognome"></div><div class="inp-field" style="flex:1"><label>Operatore Segreteria</label><input type="text" id="d-op" placeholder="Nome Cognome"></div>
                 </div>
                 <div class="group-actions"><button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveDae()">REGISTRA</button></div>
             </div>
         </div>
-
         <div class="scroll-area">
             <h2 class="page-title">⚡ Registro Controlli DAE</h2>
-            <div class="table-wrap glass-card">
-                <div style="overflow-x:auto;">
-                    <table id="table-dae">
-                        <thead><tr><th>Data</th><th>Ora</th><th>Stato</th><th>Assistente Bagnanti</th><th>Operatore Segreteria</th><th style="text-align:right"></th></tr></thead>
-                        <tbody id="tbody-dae"></tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-dae"><thead><tr><th>Data</th><th>Ora</th><th>Stato</th><th>Assistente Bagnanti</th><th>Operatore Segreteria</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-dae"></tbody></table></div></div>
         </div>
     </div>
 
@@ -346,360 +298,189 @@
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0",
-      authDomain: "piscinastats-64519.firebaseapp.com",
-      projectId: "piscinastats-64519",
-      storageBucket: "piscinastats-64519.firebasestorage.app",
-      messagingSenderId: "297663099794",
-      appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0", authDomain: "piscinastats-64519.firebaseapp.com", projectId: "piscinastats-64519", storageBucket: "piscinastats-64519.firebasestorage.app", messagingSenderId: "297663099794", appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b" };
+    const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
+    let dataIngressi=[], dataVasca=[], dataDae=[]; let editIdIngressi=null, editIdVasca=null;
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    let dataIngressi=[], dataVasca=[], dataDae=[];
-    let editIdIngressi = null;
-    let editIdVasca = null;
-
-    // --- TOAST SYSTEM ---
+    // UTILS
     window.showToast = (msg, type='success') => {
-        const container = document.getElementById('toast-container');
-        const el = document.createElement('div');
-        el.className = `toast toast-${type}`;
-        el.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`;
-        container.appendChild(el);
-        requestAnimationFrame(() => el.classList.add('show'));
-        setTimeout(() => {
-            el.classList.remove('show');
-            setTimeout(() => el.remove(), 300);
-        }, 3000);
+        const c = document.getElementById('toast-container'); const e = document.createElement('div');
+        e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`;
+        c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000);
     };
-
-    // --- AUTH ---
     window.doLogin = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch(e) { document.getElementById('login-error').innerText = e.message; } };
     window.doLogout = () => signOut(auth);
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('user-display').innerText = user.email.split('@')[0];
-            startListening();
-        } else { document.getElementById('login-screen').classList.remove('hidden'); }
-    });
+    onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen').classList.add('hidden'); document.getElementById('user-display').innerText=u.email.split('@')[0]; startListening(); } else { document.getElementById('login-screen').classList.remove('hidden'); } });
 
-    // --- DATA ---
     function startListening() {
-        onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => {
-            dataIngressi = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            populateYearFilters();
-            refreshCurrentView();
-        });
-        onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => {
-            dataVasca = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca();
-        });
-        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc")), (snap) => {
-            dataDae = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae();
-        });
+        onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
+        onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
+        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
     }
 
-    // --- 1. INGRESSI (EDITABLE) ---
+    // INGRESSI
     window.saveIngressi = async () => {
-        const date = document.getElementById('i-date').value;
-        if(!date) return showToast("Inserisci la data", "error");
+        const date = document.getElementById('i-date').value; if(!date) return showToast("Data mancante","error");
         const payload = {
-            date, fascia: document.getElementById('i-fascia').value, meteo: document.getElementById('i-meteo').value,
-            int: parseInt(document.getElementById('q-intero').value)||0,
-            rid: parseInt(document.getElementById('q-ridotto').value)||0,
-            grat: parseInt(document.getElementById('q-gratuito').value)||0,
-            abb_int: parseInt(document.getElementById('q-abb-int').value)||0,
-            abb_rid: parseInt(document.getElementById('q-abb-rid').value)||0,
-            totale: (parseInt(document.getElementById('q-intero').value)||0)+(parseInt(document.getElementById('q-ridotto').value)||0)+(parseInt(document.getElementById('q-gratuito').value)||0)+(parseInt(document.getElementById('q-abb-int').value)||0)+(parseInt(document.getElementById('q-abb-rid').value)||0)
+            date, fascia:document.getElementById('i-fascia').value, meteo:document.getElementById('i-meteo').value,
+            int:parseInt(document.getElementById('q-intero').value)||0, rid:parseInt(document.getElementById('q-ridotto').value)||0,
+            grat:parseInt(document.getElementById('q-gratuito').value)||0, abb_int:parseInt(document.getElementById('q-abb-int').value)||0,
+            abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0,
+            totale:(parseInt(document.getElementById('q-intero').value)||0)+(parseInt(document.getElementById('q-ridotto').value)||0)+(parseInt(document.getElementById('q-gratuito').value)||0)+(parseInt(document.getElementById('q-abb-int').value)||0)+(parseInt(document.getElementById('q-abb-rid').value)||0)
         };
-        
-        if(payload.totale === 0) return showToast("Inserisci almeno un ingresso", "error");
-
-        try {
-            if(editIdIngressi) {
-                await updateDoc(doc(db, "sessioni", editIdIngressi), payload);
-                showToast("Ingressi aggiornati!");
-                cancelEditIngressi();
-            } else {
-                await addDoc(collection(db, "sessioni"), payload);
-                showToast("Ingressi salvati!");
-                document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0);
-            }
-        } catch(e) { showToast(e.message, "error"); }
+        if(payload.totale===0) return showToast("Inserisci dati","error");
+        try { if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), payload); showToast("Aggiornato"); cancelEditIngressi(); } else { await addDoc(collection(db,"sessioni"), payload); showToast("Salvato"); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); } } catch(e){ showToast(e.message,"error"); }
     };
-
     window.editIngressi = (id) => {
-        const d = dataIngressi.find(x=>x.id===id); if(!d) return;
-        editIdIngressi = id;
-        document.getElementById('i-date').value = d.date;
-        document.getElementById('i-fascia').value = d.fascia;
-        document.getElementById('i-meteo').value = d.meteo;
-        document.getElementById('q-intero').value = d.int;
-        document.getElementById('q-ridotto').value = d.rid;
-        document.getElementById('q-gratuito').value = d.grat;
-        document.getElementById('q-abb-int').value = d.abb_int;
-        document.getElementById('q-abb-rid').value = d.abb_rid;
-        
-        document.getElementById('title-ingressi').innerText = "Modifica Ingressi";
-        document.getElementById('btn-save-ingressi').innerText = "AGGIORNA";
-        document.getElementById('btn-save-ingressi').style.background = "#f59e0b"; // Warning color
-        document.getElementById('cancel-ingressi').classList.remove('hidden');
-        document.getElementById('cb-ingressi').classList.add('editing');
-        
-        window.scrollTo({top:0, behavior:'smooth'});
+        const d = dataIngressi.find(x=>x.id===id); if(!d) return; editIdIngressi = id;
+        document.getElementById('i-date').value=d.date; document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo;
+        document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid; document.getElementById('q-gratuito').value=d.grat;
+        document.getElementById('q-abb-int').value=d.abb_int; document.getElementById('q-abb-rid').value=d.abb_rid;
+        document.getElementById('title-ingressi').innerText="Modifica Ingressi"; document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; document.getElementById('btn-save-ingressi').style.background="#f59e0b"; document.getElementById('cancel-ingressi').classList.remove('hidden'); document.getElementById('cb-ingressi').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'});
     };
+    window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); };
 
-    window.cancelEditIngressi = () => {
-        editIdIngressi = null;
-        document.getElementById('title-ingressi').innerText = "Registrazione Ingressi";
-        document.getElementById('btn-save-ingressi').innerText = "SALVA";
-        document.getElementById('btn-save-ingressi').style.background = ""; // Reset
-        document.getElementById('cancel-ingressi').classList.add('hidden');
-        document.getElementById('cb-ingressi').classList.remove('editing');
-        document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0);
-    };
-
-    // --- 2. VASCA (EDITABLE) ---
-    window.calcClTot = () => {
-        const l = parseFloat(document.getElementById('v-cll').value)||0;
-        const c = parseFloat(document.getElementById('v-clc').value)||0;
-        document.getElementById('v-clt').value = (l+c).toFixed(2);
-    };
-
+    // VASCA
+    window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
     window.saveVasca = async () => {
-        const date = document.getElementById('v-date').value;
-        const time = document.getElementById('v-time').value;
-        if(!date || !time) return showToast("Data e Ora obbligatori", "error");
-        
-        const payload = {
-            date, time,
-            bag: document.getElementById('v-bag').value, ta: document.getElementById('v-ta').value, th: document.getElementById('v-th').value,
-            ph: document.getElementById('v-ph').value, cll: document.getElementById('v-cll').value, clc: document.getElementById('v-clc').value, clt: document.getElementById('v-clt').value
-        };
-
-        try {
-            if(editIdVasca) {
-                await updateDoc(doc(db, "valori_vasca", editIdVasca), payload);
-                showToast("Valori aggiornati!");
-                cancelEditVasca();
-            } else {
-                await addDoc(collection(db, "valori_vasca"), payload);
-                showToast("Valori salvati!");
-            }
-        } catch(e) { showToast(e.message, "error"); }
+        const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value;
+        if(!date || !time) return showToast("Data/Ora mancanti","error");
+        const payload = { date, time, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value };
+        try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); }
     };
-
-    window.editVasca = (id) => {
-        const d = dataVasca.find(x=>x.id===id); if(!d) return;
-        editIdVasca = id;
-        document.getElementById('v-date').value = d.date;
-        document.getElementById('v-time').value = d.time;
-        document.getElementById('v-bag').value = d.bag;
-        document.getElementById('v-ta').value = d.ta;
-        document.getElementById('v-th').value = d.th;
-        document.getElementById('v-ph').value = d.ph;
-        document.getElementById('v-cll').value = d.cll;
-        document.getElementById('v-clc').value = d.clc;
-        document.getElementById('v-clt').value = d.clt;
-
-        document.getElementById('title-vasca').innerText = "Modifica Valori";
-        document.getElementById('btn-save-vasca').innerText = "AGGIORNA";
-        document.getElementById('btn-save-vasca').style.background = "#f59e0b";
-        document.getElementById('cancel-vasca').classList.remove('hidden');
-        document.getElementById('cb-vasca').classList.add('editing');
-        window.scrollTo({top:0, behavior:'smooth'});
-    };
-
-    window.cancelEditVasca = () => {
-        editIdVasca = null;
-        document.getElementById('title-vasca').innerText = "Registrazione Valori Vasca";
-        document.getElementById('btn-save-vasca').innerText = "SALVA";
-        document.getElementById('btn-save-vasca').style.background = "";
-        document.getElementById('cancel-vasca').classList.add('hidden');
-        document.getElementById('cb-vasca').classList.remove('editing');
-    };
-
+    window.editVasca = (id) => { const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id; document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time; document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta; document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph; document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc; document.getElementById('v-clt').value=d.clt; document.getElementById('title-vasca').innerText="Modifica Valori"; document.getElementById('btn-save-vasca').innerText="AGGIORNA"; document.getElementById('btn-save-vasca').style.background="#f59e0b"; document.getElementById('cancel-vasca').classList.remove('hidden'); document.getElementById('cb-vasca').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+    window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('title-vasca').innerText="Registrazione Valori"; document.getElementById('btn-save-vasca').innerText="SALVA"; document.getElementById('btn-save-vasca').style.background=""; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
     function renderVasca() {
-        const tbody = document.getElementById('tbody-vasca'); tbody.innerHTML = "";
-        const groups = new Map();
-        dataVasca.forEach(d => { if(!groups.has(d.date)) groups.set(d.date, []); groups.get(d.date).push(d); });
-        
-        [...groups.keys()].forEach(dateKey => {
-            const entries = groups.get(dateKey); entries.sort((a,b) => b.time.localeCompare(a.time));
-            const dObj = new Date(dateKey);
-            const dateHtml = `<div style="font-weight:800; font-size:0.95rem; color:#1e293b; margin-bottom:2px">${dateKey.split('-').reverse().join('/')}</div><div style="font-size:0.8rem; color:#64748b; font-weight:500">${dObj.toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase()}</div>`;
-            entries.forEach((d, idx) => {
-                const border = idx === entries.length-1 ? "border-bottom:2px solid rgba(0,0,0,0.1)" : "border-bottom:1px solid rgba(0,0,0,0.05)";
-                let html = `<tr style="${border}">`;
-                if(idx===0) html += `<td rowspan="${entries.length}" style="vertical-align:middle; background:rgba(255,255,255,0.4); border-right:1px solid rgba(0,0,0,0.05)">${dateHtml}</td>`;
-                html += `<td style="font-weight:700; color:#2563eb; border-right:1px solid rgba(0,0,0,0.05)">${d.time}</td>
-                         <td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td>
-                         <td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td>
-                         <td style="text-align:right">
-                            <button class="btn btn-icon" style="color:var(--primary); background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button>
-                            <button class="btn btn-icon" style="color:#ef4444; background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button>
-                         </td></tr>`;
-                tbody.innerHTML += html;
+        const t = document.getElementById('tbody-vasca'); t.innerHTML=""; const g = new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)});
+        [...g.keys()].forEach(k=>{
+            const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`;
+            e.forEach((d,i)=>{
+                const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)";
+                t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''}
+                <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td>
+                <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`;
             });
         });
     }
 
-    // --- 3. DAE (FIXED RENDER & STATUS) ---
-    setInterval(() => {
-        const now = new Date();
-        const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-        const el = document.getElementById('d-time'); const elV = document.getElementById('v-time');
-        if(el) el.value = timeStr;
-        if(elV && !elV.value && !editIdVasca) elV.value = timeStr; 
-    }, 1000);
+    // DAE
+    setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; if(document.getElementById('v-time') && !document.getElementById('v-time').value && !editIdVasca) document.getElementById('v-time').value=s; },1000);
+    window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:new Date().toLocaleTimeString(),ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
+    function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; [...dataDae].sort((a,b)=>new Date(b.date+' '+b.time)-new Date(a.date+' '+a.time)).forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
 
-    window.saveDae = async () => {
-        // FORCE DATE
-        const rawDate = document.getElementById('d-date').value;
-        const date = rawDate || new Date().toISOString().split('T')[0];
-        
-        const ass = document.getElementById('d-ass').value; 
-        const op = document.getElementById('d-op').value;
-        const status = document.getElementById('d-status').value;
+    // COMMON
+    window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
+    const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('v-date').value=today; document.getElementById('d-date').value=today;
 
-        if(!ass || !op) return showToast("Compila i nomi", "error");
-        
-        try {
-            await addDoc(collection(db, "dae_log"), {
-                date, time: new Date().toLocaleTimeString(), ass, op, status
-            });
-            document.getElementById('d-ass').value = ""; document.getElementById('d-op').value = "";
-            showToast("DAE Registrato!");
-        } catch(e) { showToast(e.message, "error"); }
-    };
+    // NAVIGATION & LOGIC
+    window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); refreshCurrentView(); if(m==='vasca') renderVasca(); if(m==='dae') renderDae(); };
+    window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
+    function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
+    function populateYearFilters(){ const y=[...new Set(dataIngressi.map(d=>d.date.split('-')[0]))].sort().reverse(); const s=document.getElementById('dash-year'); const c=s.value; s.innerHTML='<option value="all">Tutti</option>'; y.forEach(e=>s.innerHTML+=`<option value="${e}">${e}</option>`); if(y.includes(c)) s.value=c; }
 
-    function renderDae() {
-        const tbody = document.getElementById('tbody-dae');
-        tbody.innerHTML = "";
-        
-        // Sort DAE data by date desc
-        const sortedDae = [...dataDae].sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
-
-        if(!sortedDae.length) { tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px'>Nessun controllo registrato.</td></tr>"; return; }
-        
-        sortedDae.forEach(d => {
-            const badge = d.status === 'OK' ? '<span class="badge badge-ok">✅ OK</span>' : '<span class="badge badge-ko">❌ GUASTO</span>';
-            tbody.innerHTML += `<tr>
-                <td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td>
-                <td style="color:var(--primary); font-weight:600">${d.time}</td>
-                <td>${badge}</td>
-                <td>${d.ass}</td>
-                <td>${d.op}</td>
-                <td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td>
-            </tr>`;
-        });
-    }
-
-    // --- COMMON UTILS ---
-    window.delDoc = async (coll, id) => { if(confirm("Eliminare definitivamente?")) { await deleteDoc(doc(db, coll, id)); showToast("Eliminato"); } };
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('i-date').value = today; document.getElementById('v-date').value = today; document.getElementById('d-date').value = today;
-
-    // --- NAVIGATION ---
-    window.switchModule = (mod) => {
-        document.querySelectorAll('.module-container').forEach(el => el.classList.add('hidden'));
-        document.getElementById('module-'+mod).classList.remove('hidden');
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        document.getElementById('nav-module-'+mod).classList.add('active');
-        if(mod === 'ingressi') refreshCurrentView();
-        if(mod === 'vasca') renderVasca();
-        if(mod === 'dae') renderDae();
-    };
-    
-    function refreshCurrentView() {
-        if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview();
-        if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats();
-        if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive();
-    }
-
-    window.switchSubView = (sub) => {
-        ['overview','stats','archive'].forEach(v => {
-            document.getElementById('sub-'+v).classList.add('hidden');
-            document.getElementById('btn-sub-'+v).classList.remove('btn-primary');
-        });
-        document.getElementById('sub-'+sub).classList.remove('hidden');
-        document.getElementById('btn-sub-'+sub).classList.add('btn-primary');
-        refreshCurrentView();
-    };
-
-    // --- INGRESSI RENDER LOGIC ---
-    function renderIngressiArchive() {
-        const sortOrder = document.getElementById('arch-sort').value;
-        const filtered = getFilteredArchiveData(); 
-        filtered.sort((a, b) => { const dateA = new Date(a.date); const dateB = new Date(b.date); return sortOrder === 'desc' ? dateB - dateA : dateA - dateB; });
-
-        const tbody = document.getElementById('tbody-ingressi'); tbody.innerHTML = "";
-        const groups = new Map(); filtered.forEach(d => { if(!groups.has(d.date)) groups.set(d.date, []); groups.get(d.date).push(d); });
-        
-        [...groups.keys()].forEach(dateKey => {
-            const entries = groups.get(dateKey);
-            const dObj = new Date(dateKey);
-            const dateHtml = `<div style="font-weight:800; font-size:0.95rem; color:#1e293b; margin-bottom:2px">${dateKey.split('-').reverse().join('/')}</div><div style="font-size:0.8rem; color:#64748b; font-weight:500">${dObj.toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase()}</div>`;
-            entries.forEach((d, idx) => {
-                const totSing = (d.int||0)+(d.rid||0); const totAbb = (d.abb_int||0)+(d.abb_rid||0);
-                const border = idx === entries.length-1 ? "border-bottom:2px solid rgba(0,0,0,0.1)" : "border-bottom:1px solid rgba(0,0,0,0.05)";
-                let html = `<tr style="${border}">`;
-                if(idx===0) html += `<td rowspan="${entries.length}" style="vertical-align:middle; background:rgba(255,255,255,0.4); border-right:1px solid rgba(0,0,0,0.05)">${dateHtml}</td>`;
-                html += `<td><b>${d.fascia}</b><br><small style="color:#64748b">${d.meteo}</small></td>
-                         <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${totSing}</td>
-                         <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${totAbb}</td>
-                         <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td>
-                         <td style="text-align:right">
-                            <button class="btn btn-icon" style="color:var(--primary); background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button>
-                            <button class="btn btn-icon" style="color:#ef4444; background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button>
-                         </td></tr>`;
-                tbody.innerHTML += html;
-            });
-        });
-    }
-
-    function getFilteredArchiveData() {
-        const start = document.getElementById('arch-date-start').value;
-        const end = document.getElementById('arch-date-end').value;
-        const fasciaVal = document.getElementById('arch-filter-fascia').value;
-        const meteoVal = document.getElementById('arch-filter-meteo').value;
-        return dataIngressi.filter(d => {
-            let passDate = true; if(start && d.date < start) passDate = false; if(end && d.date > end) passDate = false;
-            let passFascia = true; if(fasciaVal !== 'all' && d.fascia !== fasciaVal) passFascia = false;
-            let passMeteo = true; if(meteoVal !== 'all' && d.meteo !== meteoVal) passMeteo = false;
-            return passDate && passFascia && passMeteo;
-        });
-    }
-    
-    // RESTORED HELPERS FOR CHARTS/FILTERS
+    // RENDERERS (OVERVIEW/STATS/ARCHIVE)
     function renderOverview() {
-        const now = new Date(); const currY = now.getFullYear(); const currM = now.getMonth()+1;
-        const currData = dataIngressi.filter(d => { const dt = new Date(d.date); return dt.getFullYear() === currY && (dt.getMonth()+1) === currM; });
-        const total = currData.reduce((a,b)=>a+b.totale,0); const days = new Set(currData.map(d=>d.date)).size;
-        document.getElementById('ov-avg').innerText = days > 0 ? (total/days).toFixed(0) : 0;
-        // ... (Calls to calcTrend) ...
-        // Re-draw chart
-        const dailyMap = {};
-        currData.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(d => { const dStr=d.date.split('-').slice(2).join(); if(!dailyMap[dStr]) dailyMap[dStr]=0; dailyMap[dStr]+=d.totale; });
-        renderLineChart('chartRecent30', Object.keys(dailyMap), Object.values(dailyMap), '#2563eb');
-    }
-    
-    window.renderStats = () => { renderLineChart('chartYoY', ['1','2'], [10,20], '#2563eb'); }; // Placeholder call
-    function populateYearFilters() {} // Placeholder
-    function calcTrend() {} // Placeholder
-    
-    let charts = {};
-    const commonOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
-    function renderLineChart(id, l, d, c) { if(charts[id]) charts[id].destroy(); charts[id] = new Chart(document.getElementById(id), { type: 'line', data: { labels:l, datasets:[{data:d, borderColor:c, fill:true}] }, options: commonOpts }); }
-    
-    window.downloadCSV = () => { showToast("Download avviato..."); };
-    window.resetArchiveFilters = () => { renderIngressiArchive(); };
+        const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1;
+        const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m});
+        const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size;
+        document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0;
+        
+        // Trends
+        const pm=m===1?12:m-1; const py=m===1?y-1:y;
+        const prevM = dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===py && (dt.getMonth()+1)===pm}).reduce((a,b)=>a+b.totale,0);
+        const prevY = dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y-1 && (dt.getMonth()+1)===m}).reduce((a,b)=>a+b.totale,0);
+        
+        const setTrend=(id,curr,prev)=>{ const el=document.getElementById(id); if(prev>0){const diff=((curr-prev)/prev)*100; el.innerText=(diff>0?"+":"")+diff.toFixed(1)+"%"; el.className=diff>=0?"kpi-val trend-up":"kpi-val trend-down";}else{el.innerText="-";el.className="kpi-val";} };
+        setTrend('ov-mom',t,prevM); setTrend('ov-yoy',t,prevY);
+        
+        const dim=new Date(y,m,0).getDate(); const dd=n.getDate();
+        document.getElementById('ov-forecast').innerText = dd>0?Math.round((t/dd)*dim).toLocaleString():"-";
 
+        const l30=new Date(); l30.setDate(l30.getDate()-30);
+        const rd=dataIngressi.filter(x=>new Date(x.date)>=l30).sort((a,b)=>new Date(a.date)-new Date(b.date));
+        const dm={}; rd.forEach(x=>{const k=x.date.split('-').slice(1).reverse().join('/'); if(!dm[k])dm[k]=0; dm[k]+=x.totale;});
+        renderLineChart('chartRecent30', Object.keys(dm), Object.values(dm), '#2563eb');
+    }
+
+    window.renderStats = () => {
+        const y=document.getElementById('dash-year').value; const m=document.getElementById('dash-month').value;
+        const f=dataIngressi.filter(d=>{const dt=new Date(d.date); return (y==='all'||dt.getFullYear().toString()===y) && (m==='all'||(dt.getMonth()+1).toString()===m)});
+        document.getElementById('deep-total').innerText = f.reduce((a,b)=>a+b.totale,0).toLocaleString();
+
+        // 1. YoY
+        const lbl=m!=='all'?Array.from({length:31},(_,i)=>i+1):["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+        const currD=new Array(lbl.length).fill(0); f.forEach(d=>{currD[m!=='all'?new Date(d.date).getDate()-1:new Date(d.date).getMonth()]+=d.totale});
+        let sets=[{label:y==='all'?'Totale':y, data:currD, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,0.1)', fill:true, tension:0.4}];
+        if(y!=='all'){
+            const prevY=(parseInt(y)-1).toString(); const prevD=new Array(lbl.length).fill(0);
+            dataIngressi.filter(d=>{const dt=new Date(d.date); return dt.getFullYear().toString()===prevY && (m==='all'||(dt.getMonth()+1).toString()===m)})
+                .forEach(d=>{prevD[m!=='all'?new Date(d.date).getDate()-1:new Date(d.date).getMonth()]+=d.totale});
+            sets.push({label:prevY, data:prevD, borderColor:'#94a3b8', borderDash:[5,5], fill:false, tension:0.4});
+        }
+        renderChart('chartYoY', 'line', lbl, sets);
+
+        // 2. Pie
+        let s=0, a=0, g=0; f.forEach(d=>{s+=(d.int||0)+(d.rid||0); a+=(d.abb_int||0)+(d.abb_rid||0); g+=(d.grat||0)});
+        renderPie('chartPie', [s,a,g]);
+
+        // 3. Meteo
+        const mm={}; f.forEach(d=>{if(!mm[d.meteo])mm[d.meteo]={t:0,c:0}; mm[d.meteo].t+=d.totale; mm[d.meteo].c++});
+        renderBar('chartMeteo', Object.keys(mm), Object.keys(mm).map(k=>(mm[k].t/mm[k].c).toFixed(0)), '#0ea5e9');
+
+        // 4. Week
+        const ws=[0,0,0,0,0,0,0]; f.forEach(d=>ws[new Date(d.date).getDay()]+=d.totale);
+        renderBar('chartWeek', ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'], ws, '#8b5cf6');
+
+        // 5. Fasce
+        const fm={}; f.forEach(d=>{if(!fm[d.fascia])fm[d.fascia]=0; fm[d.fascia]+=d.totale});
+        const fs=Object.entries(fm).sort((a,b)=>b[1]-a[1]).slice(0,6);
+        renderBar('chartFasce', fs.map(x=>x[0]), fs.map(x=>x[1]), '#f59e0b', 'y');
+
+        // 6. Ticket Types (NEW)
+        let tTypes = { 'Intero':0, 'Ridotto':0, 'Abb Per.':0, 'Abb 11':0, 'Gratis':0 };
+        f.forEach(d => { tTypes['Intero']+=d.int||0; tTypes['Ridotto']+=d.rid||0; tTypes['Abb Per.']+=d.abb_int||0; tTypes['Abb 11']+=d.abb_rid||0; tTypes['Gratis']+=d.grat||0; });
+        renderBar('chartTickets', Object.keys(tTypes), Object.values(tTypes), '#10b981');
+    };
+
+    window.renderIngressiArchive = () => {
+        const start=document.getElementById('arch-date-start').value; const end=document.getElementById('arch-date-end').value;
+        const ff=document.getElementById('arch-filter-fascia').value; const fm=document.getElementById('arch-filter-meteo').value;
+        const sort=document.getElementById('arch-sort').value;
+        
+        let res = dataIngressi.filter(d => {
+            if(start && d.date<start) return false; if(end && d.date>end) return false;
+            if(ff!=='all' && d.fascia!==ff) return false; if(fm!=='all' && d.meteo!==fm) return false;
+            return true;
+        });
+        res.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return sort==='desc'?db-da:da-db});
+
+        const t=document.getElementById('tbody-ingressi'); t.innerHTML="";
+        const g=new Map(); res.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)});
+        
+        [...g.keys()].forEach(k=>{
+            const e=g.get(k); const dObj=new Date(k);
+            const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${dObj.toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`;
+            e.forEach((d,i)=>{
+                const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)";
+                t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''}
+                <td><b>${d.fascia}</b><br><small style="color:#64748b">${d.meteo}</small></td>
+                <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td>
+                <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td>
+                <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td>
+                <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`;
+            });
+        });
+    }
+
+    // CHART HELPERS
+    let ch={}; const opts={responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}};
+    function renderLineChart(id, l, d, c) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'line',data:{labels:l,datasets:[{data:d,borderColor:c,fill:true,backgroundColor:c+'20',tension:0.4}]},options:opts}); }
+    function renderBar(id, l, d, c, ax='x') { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:[{data:d,backgroundColor:c,borderRadius:6}]},options:{...opts,indexAxis:ax}}); }
+    function renderPie(id, d) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:['Sing','Abb','Grat'],datasets:[{data:d,backgroundColor:['#3b82f6','#f59e0b','#ef4444'],borderWidth:0}]},options:{...opts,plugins:{legend:{position:'right'}}}}); }
+    function renderChart(id, t, l, ds) { if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:t,data:{labels:l,datasets:ds},options:{...opts,plugins:{legend:{display:true}}}}); }
+
+    window.resetArchiveFilters = () => { document.getElementById('arch-date-start').value=""; document.getElementById('arch-date-end').value=""; document.getElementById('arch-filter-fascia').value="all"; document.getElementById('arch-filter-meteo').value="all"; renderIngressiArchive(); };
+    window.downloadCSV = () => { showToast("Download avviato..."); };
 </script>
 
 </body>
