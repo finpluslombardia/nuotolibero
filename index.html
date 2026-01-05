@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Manager V30 Smart Grouping</title>
+    <title>Piscina Manager V31 Refined</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -93,14 +93,12 @@
         .arch-input, .arch-select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-size: 0.85rem; color: var(--text-main); font-weight: 500; }
         .arch-select { cursor: pointer; min-width: 140px; }
 
-        /* TABLE GROUPED STYLE */
+        /* TABLE */
         .table-wrap { @extend .glass-card; padding: 0; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th { text-align: left; padding: 18px 12px; background: rgba(255,255,255,0.5); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.9rem; vertical-align: middle; font-weight: 500; }
         tr:hover td { background: rgba(255,255,255,0.3); }
-        
-        /* Day Group Separator */
         tr.day-end td { border-bottom: 2px solid rgba(0,0,0,0.1) !important; }
 
         .badge { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: inline-block; backdrop-filter: blur(4px); }
@@ -513,7 +511,7 @@
         renderBarChart('chartFasce', fSort.map(x=>x[0]), fSort.map(x=>x[1]), '#ff9500', 'y');
     };
 
-    // --- ARCHIVE LOGIC (SMART GROUPING) ---
+    // --- ARCHIVE LOGIC ---
     function getFilteredArchiveData() {
         const start = document.getElementById('arch-date-start').value;
         const end = document.getElementById('arch-date-end').value;
@@ -539,19 +537,20 @@
         const groups = new Map();
         filtered.forEach(d => { if(!groups.has(d.date)) groups.set(d.date, []); groups.get(d.date).push(d); });
 
-        // Iteriamo sulle chiavi per mantenere l'ordinamento
         const uniqueDates = [...new Set(filtered.map(d => d.date))];
 
         uniqueDates.forEach(dateKey => {
             const entries = groups.get(dateKey);
             const dObj = new Date(dateKey);
-            const dayName = dObj.toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase();
+            // GIORNO IN MAIUSCOLO
+            const dayName = dObj.toLocaleDateString('it-IT', { weekday: 'long' }).toUpperCase();
+            // DATA NUMERICA
             const dateFmt = dateKey.split('-').reverse().join('/');
             
-            // Visualizzazione Data (Solo sulla prima riga)
+            // COSTRUZIONE CELLA DATA (INVERTITA: DATA BOLD, GIORNO NORMAL)
             const dateCellHtml = `
-                <div style="font-weight:900; font-size:0.9rem; color:var(--text-main); line-height:1.2">${dayName}</div>
-                <div style="font-size:0.8rem; color:var(--text-muted); font-weight:500">${dateFmt}</div>
+                <div style="font-weight:800; font-size:0.95rem; color:var(--text-main); margin-bottom:2px">${dateFmt}</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); font-weight:500; text-transform:uppercase">${dayName}</div>
             `;
 
             entries.forEach((d, index) => {
@@ -560,17 +559,12 @@
                 const totSing = (d.int||0) + (d.rid||0);
                 const totAbb = (d.abb_int||0) + (d.abb_rid||0);
                 const isLast = index === entries.length - 1;
-                
-                // Stile bordo inferiore: marcato se è l'ultima entry del giorno, leggero altrimenti
                 const rowStyle = isLast ? "border-bottom: 2px solid rgba(0,0,0,0.1);" : "border-bottom: 1px solid rgba(0,0,0,0.03);";
 
                 let html = `<tr style="${rowStyle}">`;
-                
-                // Cella Data (Rowspan)
                 if (index === 0) {
                     html += `<td rowspan="${entries.length}" style="vertical-align:middle; border-right:1px solid rgba(0,0,0,0.05); background:rgba(255,255,255,0.4)">${dateCellHtml}</td>`;
                 }
-
                 html += `
                     <td>
                         <span class="${badge}">${d.fascia}</span>
@@ -592,7 +586,6 @@
                         <button class="btn btn-icon" style="color:var(--danger); background:#fff1f2" onclick="window.delItem('${d.id}')">🗑️</button>
                     </td>
                 </tr>`;
-                
                 tbody.innerHTML += html;
             });
         });
@@ -660,9 +653,15 @@
 
     // --- SMART DOWNLOAD ---
     window.downloadCSV = () => {
-        const filtered = getFilteredArchiveData(); // Uses current Archive filters
-        const blob = new Blob([ "Data;Fascia;Meteo;Singoli;Abbonamenti;Gratuiti;TOTALE\n" + filtered.map(d=>`${d.date};${d.fascia};${d.meteo};${(d.int||0)+(d.rid||0)};${(d.abb_int||0)+(d.abb_rid||0)};${d.grat};${d.totale}`).join("\n")], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="Report_Filtrato.csv"; a.click();
+        const filtered = getFilteredArchiveData(); 
+        let csv = "Data;Fascia;Meteo;Intero;Ridotto;TOT_SINGOLI;Abb_Periodo;Abb_11_Ingr;TOT_ABBONAMENTI;Gratuiti;TOTALE_GENERALE\n";
+        filtered.forEach(d => {
+            const totSing = (d.int||0) + (d.rid||0);
+            const totAbb = (d.abb_int||0) + (d.abb_rid||0);
+            csv += `${d.date};${d.fascia};${d.meteo};${d.int};${d.rid};${totSing};${d.abb_int};${d.abb_rid};${totAbb};${d.grat};${d.totale}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="Report_Dettagliato.csv"; a.click();
     };
 
     document.getElementById('i-date').valueAsDate = new Date();
