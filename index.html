@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Manager V29 Detailed</title>
+    <title>Piscina Manager V30 Smart Grouping</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -59,7 +59,7 @@
         .t-box label { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; text-align: center; width: 100%; opacity: 0.8; }
         .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.5rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; text-shadow: 0 1px 1px rgba(255,255,255,0.8); }
 
-        /* SCROLL AREA & CARDS */
+        /* SCROLL AREA */
         .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
         .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
         .page-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
@@ -83,7 +83,7 @@
         .chart-header { margin-bottom: 15px; font-weight: 700; color: var(--text-main); font-size: 1rem; flex-shrink: 0; }
         .chart-wrapper { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
 
-        /* ARCHIVE TOOLBAR & TABLE */
+        /* ARCHIVE TOOLBAR */
         .archive-toolbar { 
             display: flex; gap: 10px; align-items: center; flex-wrap: nowrap;
             background: rgba(255,255,255,0.3); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: var(--glass-border);
@@ -93,17 +93,20 @@
         .arch-input, .arch-select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-size: 0.85rem; color: var(--text-main); font-weight: 500; }
         .arch-select { cursor: pointer; min-width: 140px; }
 
+        /* TABLE GROUPED STYLE */
         .table-wrap { @extend .glass-card; padding: 0; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
         th { text-align: left; padding: 18px 12px; background: rgba(255,255,255,0.5); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        td { padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.9rem; vertical-align: middle; font-weight: 500; }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.9rem; vertical-align: middle; font-weight: 500; }
         tr:hover td { background: rgba(255,255,255,0.3); }
         
+        /* Day Group Separator */
+        tr.day-end td { border-bottom: 2px solid rgba(0,0,0,0.1) !important; }
+
         .badge { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: inline-block; backdrop-filter: blur(4px); }
         .badge-summer { background: rgba(255, 237, 213, 0.7); color: #ea580c; border: 1px solid rgba(253, 186, 116, 0.4); }
         .badge-std { background: rgba(219, 234, 254, 0.7); color: #2563eb; border: 1px solid rgba(147, 197, 253, 0.4); }
 
-        /* DETAILED COLUMNS STYLE */
         .col-detail { color: var(--text-muted); font-size: 0.85rem; text-align: center; }
         .col-subtot { font-weight: 700; text-align: center; background: rgba(255,255,255,0.2); }
         .col-total { font-weight: 900; color: var(--text-main); text-align: center; font-size: 1.1rem; }
@@ -309,7 +312,7 @@
                     <option value="asc">⬆️ Vecchi</option>
                 </select>
                 <button class="btn btn-danger" style="height:36px; width:36px; padding:0" onclick="resetArchiveFilters()" title="Resetta">✕</button>
-                <button class="btn btn-primary" style="height:36px; font-size:0.8rem; padding:0 20px" onclick="downloadCSV()">Scarica Dati Filtrati</button>
+                <button class="btn btn-primary" style="height:36px; font-size:0.8rem; padding:0 20px" onclick="downloadCSV()">Scarica Excel</button>
             </div>
 
             <div class="table-wrap glass-card">
@@ -317,7 +320,7 @@
                     <table id="data-table">
                         <thead>
                             <tr>
-                                <th style="min-width:100px">Data</th>
+                                <th style="min-width:110px">Data</th>
                                 <th>Fascia / Meteo</th>
                                 <th class="col-detail bg-sub-blue">Int.</th>
                                 <th class="col-detail bg-sub-blue">Rid.</th>
@@ -428,7 +431,6 @@
         document.getElementById('q-gratuito').value = d.grat;
         document.getElementById('q-abb-int').value = d.abb_int;
         document.getElementById('q-abb-rid').value = d.abb_rid;
-        
         document.getElementById('form-title').innerText = "Modifica ID: " + id.substr(0,4);
         document.getElementById('btn-save').innerText = "AGGIORNA";
         document.getElementById('btn-save').style.background = "#f59e0b";
@@ -511,24 +513,16 @@
         renderBarChart('chartFasce', fSort.map(x=>x[0]), fSort.map(x=>x[1]), '#ff9500', 'y');
     };
 
-    // --- ARCHIVE LOGIC (DETAILED) ---
+    // --- ARCHIVE LOGIC (SMART GROUPING) ---
     function getFilteredArchiveData() {
         const start = document.getElementById('arch-date-start').value;
         const end = document.getElementById('arch-date-end').value;
         const fasciaVal = document.getElementById('arch-filter-fascia').value;
         const meteoVal = document.getElementById('arch-filter-meteo').value;
-        
         return allData.filter(d => {
-            let passDate = true;
-            if(start && d.date < start) passDate = false;
-            if(end && d.date > end) passDate = false;
-            
-            let passFascia = true;
-            if(fasciaVal !== 'all' && d.fascia !== fasciaVal) passFascia = false;
-            
-            let passMeteo = true;
-            if(meteoVal !== 'all' && d.meteo !== meteoVal) passMeteo = false;
-
+            let passDate = true; if(start && d.date < start) passDate = false; if(end && d.date > end) passDate = false;
+            let passFascia = true; if(fasciaVal !== 'all' && d.fascia !== fasciaVal) passFascia = false;
+            let passMeteo = true; if(meteoVal !== 'all' && d.meteo !== meteoVal) passMeteo = false;
             return passDate && passFascia && passMeteo;
         });
     }
@@ -536,42 +530,71 @@
     window.renderArchive = () => {
         const sortOrder = document.getElementById('arch-sort').value;
         const filtered = getFilteredArchiveData();
-        
-        filtered.sort((a, b) => {
-            const dateA = new Date(a.date); const dateB = new Date(b.date);
-            return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-        });
+        filtered.sort((a, b) => { const dateA = new Date(a.date); const dateB = new Date(b.date); return sortOrder === 'desc' ? dateB - dateA : dateA - dateB; });
 
         const tbody = document.getElementById('table-body');
         tbody.innerHTML = "";
-        filtered.forEach(d => {
-            const isSum = d.fascia.includes("Estiva");
-            const badge = isSum ? 'badge badge-summer' : 'badge badge-std';
-            const totSing = (d.int||0) + (d.rid||0);
-            const totAbb = (d.abb_int||0) + (d.abb_rid||0);
 
-            tbody.innerHTML += `<tr>
-                <td><span style="font-weight:600">${d.date.split('-').reverse().join('/')}</span></td>
-                <td>
-                    <span class="${badge}">${d.fascia}</span>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px">${d.meteo}</div>
-                </td>
+        // RAGGRUPPAMENTO PER DATA
+        const groups = new Map();
+        filtered.forEach(d => { if(!groups.has(d.date)) groups.set(d.date, []); groups.get(d.date).push(d); });
+
+        // Iteriamo sulle chiavi per mantenere l'ordinamento
+        const uniqueDates = [...new Set(filtered.map(d => d.date))];
+
+        uniqueDates.forEach(dateKey => {
+            const entries = groups.get(dateKey);
+            const dObj = new Date(dateKey);
+            const dayName = dObj.toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase();
+            const dateFmt = dateKey.split('-').reverse().join('/');
+            
+            // Visualizzazione Data (Solo sulla prima riga)
+            const dateCellHtml = `
+                <div style="font-weight:900; font-size:0.9rem; color:var(--text-main); line-height:1.2">${dayName}</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); font-weight:500">${dateFmt}</div>
+            `;
+
+            entries.forEach((d, index) => {
+                const isSum = d.fascia.includes("Estiva");
+                const badge = isSum ? 'badge badge-summer' : 'badge badge-std';
+                const totSing = (d.int||0) + (d.rid||0);
+                const totAbb = (d.abb_int||0) + (d.abb_rid||0);
+                const isLast = index === entries.length - 1;
                 
-                <td class="col-detail bg-sub-blue">${d.int || '-'}</td>
-                <td class="col-detail bg-sub-blue">${d.rid || '-'}</td>
-                <td class="col-subtot bg-sub-blue" style="color:var(--primary)">${totSing}</td>
+                // Stile bordo inferiore: marcato se è l'ultima entry del giorno, leggero altrimenti
+                const rowStyle = isLast ? "border-bottom: 2px solid rgba(0,0,0,0.1);" : "border-bottom: 1px solid rgba(0,0,0,0.03);";
+
+                let html = `<tr style="${rowStyle}">`;
                 
-                <td class="col-detail bg-sub-purp">${d.abb_int || '-'}</td>
-                <td class="col-detail bg-sub-purp">${d.abb_rid || '-'}</td>
-                <td class="col-subtot bg-sub-purp" style="color:#a855f7">${totAbb}</td>
+                // Cella Data (Rowspan)
+                if (index === 0) {
+                    html += `<td rowspan="${entries.length}" style="vertical-align:middle; border-right:1px solid rgba(0,0,0,0.05); background:rgba(255,255,255,0.4)">${dateCellHtml}</td>`;
+                }
+
+                html += `
+                    <td>
+                        <span class="${badge}">${d.fascia}</span>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px">${d.meteo}</div>
+                    </td>
+                    <td class="col-detail bg-sub-blue">${d.int || '-'}</td>
+                    <td class="col-detail bg-sub-blue">${d.rid || '-'}</td>
+                    <td class="col-subtot bg-sub-blue" style="color:var(--primary)">${totSing}</td>
+                    
+                    <td class="col-detail bg-sub-purp">${d.abb_int || '-'}</td>
+                    <td class="col-detail bg-sub-purp">${d.abb_rid || '-'}</td>
+                    <td class="col-subtot bg-sub-purp" style="color:#a855f7">${totAbb}</td>
+                    
+                    <td class="col-detail">${d.grat || '-'}</td>
+                    <td class="col-total">${d.totale}</td>
+                    
+                    <td style="text-align:right">
+                        <button class="btn btn-icon" style="color:var(--primary); background:#eef2ff" onclick="window.editItem('${d.id}')">✏️</button>
+                        <button class="btn btn-icon" style="color:var(--danger); background:#fff1f2" onclick="window.delItem('${d.id}')">🗑️</button>
+                    </td>
+                </tr>`;
                 
-                <td class="col-detail">${d.grat || '-'}</td>
-                <td class="col-total">${d.totale}</td>
-                
-                <td style="text-align:right">
-                    <button class="btn btn-icon" style="color:var(--primary); background:#eef2ff" onclick="window.editItem('${d.id}')">✏️</button>
-                    <button class="btn btn-icon" style="color:var(--danger); background:#fff1f2" onclick="window.delItem('${d.id}')">🗑️</button>
-                </td></tr>`;
+                tbody.innerHTML += html;
+            });
         });
     };
 
@@ -637,15 +660,9 @@
 
     // --- SMART DOWNLOAD ---
     window.downloadCSV = () => {
-        const filtered = getFilteredArchiveData(); 
-        let csv = "Data;Fascia;Meteo;Intero;Ridotto;TOT_SINGOLI;Abb_Periodo;Abb_11_Ingr;TOT_ABBONAMENTI;Gratuiti;TOTALE_GENERALE\n";
-        filtered.forEach(d => {
-            const totSing = (d.int||0) + (d.rid||0);
-            const totAbb = (d.abb_int||0) + (d.abb_rid||0);
-            csv += `${d.date};${d.fascia};${d.meteo};${d.int};${d.rid};${totSing};${d.abb_int};${d.abb_rid};${totAbb};${d.grat};${d.totale}\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="Report_Dettagliato.csv"; a.click();
+        const filtered = getFilteredArchiveData(); // Uses current Archive filters
+        const blob = new Blob([ "Data;Fascia;Meteo;Singoli;Abbonamenti;Gratuiti;TOTALE\n" + filtered.map(d=>`${d.date};${d.fascia};${d.meteo};${(d.int||0)+(d.rid||0)};${(d.abb_int||0)+(d.abb_rid||0)};${d.grat};${d.totale}`).join("\n")], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="Report_Filtrato.csv"; a.click();
     };
 
     document.getElementById('i-date').valueAsDate = new Date();
