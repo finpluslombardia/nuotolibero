@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V54 Emergency Fix</title>
+    <title>Piscina Facility Suite V55 Filters Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -327,7 +327,6 @@
     function startListening() {
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
-        // Simplified DAE query to avoid index errors
         onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
     }
 
@@ -354,7 +353,7 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS
+    // RENDER STATS (V51: FIXED)
     window.renderStats = () => {
         const m = document.getElementById('dash-month').value;
         const mode = document.getElementById('stat-mode').value; 
@@ -396,13 +395,12 @@
         document.getElementById('deep-total').innerText = parseFloat(displayTotal).toLocaleString();
         renderPie('chartPie', Object.keys(t), pieData);
 
-        // HELPERS FOR MULTI-SERIES BAR
+        // HELPER BUILDER
         const buildMultiSeries = (extractor, sortLabels=false) => {
             let yearsToUse = selectedYears.length > 0 ? selectedYears : [];
             let allLabels = new Set();
             dataIngressi.forEach(d => allLabels.add(extractor(d).key));
             let sortedL = Array.from(allLabels); if(sortLabels) sortedL.sort();
-            
             let historyDataPoints = sortedL.map(l => {
                 let subset = dataIngressi.filter(d => extractor(d).key === l && (m==='all'||(new Date(d.date).getMonth()+1)==m));
                 if(subset.length===0) return 0;
@@ -478,7 +476,7 @@
     function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
 
     function renderOverview() { const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m}); const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; 
-    // FIX CHART INIT
+    // FIX OVERVIEW CHARTS: Correct logic for dual lines
     const today=new Date(); const dates=[], l30=[], l30_prev=[];
     for(let i=29; i>=0; i--) {
         const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; dates.push(dt.getDate()+'/'+(dt.getMonth()+1));
@@ -496,14 +494,29 @@
     }
     renderLineChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
     }
-
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
     function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; 
-        // JS SORTING to fix DB index issue
         const sortedDae = [...dataDae].sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
         sortedDae.forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); 
     }
-    function renderIngressiArchive() { const s=document.getElementById('arch-sort').value; const f=dataIngressi.filter(d=>true); f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return s==='desc'?db-da:da-db}); const t=document.getElementById('tbody-ingressi'); t.innerHTML=""; const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b><br><small style="color:#64748b">${d.meteo}</small></td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`; }); }); }
+    function renderIngressiArchive() { 
+        const start = document.getElementById('arch-date-start').value;
+        const end = document.getElementById('arch-date-end').value;
+        const fascia = document.getElementById('arch-filter-fascia').value;
+        const meteo = document.getElementById('arch-filter-meteo').value;
+        const sort = document.getElementById('arch-sort').value;
+
+        const f = dataIngressi.filter(d => {
+            if (start && d.date < start) return false;
+            if (end && d.date > end) return false;
+            if (fascia !== 'all' && d.fascia !== fascia) return false;
+            if (meteo !== 'all' && d.meteo !== meteo) return false;
+            return true;
+        });
+        f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return sort==='desc'?db-da:da-db}); 
+        
+        const t=document.getElementById('tbody-ingressi'); t.innerHTML=""; const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b><br><small style="color:#64748b">${d.meteo}</small></td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`; }); }); 
+    }
 
     // CHART HELPERS
     let ch={}; const opts={responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, layout:{padding:25}};
@@ -516,8 +529,38 @@
     // INIT
     setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
     const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('v-date').value=today; document.getElementById('d-date').value=today;
-    window.downloadCSV = () => showToast("Download avviato...");
-    window.resetArchiveFilters = () => renderIngressiArchive();
+    window.downloadCSV = () => {
+        const start = document.getElementById('arch-date-start').value;
+        const end = document.getElementById('arch-date-end').value;
+        const fascia = document.getElementById('arch-filter-fascia').value;
+        const meteo = document.getElementById('arch-filter-meteo').value;
+
+        const filtered = dataIngressi.filter(d => {
+            if (start && d.date < start) return false;
+            if (end && d.date > end) return false;
+            if (fascia !== 'all' && d.fascia !== fascia) return false;
+            if (meteo !== 'all' && d.meteo !== meteo) return false;
+            return true;
+        });
+
+        if(!filtered.length) return showToast("Nessun dato da scaricare", "error");
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Data;Fascia;Meteo;Intero;Ridotto;Abbonamenti;Gratuiti;Totale\n";
+
+        filtered.forEach(row => {
+            csvContent += `${row.date};${row.fascia};${row.meteo};${row.int};${row.rid};${row.abb_int + row.abb_rid};${row.grat};${row.totale}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "archivio_ingressi.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+    window.resetArchiveFilters = () => { document.getElementById('arch-date-start').value=""; document.getElementById('arch-date-end').value=""; document.getElementById('arch-filter-fascia').value="all"; document.getElementById('arch-filter-meteo').value="all"; renderIngressiArchive(); };
 </script>
 
 </body>
