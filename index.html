@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Manager V28 Precision</title>
+    <title>Piscina Manager V29 Detailed</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -83,38 +83,39 @@
         .chart-header { margin-bottom: 15px; font-weight: 700; color: var(--text-main); font-size: 1rem; flex-shrink: 0; }
         .chart-wrapper { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
 
-        /* ARCHIVE TOOLBAR (PRECISION) */
+        /* ARCHIVE TOOLBAR & TABLE */
         .archive-toolbar { 
             display: flex; gap: 10px; align-items: center; flex-wrap: nowrap;
             background: rgba(255,255,255,0.3); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: var(--glass-border);
         }
         .arch-group { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.5); padding: 5px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.5); }
         .arch-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        
-        /* New Filter Inputs */
-        .arch-input, .arch-select { 
-            height: 36px; padding: 0 10px; border-radius: 8px; 
-            border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); 
-            font-size: 0.85rem; color: var(--text-main); font-family: inherit; font-weight: 500;
-        }
-        .arch-input:focus, .arch-select:focus { border-color: var(--primary); outline: none; }
+        .arch-input, .arch-select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-size: 0.85rem; color: var(--text-main); font-weight: 500; }
         .arch-select { cursor: pointer; min-width: 140px; }
 
-        /* UI ELEMENTS */
+        .table-wrap { @extend .glass-card; padding: 0; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { text-align: left; padding: 18px 12px; background: rgba(255,255,255,0.5); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        td { padding: 14px 12px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.9rem; vertical-align: middle; font-weight: 500; }
+        tr:hover td { background: rgba(255,255,255,0.3); }
+        
+        .badge { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: inline-block; backdrop-filter: blur(4px); }
+        .badge-summer { background: rgba(255, 237, 213, 0.7); color: #ea580c; border: 1px solid rgba(253, 186, 116, 0.4); }
+        .badge-std { background: rgba(219, 234, 254, 0.7); color: #2563eb; border: 1px solid rgba(147, 197, 253, 0.4); }
+
+        /* DETAILED COLUMNS STYLE */
+        .col-detail { color: var(--text-muted); font-size: 0.85rem; text-align: center; }
+        .col-subtot { font-weight: 700; text-align: center; background: rgba(255,255,255,0.2); }
+        .col-total { font-weight: 900; color: var(--text-main); text-align: center; font-size: 1.1rem; }
+        .bg-sub-blue { background-color: rgba(59, 130, 246, 0.05); }
+        .bg-sub-purp { background-color: rgba(168, 85, 247, 0.05); }
+
+        /* BUTTONS */
         .btn { padding: 0 24px; border-radius: 12px; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; height: 44px; font-family: inherit; }
         .btn:active { transform: scale(0.97); }
         .btn-primary { background: linear-gradient(135deg, var(--primary), #1d4ed8); color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
         .btn-danger { background: rgba(254, 202, 202, 0.4); color: #dc2626; border: 1px solid rgba(252, 165, 165, 0.5); }
         .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
-        
-        .table-wrap { @extend .glass-card; padding: 0; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 18px 20px; background: rgba(255,255,255,0.5); font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        td { padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.95rem; vertical-align: middle; font-weight: 500; }
-        tr:hover td { background: rgba(255,255,255,0.3); }
-        .badge { padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: inline-block; backdrop-filter: blur(4px); }
-        .badge-summer { background: rgba(255, 237, 213, 0.7); color: #ea580c; border: 1px solid rgba(253, 186, 116, 0.4); }
-        .badge-std { background: rgba(219, 234, 254, 0.7); color: #2563eb; border: 1px solid rgba(147, 197, 253, 0.4); }
 
         .hidden { display: none !important; }
         .editing-mode { background: rgba(254, 243, 199, 0.8) !important; border: 2px solid #f59e0b !important; box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
@@ -277,7 +278,6 @@
                     <span class="arch-label">A:</span>
                     <input type="date" id="arch-date-end" class="arch-input" onchange="renderArchive()">
                 </div>
-                
                 <select id="arch-filter-fascia" class="arch-select" onchange="renderArchive()">
                     <option value="all">Tutte le Fasce</option>
                     <optgroup label="Interna">
@@ -292,7 +292,6 @@
                         <option value="Estiva - Unico">Estiva - Unico</option>
                     </optgroup>
                 </select>
-
                 <select id="arch-filter-meteo" class="arch-select" onchange="renderArchive()">
                     <option value="all">Tutto il Meteo</option>
                     <option value="☀️ Sole">☀️ Sole</option>
@@ -305,7 +304,6 @@
                     <option value="⛈️ Temporale">⛈️ Temporale</option>
                     <option value="❓ N/D">❓ N/D</option>
                 </select>
-
                 <select id="arch-sort" class="arch-select" style="min-width:100px" onchange="renderArchive()">
                     <option value="desc">⬇️ Recenti</option>
                     <option value="asc">⬆️ Vecchi</option>
@@ -317,7 +315,21 @@
             <div class="table-wrap glass-card">
                 <div style="overflow-x:auto;">
                     <table id="data-table">
-                        <thead><tr><th>Data</th><th>Fascia</th><th>Meteo</th><th>Singoli</th><th>Abb.</th><th>Grat</th><th>Tot</th><th style="text-align:right">Azioni</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th style="min-width:100px">Data</th>
+                                <th>Fascia / Meteo</th>
+                                <th class="col-detail bg-sub-blue">Int.</th>
+                                <th class="col-detail bg-sub-blue">Rid.</th>
+                                <th class="col-subtot bg-sub-blue">TOT SING.</th>
+                                <th class="col-detail bg-sub-purp">Per.</th>
+                                <th class="col-detail bg-sub-purp">11 Ingr.</th>
+                                <th class="col-subtot bg-sub-purp">TOT ABB.</th>
+                                <th class="col-detail">Grat.</th>
+                                <th class="col-total">TOTALE</th>
+                                <th style="text-align:right">Azioni</th>
+                            </tr>
+                        </thead>
                         <tbody id="table-body"></tbody>
                     </table>
                 </div>
@@ -370,7 +382,6 @@
         onSnapshot(q, (snapshot) => {
             allData = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
             populateYearFilters();
-            // Refresh current view
             const activeView = document.querySelector('.nav-item.active').id.replace('nav-', '');
             if(activeView === 'overview') renderOverview();
             else if(activeView === 'stats') renderStats();
@@ -378,7 +389,7 @@
         });
     }
 
-    // ACTIONS (SAVE/EDIT/DEL)
+    // ACTIONS
     window.saveData = async () => {
         const date = document.getElementById('i-date').value;
         if(!date) return alert("Inserisci la data");
@@ -460,7 +471,7 @@
         if(years.includes(curr)) sel.value = curr;
     }
 
-    // --- 1. OVERVIEW LOGIC ---
+    // --- OVERVIEW ---
     function renderOverview() {
         const now = new Date();
         const currY = now.getFullYear();
@@ -482,7 +493,7 @@
         renderLineChart('chartRecent30', Object.keys(dailyMap), Object.values(dailyMap), '#2563eb');
     }
 
-    // --- 2. STATS LOGIC ---
+    // --- STATS ---
     window.renderStats = () => {
         const y = document.getElementById('dash-year').value;
         const m = document.getElementById('dash-month').value;
@@ -500,7 +511,7 @@
         renderBarChart('chartFasce', fSort.map(x=>x[0]), fSort.map(x=>x[1]), '#ff9500', 'y');
     };
 
-    // --- 3. ARCHIVE LOGIC (PRECISION FILTER) ---
+    // --- ARCHIVE LOGIC (DETAILED) ---
     function getFilteredArchiveData() {
         const start = document.getElementById('arch-date-start').value;
         const end = document.getElementById('arch-date-end').value;
@@ -536,13 +547,27 @@
         filtered.forEach(d => {
             const isSum = d.fascia.includes("Estiva");
             const badge = isSum ? 'badge badge-summer' : 'badge badge-std';
-            const s = (d.int||0)+(d.rid||0); const a = (d.abb_int||0)+(d.abb_rid||0);
+            const totSing = (d.int||0) + (d.rid||0);
+            const totAbb = (d.abb_int||0) + (d.abb_rid||0);
+
             tbody.innerHTML += `<tr>
                 <td><span style="font-weight:600">${d.date.split('-').reverse().join('/')}</span></td>
-                <td><span class="${badge}">${d.fascia}</span></td>
-                <td style="color:var(--text-muted)">${d.meteo}</td>
-                <td>${s}</td><td>${a}</td><td>${d.grat}</td>
-                <td style="font-weight:700; color:var(--primary)">${d.totale}</td>
+                <td>
+                    <span class="${badge}">${d.fascia}</span>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px">${d.meteo}</div>
+                </td>
+                
+                <td class="col-detail bg-sub-blue">${d.int || '-'}</td>
+                <td class="col-detail bg-sub-blue">${d.rid || '-'}</td>
+                <td class="col-subtot bg-sub-blue" style="color:var(--primary)">${totSing}</td>
+                
+                <td class="col-detail bg-sub-purp">${d.abb_int || '-'}</td>
+                <td class="col-detail bg-sub-purp">${d.abb_rid || '-'}</td>
+                <td class="col-subtot bg-sub-purp" style="color:#a855f7">${totAbb}</td>
+                
+                <td class="col-detail">${d.grat || '-'}</td>
+                <td class="col-total">${d.totale}</td>
+                
                 <td style="text-align:right">
                     <button class="btn btn-icon" style="color:var(--primary); background:#eef2ff" onclick="window.editItem('${d.id}')">✏️</button>
                     <button class="btn btn-icon" style="color:var(--danger); background:#fff1f2" onclick="window.delItem('${d.id}')">🗑️</button>
@@ -559,7 +584,7 @@
         renderArchive();
     };
 
-    // --- UTILS ---
+    // --- UTILS & CHARTS ---
     function calcTrend(elId, curr, y, m, type) {
         const el = document.getElementById(elId); const lbl = document.getElementById(elId+'-label');
         let prevTotal = 0, txt = "";
@@ -580,7 +605,6 @@
         } else { el.innerText = "N/A"; el.className = "kpi-val trend-neutral"; lbl.innerText = "No dati storici"; }
     }
 
-    // --- CHART FACTORY ---
     let charts = {};
     const commonOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } };
     function renderLineChart(id, labels, data, color) {
@@ -613,9 +637,15 @@
 
     // --- SMART DOWNLOAD ---
     window.downloadCSV = () => {
-        const filtered = getFilteredArchiveData(); // Uses current Archive filters
-        const blob = new Blob([ "Data;Fascia;Meteo;Singoli;Abbonamenti;Gratuiti;TOTALE\n" + filtered.map(d=>`${d.date};${d.fascia};${d.meteo};${(d.int||0)+(d.rid||0)};${(d.abb_int||0)+(d.abb_rid||0)};${d.grat};${d.totale}`).join("\n")], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="Report_Filtrato.csv"; a.click();
+        const filtered = getFilteredArchiveData(); 
+        let csv = "Data;Fascia;Meteo;Intero;Ridotto;TOT_SINGOLI;Abb_Periodo;Abb_11_Ingr;TOT_ABBONAMENTI;Gratuiti;TOTALE_GENERALE\n";
+        filtered.forEach(d => {
+            const totSing = (d.int||0) + (d.rid||0);
+            const totAbb = (d.abb_int||0) + (d.abb_rid||0);
+            csv += `${d.date};${d.fascia};${d.meteo};${d.int};${d.rid};${totSing};${d.abb_int};${d.abb_rid};${totAbb};${d.grat};${d.totale}\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="Report_Dettagliato.csv"; a.click();
     };
 
     document.getElementById('i-date').valueAsDate = new Date();
