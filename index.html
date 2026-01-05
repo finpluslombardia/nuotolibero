@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V62 Explicit Exclusion</title>
+    <title>Piscina Facility Suite V63 Stability Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -89,10 +89,10 @@
         .benchmark-toggle span { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); }
         
         /* EXCLUDE TOGGLE (RED) */
-        .exclude-toggle { @extend .benchmark-toggle; border: 1px solid #fca5a5; background: #fef2f2; }
+        .exclude-toggle { @extend .benchmark-toggle; border: 1px solid #fca5a5; background: #fef2f2; display:flex; align-items:center; gap:8px; padding:0 15px; height:44px; border-radius:12px; cursor:pointer; }
         .exclude-toggle:hover { background: #fee2e2; }
-        .exclude-toggle input { accent-color: #ef4444; }
-        .exclude-toggle span { color: #b91c1c; }
+        .exclude-toggle input { accent-color: #ef4444; width:18px; height:18px; }
+        .exclude-toggle span { color: #b91c1c; font-weight:700; font-size:0.8rem; }
 
         /* KPI & CHARTS LAYOUT */
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
@@ -177,7 +177,7 @@
             </div>
             <div class="cb-row">
                 <div class="group-ctx">
-                    <div class="inp-field" style="flex:0.8"><label>Data</label><input type="date" id="i-date" onchange="renderOverview()"></div>
+                    <div class="inp-field" style="flex:0.8"><label>Data</label><input type="date" id="i-date"></div>
                     <div class="inp-field" style="flex:1"><label>Tipo Giorno</label>
                         <select id="i-type"><option value="standard">🏢 Standard</option><option value="festivo">🔴 Festivo</option><option value="evento">🏆 Gara/Evento</option><option value="extra">⚠️ Straordinario</option></select>
                     </div>
@@ -186,6 +186,9 @@
                     </div>
                     <div class="inp-field" style="flex:1.2"><label>Fascia</label>
                         <select id="i-fascia"><optgroup label="🏊 Vasca Interna"><option value="Mattina">Mattina</option><option value="Mattina intera">Mattina intera</option><option value="Pranzo">Pranzo</option><option value="Sera">Sera</option><option value="Sabato pom">Sabato pom</option><option value="Domenica">Domenica</option><option value="Festivo">Festivo</option><option value="Unico">Unico</option></optgroup><optgroup label="☀️ Vasca Esterna"><option value="Estiva - Mattina">Estiva - Mattina</option><option value="Estiva - Pomeriggio">Estiva - Pomeriggio</option><option value="Estiva - Unico">Estiva - Unico</option></optgroup></select>
+                    </div>
+                    <div class="inp-field" style="flex:1"><label>Meteo</label>
+                        <select id="i-meteo"><option value="☀️ Sole">☀️ Sole</option><option value="🔥 Sole + Caldo">🔥 Sole + Caldo</option><option value="❄️ Sole + Freddo">❄️ Sole + Freddo</option><option value="☁️ Nuvoloso">☁️ Nuvoloso</option><option value="🌥️ Nuv + Freddo">🌥️ Nuv + Freddo</option><option value="🌧️ Pioggia">🌧️ Pioggia</option><option value="🌨️ Piog + Freddo">🌨️ Piog + Freddo</option><option value="⛈️ Temporale">⛈️ Temporale</option><option value="❓ N/D">❓ N/D</option></select>
                     </div>
                 </div>
                 <div class="group-tickets">
@@ -384,7 +387,7 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (V62: EXPLICIT EXCLUSION LOGIC)
+    // RENDER STATS (V63: FIXED SYNTAX & LOGIC)
     window.renderStats = () => {
         const m = document.getElementById('dash-month').value;
         const mode = document.getElementById('stat-mode').value; 
@@ -393,7 +396,7 @@
         
         // GLOBAL FILTERING + EXCLUSION CHECK
         const f = dataIngressi.filter(d => {
-            if(d.exclude) return false; // HARD EXCLUDE FROM STATS
+            if(d.exclude) return false; 
 
             const dt = new Date(d.date);
             const yMatch = selectedYears.length === 0 || selectedYears.includes(dt.getFullYear().toString());
@@ -413,7 +416,7 @@
         // 1. CHART YoY (Line)
         let labels=[], sets=[];
         const avgMonthlyTotals = new Array(12).fill(0);
-        // History calc: Exclude 'exclude' flagged days + apply type filter
+        
         const historyDataFiltered = dataIngressi.filter(d => {
              if(d.exclude) return false;
              const type = d.type || 'standard';
@@ -539,13 +542,37 @@
         renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
     };
 
-    // ... (SAVE LOGIC V62: EXCLUDE FLAG) ...
-    window.saveIngressi = async () => { const date = document.getElementById('i-date').value; if(!date) return showToast("Data mancante","error"); 
-    const payload = { 
-        date, 
-        type: document.getElementById('i-type').value, 
-        exclude: document.getElementById('i-exclude').checked, // SAVE FLAG
-        fascia:document.getElementById('i-fascia').value, meteo:document.getElementById('i-meteo').value, int:parseInt(document.getElementById('q-intero').value)||0, rid:parseInt(document.getElementById('q-ridotto').value)||0, grat:parseInt(document.getElementById('q-gratuito').value)||0, abb_int:parseInt(document.getElementById('q-abb-int').value)||0, abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0, totale:(parseInt(document.getElementById('q-intero').value)||0)+(parseInt(document.getElementById('q-ridotto').value)||0)+(parseInt(document.getElementById('q-gratuito').value)||0)+(parseInt(document.getElementById('q-abb-int').value)||0)+(parseInt(document.getElementById('q-abb-rid').value)||0) }; if(payload.totale===0) return showToast("Inserisci dati","error"); try { if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), payload); showToast("Aggiornato"); cancelEditIngressi(); } else { await addDoc(collection(db,"sessioni"), payload); showToast("Salvato"); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); } } catch(e){ showToast(e.message,"error"); } };
+    // ... (SAVE LOGIC V63) ...
+    window.saveIngressi = async () => { 
+        const date = document.getElementById('i-date').value; if(!date) return showToast("Data mancante","error"); 
+        
+        // SAFELY GET VALUES
+        const type = document.getElementById('i-type').value;
+        const exclude = document.getElementById('i-exclude').checked;
+
+        const payload = { 
+            date, 
+            type, 
+            exclude, 
+            fascia:document.getElementById('i-fascia').value, 
+            meteo:document.getElementById('i-meteo').value, 
+            int:parseInt(document.getElementById('q-intero').value)||0, 
+            rid:parseInt(document.getElementById('q-ridotto').value)||0, 
+            grat:parseInt(document.getElementById('q-gratuito').value)||0, 
+            abb_int:parseInt(document.getElementById('q-abb-int').value)||0, 
+            abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0, 
+            totale:0 
+        };
+        payload.totale = payload.int + payload.rid + payload.grat + payload.abb_int + payload.abb_rid;
+
+        if(payload.totale===0) return showToast("Inserisci dati","error"); 
+        
+        try { 
+            if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), payload); showToast("Aggiornato"); cancelEditIngressi(); } 
+            else { await addDoc(collection(db,"sessioni"), payload); showToast("Salvato"); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); } 
+        } catch(e){ showToast(e.message,"error"); } 
+    };
+
     window.editIngressi = (id) => { const d = dataIngressi.find(x=>x.id===id); if(!d) return; editIdIngressi = id; document.getElementById('i-date').value=d.date; document.getElementById('i-type').value=d.type||'standard'; document.getElementById('i-exclude').checked=d.exclude||false; document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo; document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid; document.getElementById('q-gratuito').value=d.grat; document.getElementById('q-abb-int').value=d.abb_int; document.getElementById('q-abb-rid').value=d.abb_rid; document.getElementById('title-ingressi').innerText="Modifica Ingressi"; document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; document.getElementById('btn-save-ingressi').style.background="#f59e0b"; document.getElementById('cancel-ingressi').classList.remove('hidden'); document.getElementById('cb-ingressi').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
     window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked=false; };
     window.saveVasca = async () => { const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value; if(!date || !time) return showToast("Data/Ora mancanti","error"); const payload = { date, time, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value }; try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); } };
