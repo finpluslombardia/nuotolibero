@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V66 - Utenze Manager</title>
+    <title>Piscina Facility Suite V67 - Fixed & Enhanced</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -357,14 +357,21 @@
                 <div class="group-ctx">
                     <div class="inp-field" style="flex:0.5"><label>Data</label><input type="date" id="u-date"></div>
                     <div class="inp-field" style="flex:1"><label>Tipo Utenza</label>
-                        <select id="u-type" onchange="renderUtenze()">
-                            <option value="⚡ Elettricità">⚡ Elettricità (kWh)</option>
+                        <select id="u-type" onchange="toggleUtenzeMode()">
+                            <option value="⚡ Elettricità">⚡ Elettricità</option>
                             <option value="💧 Acqua">💧 Acqua (m³)</option>
                             <option value="🔥 Gas Metano">🔥 Gas Metano (m³)</option>
-                            <option value="🛢️ Gasolio">🛢️ Gasolio (Litri)</option>
                         </select>
                     </div>
-                    <div class="inp-field" style="flex:1"><label>Lettura Contatore</label><input type="number" id="u-val" placeholder="Es. 12500" step="any"></div>
+                    
+                    <div id="u-single-input" class="inp-field hidden" style="flex:1"><label>Lettura Contatore</label><input type="number" id="u-val" placeholder="Es. 12500" step="any"></div>
+                    
+                    <div id="u-elec-input" class="group-ctx" style="flex:2.5; gap:10px">
+                        <div class="t-box"><label>A1 (F1)</label><input type="number" id="u-a1" step="any" style="font-size:1.1rem"></div>
+                        <div class="t-box"><label>A2 (F2)</label><input type="number" id="u-a2" step="any" style="font-size:1.1rem"></div>
+                        <div class="t-box"><label>A3 (F3)</label><input type="number" id="u-a3" step="any" style="font-size:1.1rem"></div>
+                    </div>
+
                     <div class="inp-field" style="flex:2"><label>Note</label><input type="text" id="u-note" placeholder="Opzionale..."></div>
                 </div>
                 <div class="group-actions"><button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveUtenze()">SALVA</button></div>
@@ -372,11 +379,11 @@
         </div>
         <div class="scroll-area">
             <div class="chart-card glass-card" style="height:250px; margin-bottom:20px; padding:15px">
-                 <div class="chart-header" style="font-size:0.8rem; margin-bottom:10px">Andamento Letture (Ultimi 20 inserimenti)</div>
+                 <div class="chart-header" style="font-size:0.8rem; margin-bottom:10px">Andamento Consumi</div>
                  <div class="chart-wrapper"><canvas id="chartUtenze"></canvas></div>
             </div>
             <h2 class="page-title">📊 Storico Letture</h2>
-            <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-utenze"><thead><tr><th>Data</th><th>Tipo</th><th>Lettura</th><th>Note</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-utenze"></tbody></table></div></div>
+            <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-utenze"><thead><tr><th>Data</th><th>Tipo</th><th>Dettaglio Lettura</th><th>Note</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-utenze"></tbody></table></div></div>
         </div>
     </div>
 
@@ -399,8 +406,7 @@
     function startListening() {
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
-        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
-        // NEW LISTENER FOR UTENZE
+        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
         onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc")), (snap) => { dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze(); });
     }
 
@@ -574,92 +580,67 @@
         renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
     };
 
-    window.saveIngressi = async () => { 
-        const date = document.getElementById('i-date').value; 
-        if(!date) return showToast("Data mancante","error"); 
-        
-        const payload = { 
-            date, 
-            type:document.getElementById('i-type').value, 
-            fascia:document.getElementById('i-fascia').value, 
-            meteo:document.getElementById('i-meteo').value, 
-            excludeStats: document.getElementById('i-exclude').checked, 
-            int:parseInt(document.getElementById('q-intero').value)||0, 
-            rid:parseInt(document.getElementById('q-ridotto').value)||0, 
-            grat:parseInt(document.getElementById('q-gratuito').value)||0, 
-            abb_int:parseInt(document.getElementById('q-abb-int').value)||0, 
-            abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0, 
-            totale:(parseInt(document.getElementById('q-intero').value)||0)+(parseInt(document.getElementById('q-ridotto').value)||0)+(parseInt(document.getElementById('q-gratuito').value)||0)+(parseInt(document.getElementById('q-abb-int').value)||0)+(parseInt(document.getElementById('q-abb-rid').value)||0) 
-        }; 
-        if(payload.totale===0) return showToast("Inserisci dati","error"); 
-        try { 
-            if(editIdIngressi) { 
-                await updateDoc(doc(db,"sessioni",editIdIngressi), payload); 
-                showToast("Aggiornato"); 
-                cancelEditIngressi(); 
-            } else { 
-                await addDoc(collection(db,"sessioni"), payload); 
-                showToast("Salvato"); 
-                document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); 
-                document.getElementById('i-exclude').checked = false; 
-            } 
-        } catch(e){ showToast(e.message,"error"); } 
-    };
-
-    window.editIngressi = (id) => { 
-        const d = dataIngressi.find(x=>x.id===id); if(!d) return; 
-        editIdIngressi = id; 
-        document.getElementById('i-date').value=d.date; 
-        document.getElementById('i-type').value=d.type||'standard'; 
-        document.getElementById('i-fascia').value=d.fascia; 
-        document.getElementById('i-meteo').value=d.meteo; 
-        document.getElementById('i-exclude').checked = d.excludeStats || false; 
-        document.getElementById('q-intero').value=d.int; 
-        document.getElementById('q-ridotto').value=d.rid; 
-        document.getElementById('q-gratuito').value=d.grat; 
-        document.getElementById('q-abb-int').value=d.abb_int; 
-        document.getElementById('q-abb-rid').value=d.abb_rid; 
-        document.getElementById('title-ingressi').innerText="Modifica Ingressi"; 
-        document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; 
-        document.getElementById('btn-save-ingressi').style.background="#f59e0b"; 
-        document.getElementById('cancel-ingressi').classList.remove('hidden'); 
-        document.getElementById('cb-ingressi').classList.add('editing'); 
-        window.scrollTo({top:0,behavior:'smooth'}); 
-    };
-    
-    window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; };
-    window.saveVasca = async () => { const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value; if(!date || !time) return showToast("Data/Ora mancanti","error"); const payload = { date, time, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value }; try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); } };
-    window.editVasca = (id) => { const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id; document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time; document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta; document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph; document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc; document.getElementById('v-clt').value=d.clt; document.getElementById('title-vasca').innerText="Modifica Valori"; document.getElementById('btn-save-vasca').innerText="AGGIORNA"; document.getElementById('btn-save-vasca').style.background="#f59e0b"; document.getElementById('cancel-vasca').classList.remove('hidden'); document.getElementById('cb-vasca').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
-    window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('title-vasca').innerText="Registrazione Valori"; document.getElementById('btn-save-vasca').innerText="SALVA"; document.getElementById('btn-save-vasca').style.background=""; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
-    window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
-    window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
-    window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
-    
-    // NAVIGATION
-    window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')refreshCurrentView(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
-    window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
-    function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
-
+    // FIXED OVERVIEW STATS V67
     function renderOverview() { 
-        const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; 
-        const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m && !x.excludeStats}); 
-        const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; 
-        document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; 
+        // SAFETY: If data not loaded, exit
+        if(!dataIngressi || dataIngressi.length === 0) return;
+
+        // Use string matching for month (safer than getMonth integer math)
+        const today = new Date();
+        const currentMonthStr = today.toISOString().slice(0, 7); // YYYY-MM
+        const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const prevMonthStr = prevMonthDate.toISOString().slice(0, 7);
+
+        // 1. Current Month Data
+        const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats);
+        const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
+        const daysCurrent = new Set(dCurrent.map(x=>x.date)).size; 
+        document.getElementById('ov-avg').innerText = daysCurrent > 0 ? (totalCurrent/daysCurrent).toFixed(0) : 0; 
+
+        // 2. Previous Month Data (MoM)
+        const dPrev = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats);
+        const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
         
-        const today=new Date(); const dates=[], l30=[], l30_prev=[];
+        let mom = 0;
+        if(totalPrev > 0) mom = ((totalCurrent - totalPrev) / totalPrev) * 100;
+        else if (totalCurrent > 0) mom = 100;
+        
+        const momEl = document.getElementById('ov-mom');
+        momEl.innerText = (mom > 0 ? "+" : "") + mom.toFixed(1) + "%";
+        momEl.style.color = mom >= 0 ? "#16a34a" : "#dc2626";
+        document.getElementById('ov-mom-label').innerText = `vs ${prevMonthDate.toLocaleString('it-IT',{month:'long'})}`;
+
+        // 3. YoY (Same month last year)
+        const yoyDate = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+        const yoyStr = yoyDate.toISOString().slice(0, 7);
+        const dYoy = dataIngressi.filter(x => x.date.startsWith(yoyStr) && !x.excludeStats);
+        const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
+
+        let yoy = 0;
+        if(totalYoy > 0) yoy = ((totalCurrent - totalYoy) / totalYoy) * 100;
+        else if(totalCurrent > 0) yoy = 100;
+
+        const yoyEl = document.getElementById('ov-yoy');
+        yoyEl.innerText = (yoy > 0 ? "+" : "") + yoy.toFixed(1) + "%";
+        yoyEl.style.color = yoy >= 0 ? "#16a34a" : "#dc2626";
+        document.getElementById('ov-yoy-label').innerText = `vs ${yoyDate.getFullYear()}`;
+
+        // 4. Forecast
+        const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+        const currentDay = today.getDate();
+        if(daysCurrent > 0) {
+            const forecast = (totalCurrent / currentDay) * daysInMonth;
+            document.getElementById('ov-forecast').innerText = forecast.toFixed(0);
+        } else {
+            document.getElementById('ov-forecast').innerText = "-";
+        }
+        
+        // CHARTS (Logic unchanged from V64)
+        const dates=[], l30=[], l30_prev=[];
         for(let i=29; i>=0; i--) {
-            // Giorno Corrente
-            const dt=new Date(); 
-            dt.setDate(today.getDate()-i); 
-            const dtStr=dt.toISOString().split('T')[0]; 
-            
+            const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; 
             dates.push(`${dt.toLocaleDateString('it-IT',{weekday:'short'})} ${dt.getDate()}/${dt.getMonth()+1}`);
-            
-            // Giorno Anno Precedente (ALLINEATO PER SETTIMANA: -52 settimane = -364 giorni)
-            const dtPrev=new Date(dt); 
-            dtPrev.setDate(dt.getDate()-364); 
-            const dtPrevStr=dtPrev.toISOString().split('T')[0];
-            
+            const dtPrev=new Date(dt); dtPrev.setDate(dt.getDate()-364); const dtPrevStr=dtPrev.toISOString().split('T')[0];
             l30.push(dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
             l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
         }
@@ -675,27 +656,74 @@
     }
 
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
+    
+    // FIX DAE V67: ROBUST TIME HANDLING & SORTING
+    window.saveDae = async () => { 
+        const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; 
+        const a=document.getElementById('d-ass').value; 
+        const o=document.getElementById('d-op').value; 
+        const tVal = document.getElementById('d-time').value; 
+        if(!a||!o) return showToast("Compila nomi","error"); 
+        try { 
+            await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); 
+            document.getElementById('d-ass').value=""; 
+            document.getElementById('d-op').value=""; 
+            showToast("DAE Registrato!"); 
+        } catch(e){ showToast(e.message,"error"); } 
+    };
     function renderDae() { 
         const t=document.getElementById('tbody-dae'); t.innerHTML=""; 
-        const sortedDae = [...dataDae].sort((a,b) => new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time)); 
+        const sortedDae = [...dataDae].sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time)); 
         sortedDae.forEach(d=>{ 
             const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; 
             t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; 
         }); 
     }
 
-    // UTENZE LOGIC
+    // UTENZE V67: TOGGLE FIELDS & SAVE
+    window.toggleUtenzeMode = () => {
+        const type = document.getElementById('u-type').value;
+        const single = document.getElementById('u-single-input');
+        const elec = document.getElementById('u-elec-input');
+        if(type === '⚡ Elettricità') {
+            single.classList.add('hidden');
+            elec.classList.remove('hidden');
+            elec.style.display = 'flex';
+        } else {
+            single.classList.remove('hidden');
+            elec.classList.add('hidden');
+            elec.style.display = 'none';
+        }
+    };
+    // Init toggle
+    window.toggleUtenzeMode();
+
     window.saveUtenze = async () => {
         const d = document.getElementById('u-date').value;
         const type = document.getElementById('u-type').value;
-        const val = parseFloat(document.getElementById('u-val').value);
         const note = document.getElementById('u-note').value;
         
-        if(!d || isNaN(val)) return showToast("Compila data e lettura", "error");
+        let payload = { date: d, type, note };
+
+        if(type === '⚡ Elettricità') {
+            const a1 = parseFloat(document.getElementById('u-a1').value)||0;
+            const a2 = parseFloat(document.getElementById('u-a2').value)||0;
+            const a3 = parseFloat(document.getElementById('u-a3').value)||0;
+            if(!d) return showToast("Data mancante", "error");
+            payload.a1 = a1; payload.a2 = a2; payload.a3 = a3;
+            payload.val = a1+a2+a3; // Total for graph
+        } else {
+            const val = parseFloat(document.getElementById('u-val').value);
+            if(!d || isNaN(val)) return showToast("Compila data e lettura", "error");
+            payload.val = val;
+        }
         
         try {
-            await addDoc(collection(db, "utenze_log"), { date: d, type, val, note });
+            await addDoc(collection(db, "utenze_log"), payload);
             document.getElementById('u-val').value = "";
+            document.getElementById('u-a1').value = "";
+            document.getElementById('u-a2').value = "";
+            document.getElementById('u-a3').value = "";
             document.getElementById('u-note').value = "";
             showToast("Lettura salvata");
         } catch(e){ showToast(e.message, "error"); }
@@ -711,17 +739,25 @@
         f.sort((a,b) => new Date(b.date) - new Date(a.date));
 
         f.forEach(d => {
+             let valDisplay = "";
+             if(d.type === '⚡ Elettricità') {
+                 valDisplay = `<span style="font-size:0.8rem">A1:<b>${d.a1||0}</b> | A2:<b>${d.a2||0}</b> | A3:<b>${d.a3||0}</b></span>`;
+             } else {
+                 valDisplay = `<span style="font-weight:800; color:var(--primary)">${d.val}</span>`;
+             }
+
              t.innerHTML += `<tr>
                 <td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td>
                 <td>${d.type}</td>
-                <td style="font-weight:800; color:var(--primary)">${d.val}</td>
+                <td>${valDisplay}</td>
                 <td style="color:#64748b; font-size:0.85rem">${d.note}</td>
                 <td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('utenze_log','${d.id}')">🗑️</button></td>
              </tr>`;
         });
 
-        // Simple Chart for Utilities (Last 20 readings reversed for chart)
+        // Simple Chart for Utilities
         const chartData = [...f].slice(0, 20).reverse();
+        // For electricity use TOTAL
         renderLineChart('chartUtenze', chartData.map(d=>d.date.split('-').slice(1).reverse().join('/')), [{label: selectedType, data: chartData.map(d=>d.val), borderColor: '#8b5cf6', fill: true}]);
     };
     
