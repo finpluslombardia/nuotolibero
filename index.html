@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V71 - Fix Rendering</title>
+    <title>Piscina Facility Suite V72 - Chart Toggle Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -220,7 +220,7 @@
 
             <div id="sub-overview">
                 <div class="filter-row" style="margin-bottom:10px; justify-content:flex-end">
-                    <select id="ov-chart-type" class="filter-select" onchange="renderOverview()" style="font-weight:700; border:1px solid var(--primary); color:var(--primary)">
+                    <select id="ov-chart-type" class="filter-select" onchange="renderOverviewCharts()" style="font-weight:700; border:1px solid var(--primary); color:var(--primary)">
                         <option value="line">📈 Grafico a Linea</option>
                         <option value="bar">📊 Grafico a Colonne</option>
                     </select>
@@ -232,8 +232,14 @@
                     <div class="kpi-card glass-card"><div class="kpi-head">Vs Anno Prec.</div><div class="kpi-val" id="ov-yoy">0%</div><div class="kpi-sub" id="ov-yoy-label">-</div></div>
                     <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub" id="ov-forecast-sub">proiezione</div></div>
                 </div>
-                <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec. (Allineato Giorno Settimana)</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
-                <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Andamento Ultimi 12 Mesi vs Anno Prec.</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
+                <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec. (Allineato Giorno Settimana) 
+
+[Image of dashboard interface with line chart]
+</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
+                <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Andamento Ultimi 12 Mesi vs Anno Prec. 
+
+[Image of dashboard interface with bar chart]
+</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
             </div>
 
             <div id="sub-stats" class="hidden">
@@ -350,7 +356,8 @@
                  <div style="display:flex; justify-content:space-between; margin-bottom:10px">
                      <div class="chart-header" style="font-size:0.8rem;">Andamento Consumi</div>
                      <select id="u-chart-type" class="filter-select" onchange="renderUtenze()" style="height:30px; font-size:0.8rem; padding:0 10px; border:1px solid #8b5cf6; color:#8b5cf6">
-                        <option value="line">📈 Linea</option><option value="bar">📊 Colonne</option>
+                        <option value="line">📈 Linea</option>
+                        <option value="bar">📊 Colonne</option>
                     </select>
                  </div>
                  <div class="chart-wrapper"><canvas id="chartUtenze"></canvas></div>
@@ -370,8 +377,6 @@
     const firebaseConfig = { apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0", authDomain: "piscinastats-64519.firebaseapp.com", projectId: "piscinastats-64519", storageBucket: "piscinastats-64519.firebasestorage.app", messagingSenderId: "297663099794", appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b" };
     const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
     let dataIngressi=[], dataVasca=[], dataDae=[], dataUtenze=[]; let editIdIngressi=null, editIdVasca=null;
-    
-    // Safety check for chart
     const isChartReady = () => typeof Chart !== 'undefined';
 
     window.showToast = (msg, type='success') => { const c = document.getElementById('toast-container'); const e = document.createElement('div'); e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); };
@@ -409,26 +414,32 @@
     function renderDynamicChart(id, labels, datasets, type) {
         if(!isChartReady()) return;
         if(ch[id]) ch[id].destroy();
+        const isBar = type === 'bar';
         const optimizedDatasets = datasets.map(d => ({
             ...d,
-            backgroundColor: type === 'bar' ? d.borderColor : (d.fill ? d.borderColor + '20' : undefined),
-            borderWidth: type === 'bar' ? 0 : 2,
-            pointRadius: type === 'bar' ? 0 : 3
+            // If BAR: Solid color (use border color as bg). If LINE: Transparent fill if fill=true
+            backgroundColor: isBar ? d.borderColor : (d.fill ? d.borderColor + '20' : undefined),
+            borderWidth: isBar ? 0 : 2,
+            pointRadius: isBar ? 0 : 3,
+            // KEY FIX: Remove borderDash if Bar (avoids ugly dashed bars)
+            borderDash: isBar ? [] : (d.borderDash || []),
+            // Ensure tension is kept for lines
+            tension: 0.4 
         }));
         ch[id] = new Chart(document.getElementById(id), {
             type: type,
             data: { labels: labels, datasets: optimizedDatasets },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, layout: { padding: 25 }, scales: { y: { beginAtZero: true } }, tension: 0.4 }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, layout: { padding: 25 }, scales: { y: { beginAtZero: true } } }
         });
     }
     function renderPie(id,l,d) { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#f59e0b','#ef4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
     function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:ds},options:{responsive:true,maintainAspectRatio:false,indexAxis:ax,plugins:{legend:{display:true}}}}); }
 
-    // OVERVIEW
-    function renderOverview() { 
+    // OVERVIEW (SPLIT LOGIC FOR STABILITY)
+    window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
+
+    function renderOverviewKPI() {
         if(!dataIngressi || dataIngressi.length === 0) return;
-        
-        // CALCOLO NUMERI PRIMA DI TUTTO (COSI APPAIONO SEMPRE)
         const today = new Date();
         const currentMonthStr = today.toISOString().slice(0, 7); 
         const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
@@ -460,10 +471,12 @@
         const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
         if(daysCurrent > 0) { document.getElementById('ov-forecast').innerText = ((totalCurrent / today.getDate()) * daysInMonth).toFixed(0); } 
         else { document.getElementById('ov-forecast').innerText = "-"; }
+    }
 
-        // ORA I GRAFICI
-        if(!isChartReady()) return;
+    window.renderOverviewCharts = () => {
+        if(!dataIngressi || dataIngressi.length === 0 || !isChartReady()) return;
         const chartType = document.getElementById('ov-chart-type').value;
+        const today = new Date();
         const dates=[], l30=[], l30_prev=[];
         for(let i=29; i>=0; i--) {
             const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; 
@@ -507,7 +520,7 @@
         const colors = ['#2563eb', '#a855f7', '#f59e0b', '#10b981', '#ef4444'];
         
         // YOY
-        const historyDataFiltered = dataIngressi.filter(d => !d.excludeStats); // Simplified history for speed
+        const historyDataFiltered = dataIngressi.filter(d => !d.excludeStats);
         const avgMonthlyTotals = new Array(12).fill(0);
         const uniqueYears = new Set(historyDataFiltered.map(d=>d.date.split('-')[0])).size || 1;
         historyDataFiltered.forEach(d => { avgMonthlyTotals[new Date(d.date).getMonth()] += d.totale; });
@@ -581,8 +594,7 @@
 
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
     
-    // DAE
-    window.saveDae = async () => { const d=document.getElementById('d-date').value; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:document.getElementById('d-time').value,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
+    window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
     function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; const sortedDae = [...dataDae].sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time)); sortedDae.forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${(d.date||'').split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time||'-'}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
 
     // UTENZE
