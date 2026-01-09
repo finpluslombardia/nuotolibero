@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Facility Suite V73 - Smart Charts & Utilities</title>
+    <title>Facility Suite V74 - Energy & Meteo Analytics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -336,13 +336,28 @@
                             <option value="🔥 Gas Metano">🔥 Gas Metano (m³)</option>
                         </select>
                     </div>
+                    
                     <div id="u-single-input" class="inp-field hidden" style="flex:1"><label>Lettura Contatore</label><input type="number" id="u-val" placeholder="Es. 12500" step="any"></div>
+                    
+                    <div id="u-extra-gas" class="inp-field hidden" style="flex:1"><label>Temp. Media (°C)</label><input type="number" id="u-temp" placeholder="°C" step="0.1"></div>
+
+                    <div id="u-extra-elec-meteo" class="inp-field hidden" style="flex:1"><label>Meteo Giornata</label>
+                        <select id="u-meteo">
+                             <option value="☀️ Sole">☀️ Sole</option>
+                             <option value="☁️ Nuvoloso">☁️ Nuvoloso</option>
+                             <option value="🌧️ Pioggia">🌧️ Pioggia</option>
+                             <option value="❄️ Freddo/Neve">❄️ Freddo/Neve</option>
+                             <option value="🔥 Caldo Estremo">🔥 Caldo Estremo</option>
+                        </select>
+                    </div>
+
                     <div id="u-elec-input" class="group-ctx" style="flex:2.5; gap:10px">
                         <div class="t-box"><label>A1 (F1)</label><input type="number" id="u-a1" step="any" style="font-size:1.1rem"></div>
                         <div class="t-box"><label>A2 (F2)</label><input type="number" id="u-a2" step="any" style="font-size:1.1rem"></div>
                         <div class="t-box"><label>A3 (F3)</label><input type="number" id="u-a3" step="any" style="font-size:1.1rem"></div>
                     </div>
-                    <div class="inp-field" style="flex:2"><label>Note</label><input type="text" id="u-note" placeholder="Opzionale..."></div>
+
+                    <div class="inp-field" style="flex:1.5"><label>Note</label><input type="text" id="u-note" placeholder="Opzionale..."></div>
                 </div>
                 <div class="group-actions"><button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveUtenze()">SALVA</button></div>
             </div>
@@ -400,18 +415,13 @@
 
     // --- LOGICA DATE INTELLIGENTI ---
     const FESTIVITA_FISSE = ["01-01", "06-01", "25-04", "01-05", "02-06", "15-08", "01-11", "08-12", "25-12", "26-12"];
-    
     function getDataConfronto(dataCorrente) {
         const m = String(dataCorrente.getMonth() + 1).padStart(2, '0');
         const d = String(dataCorrente.getDate()).padStart(2, '0');
         const chiaveData = `${d}-${m}`;
         const dataAnnoPrec = new Date(dataCorrente);
-
-        if (FESTIVITA_FISSE.includes(chiaveData)) {
-            dataAnnoPrec.setFullYear(dataCorrente.getFullYear() - 1);
-        } else {
-            dataAnnoPrec.setDate(dataCorrente.getDate() - 364);
-        }
+        if (FESTIVITA_FISSE.includes(chiaveData)) { dataAnnoPrec.setFullYear(dataCorrente.getFullYear() - 1); } 
+        else { dataAnnoPrec.setDate(dataCorrente.getDate() - 364); }
         return dataAnnoPrec;
     }
 
@@ -445,7 +455,7 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER HELPERS - UPDATE WITH SMART TOOLTIP
+    // RENDER HELPERS
     let ch={}; 
     function renderDynamicChart(id, labels, datasets, type) {
         if(!isChartReady()) return;
@@ -474,18 +484,27 @@
                 plugins: { 
                     legend: { display: true },
                     tooltip: {
-                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
                         padding: 12,
                         cornerRadius: 8,
                         titleFont: { size: 13 },
                         bodyFont: { size: 13, weight: 'bold' },
                         callbacks: {
+                            // TOOLTIP PARLANTE (INGRESSI) + METEO/TEMP (UTENZE)
                             afterBody: function(context) {
-                                const punto = context.find(c => c.raw && c.raw.refDate);
-                                if (punto) {
+                                const punto = context.find(c => c.raw);
+                                if(!punto) return [];
+                                
+                                // Caso Ingressi: Mostra data confronto
+                                if (punto.raw.refDate) {
                                     const dRef = new Date(punto.raw.refDate);
                                     const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
                                     return ['', '------------------', `Confrontato con:\n${dStr}`];
+                                }
+                                
+                                // Caso Utenze: Mostra Meteo o Temperatura se presenti nel dataset custom
+                                if (punto.raw.extraInfo) {
+                                    return ['', `📝 ${punto.raw.extraInfo}`];
                                 }
                                 return [];
                             }
@@ -502,19 +521,16 @@
 
     // OVERVIEW
     window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
-
     function renderOverviewKPI() {
         if(!dataIngressi || dataIngressi.length === 0) return;
         const today = new Date();
         const currentMonthStr = today.toISOString().slice(0, 7); 
         const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         const prevMonthStr = prevMonthDate.toISOString().slice(0, 7);
-
         const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats);
         const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
         const daysCurrent = new Set(dCurrent.map(x=>x.date)).size; 
         document.getElementById('ov-avg').innerText = daysCurrent > 0 ? (totalCurrent/daysCurrent).toFixed(0) : 0; 
-
         const dPrev = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats);
         const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
         let mom = totalPrev > 0 ? ((totalCurrent - totalPrev) / totalPrev) * 100 : (totalCurrent > 0 ? 100 : 0);
@@ -522,7 +538,6 @@
         momEl.innerText = (mom > 0 ? "+" : "") + mom.toFixed(1) + "%";
         momEl.style.color = mom >= 0 ? "#16a34a" : "#dc2626";
         document.getElementById('ov-mom-label').innerText = `vs ${prevMonthDate.toLocaleString('it-IT',{month:'long'})}`;
-
         const yoyDate = new Date(today.getFullYear() - 1, today.getMonth(), 1);
         const yoyStr = yoyDate.toISOString().slice(0, 7);
         const dYoy = dataIngressi.filter(x => x.date.startsWith(yoyStr) && !x.excludeStats);
@@ -532,7 +547,6 @@
         yoyEl.innerText = (yoy > 0 ? "+" : "") + yoy.toFixed(1) + "%";
         yoyEl.style.color = yoy >= 0 ? "#16a34a" : "#dc2626";
         document.getElementById('ov-yoy-label').innerText = `vs ${yoyDate.getFullYear()}`;
-
         const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
         if(daysCurrent > 0) { document.getElementById('ov-forecast').innerText = ((totalCurrent / today.getDate()) * daysInMonth).toFixed(0); } 
         else { document.getElementById('ov-forecast').innerText = "-"; }
@@ -545,23 +559,12 @@
         const dates=[], l30=[], l30_prev=[];
         
         for(let i=29; i>=0; i--) {
-            const dt=new Date(); 
-            dt.setDate(today.getDate()-i); 
-            const dtStr=dt.toISOString().split('T')[0]; 
-            
+            const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; 
             dates.push(`${dt.toLocaleDateString('it-IT',{weekday:'short'})} ${dt.getDate()}/${dt.getMonth()+1}`);
-            
             const dtPrev = getDataConfronto(dt);
             const dtPrevStr = dtPrev.toISOString().split('T')[0];
-
             const valOggi = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0);
-            
-            l30.push({
-                x: dates[dates.length-1], 
-                y: valOggi,               
-                refDate: dtPrevStr        
-            });
-
+            l30.push({ x: dates[dates.length-1], y: valOggi, refDate: dtPrevStr });
             l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
         }
         
@@ -597,12 +600,10 @@
         });
 
         document.getElementById('deep-total').innerText = f.reduce((a,b)=>a+b.totale,0).toLocaleString();
-        
         if(!isChartReady()) return;
         const chartType = document.getElementById('stat-chart-type').value;
         const colors = ['#2563eb', '#a855f7', '#f59e0b', '#10b981', '#ef4444'];
         
-        // YOY
         const historyDataFiltered = dataIngressi.filter(d => !d.excludeStats);
         const avgMonthlyTotals = new Array(12).fill(0);
         const uniqueYears = new Set(historyDataFiltered.map(d=>d.date.split('-')[0])).size || 1;
@@ -626,12 +627,10 @@
         }
         renderDynamicChart('chartYoY', labels, sets, chartType);
 
-        // PIE
         let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
         f.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
         renderPie('chartPie', Object.keys(t), Object.values(t));
 
-        // WEEK
         const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
         const getJsDay = (i) => (i + 1) % 7; 
         let weekSets = [];
@@ -652,7 +651,6 @@
         }
         renderDynamicChart('chartWeek', weekLabels, weekSets, chartType);
 
-        // BARS
         const buildMultiSeries = (extractor) => {
             let yearsToUse = selectedYears.length > 0 ? selectedYears : [];
             let allLabels = new Set(); dataIngressi.forEach(d => allLabels.add(extractor(d).key));
@@ -680,19 +678,52 @@
     window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
     function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; const sortedDae = [...dataDae].sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time)); sortedDae.forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${(d.date||'').split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time||'-'}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
 
-    // UTENZE - LOGICA UNIFICATA (3 CHART + TABELLA UNICA)
-    window.toggleUtenzeMode = () => { const type = document.getElementById('u-type').value; document.getElementById('u-single-input').classList.toggle('hidden', type==='⚡ Elettricità'); document.getElementById('u-elec-input').classList.toggle('hidden', type!=='⚡ Elettricità'); document.getElementById('u-elec-input').style.display = type==='⚡ Elettricità'?'flex':'none'; };
+    // UTENZE - LOGICA AGGIORNATA
+    window.toggleUtenzeMode = () => { 
+        const type = document.getElementById('u-type').value; 
+        
+        // Toggle input standard (Valore singolo)
+        const isSingle = type !== '⚡ Elettricità';
+        document.getElementById('u-single-input').classList.toggle('hidden', !isSingle);
+        
+        // Toggle input Elettricità (Tripla fascia + Meteo)
+        const isElec = type === '⚡ Elettricità';
+        document.getElementById('u-elec-input').classList.toggle('hidden', !isElec);
+        document.getElementById('u-elec-input').style.display = isElec ? 'flex' : 'none';
+        document.getElementById('u-extra-elec-meteo').classList.toggle('hidden', !isElec);
+        
+        // Toggle input Gas (Temperatura)
+        const isGas = type === '🔥 Gas Metano';
+        document.getElementById('u-extra-gas').classList.toggle('hidden', !isGas);
+    };
     window.toggleUtenzeMode(); 
     
     window.saveUtenze = async () => {
         const d = document.getElementById('u-date').value; const type = document.getElementById('u-type').value; const note = document.getElementById('u-note').value;
         let p = { date: d, type, note };
+        
         if(type === '⚡ Elettricità') {
-            const a1 = parseFloat(document.getElementById('u-a1').value)||0; const a2 = parseFloat(document.getElementById('u-a2').value)||0; const a3 = parseFloat(document.getElementById('u-a3').value)||0;
-            p.a1 = a1; p.a2 = a2; p.a3 = a3; p.val = a1+a2+a3; 
-        } else { p.val = parseFloat(document.getElementById('u-val').value); }
+            const a1 = parseFloat(document.getElementById('u-a1').value)||0; 
+            const a2 = parseFloat(document.getElementById('u-a2').value)||0; 
+            const a3 = parseFloat(document.getElementById('u-a3').value)||0;
+            p.a1 = a1; p.a2 = a2; p.a3 = a3; p.val = a1+a2+a3;
+            // Salva meteo
+            p.meteo = document.getElementById('u-meteo').value; 
+        } else { 
+            p.val = parseFloat(document.getElementById('u-val').value); 
+            // Salva temperatura se Gas
+            if(type === '🔥 Gas Metano') {
+                 p.temp = parseFloat(document.getElementById('u-temp').value) || null;
+            }
+        }
+        
         if(!d || (type!=='⚡ Elettricità' && isNaN(p.val))) return showToast("Dati mancanti", "error");
-        try { await addDoc(collection(db, "utenze_log"), p); showToast("Salvato"); document.querySelectorAll('#module-utenze input:not([type=date])').forEach(i=>i.value=''); } catch(e){ showToast(e.message, "error"); }
+        
+        try { 
+            await addDoc(collection(db, "utenze_log"), p); 
+            showToast("Salvato"); 
+            document.querySelectorAll('#module-utenze input:not([type=date])').forEach(i=>i.value=''); 
+        } catch(e){ showToast(e.message, "error"); }
     };
 
     window.renderUtenze = () => {
@@ -718,9 +749,13 @@
 
         labels.forEach(date => {
             const g = grouped[date];
-            dataElec.push(g.elec ? g.elec.val : null); 
+            // Elettricità: Passa anche il meteo come info extra per il tooltip
+            dataElec.push(g.elec ? { y: g.elec.val, extraInfo: `Meteo: ${g.elec.meteo||'N/D'}` } : null); 
+            
             dataWater.push(g.water ? g.water.val : null);
-            dataGas.push(g.gas ? g.gas.val : null);
+            
+            // Gas: Passa la temperatura come info extra
+            dataGas.push(g.gas ? { y: g.gas.val, extraInfo: g.gas.temp ? `Temp. Media: ${g.gas.temp}°C` : null } : null);
         });
 
         const labelsFmt = labels.map(d => d.split('-').slice(1).reverse().join('/'));
@@ -741,15 +776,24 @@
                 return `<div style="display:flex; align-items:center; justify-content:space-between; gap:10px"><span style="font-weight:700; color:${color}">${obj.val} ${suffix}</span><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:#ef4444; border:1px solid #fee2e2" onclick="delDoc('utenze_log','${obj.id}')">×</button></div>`;
             };
 
+            // Dettaglio Elettricità
             let elecDet = '-';
             if(g.elec) {
-                elecDet = `<div style="font-size:0.75rem; color:#64748b">F1: <b>${g.elec.a1||0}</b> | F2: <b>${g.elec.a2||0}</b> | F3: <b>${g.elec.a3||0}</b></div>`;
+                const meteoBadge = g.elec.meteo ? `<br><span style="font-size:0.75rem; background:#f1f5f9; padding:2px 6px; border-radius:4px">Meteo: ${g.elec.meteo}</span>` : '';
+                elecDet = `<div style="font-size:0.75rem; color:#64748b">F1: <b>${g.elec.a1||0}</b> | F2: <b>${g.elec.a2||0}</b> | F3: <b>${g.elec.a3||0}</b>${meteoBadge}</div>`;
+            }
+
+            // Dettaglio Gas (aggiunta temperatura)
+            let gasCell = makeCell(g.gas, '#dc2626', 'm³');
+            if(g.gas && g.gas.temp) {
+                 // Inseriamo la temperatura sotto il valore del gas
+                 gasCell = gasCell.replace('</div>', `</div><div style="font-size:0.7rem; color:#64748b; margin-top:2px">🌡️ Temp: <b>${g.gas.temp}°C</b></div>`);
             }
 
             const noteStr = g.notes.length > 0 ? g.notes.join('; ') : '';
             const dateFmt = date.split('-').reverse().join('/');
 
-            t.innerHTML += `<tr><td style="font-weight:800; color:var(--text-main)">${dateFmt}</td><td style="background:rgba(234, 179, 8, 0.05)">${makeCell(g.elec, '#d97706', 'kWh')}</td><td style="background:rgba(234, 179, 8, 0.05)">${elecDet}</td><td style="background:rgba(59, 130, 246, 0.05)">${makeCell(g.water, '#2563eb', 'm³')}</td><td style="background:rgba(239, 68, 68, 0.05)">${makeCell(g.gas, '#dc2626', 'm³')}</td><td style="font-size:0.8rem; color:#64748b; font-style:italic">${noteStr}</td></tr>`;
+            t.innerHTML += `<tr><td style="font-weight:800; color:var(--text-main)">${dateFmt}</td><td style="background:rgba(234, 179, 8, 0.05)">${makeCell(g.elec, '#d97706', 'kWh')}</td><td style="background:rgba(234, 179, 8, 0.05)">${elecDet}</td><td style="background:rgba(59, 130, 246, 0.05)">${makeCell(g.water, '#2563eb', 'm³')}</td><td style="background:rgba(239, 68, 68, 0.05)">${gasCell}</td><td style="font-size:0.8rem; color:#64748b; font-style:italic">${noteStr}</td></tr>`;
         });
     };
     
