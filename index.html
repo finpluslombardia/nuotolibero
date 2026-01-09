@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V68 - Stable</title>
+    <title>Piscina Facility Suite V69 - DAE Index Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -422,7 +422,13 @@
         try {
             onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
             onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
-            onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
+            
+            // FIXED DAE QUERY: REMOVED SECOND SORT TO FIX INDEX ERROR
+            onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc")), (snap) => { 
+                dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); 
+                if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); 
+            });
+            
             onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc")), (snap) => { dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze(); });
         } catch(e) { console.error(e); showToast("Errore caricamento dati: " + e.message, "error"); }
     }
@@ -594,7 +600,7 @@
         renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
     };
 
-    // FIXED OVERVIEW STATS V68
+    // FIXED OVERVIEW STATS V69
     function renderOverview() { 
         if(!dataIngressi || dataIngressi.length === 0 || !isChartReady()) return;
 
@@ -669,6 +675,7 @@
 
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
     
+    // SAVE DAE FIXED V69
     window.saveDae = async () => { 
         const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; 
         const a=document.getElementById('d-ass').value; 
@@ -684,11 +691,11 @@
     };
     function renderDae() { 
         const t=document.getElementById('tbody-dae'); t.innerHTML=""; 
-        // SAFETY SORT
+        // SORT CLIENT SIDE TO AVOID INDEX ERROR
         const sortedDae = [...dataDae].sort((a,b) => {
-            const ta = (a.date||'') + (a.time||'');
-            const tb = (b.date||'') + (b.time||'');
-            return tb.localeCompare(ta);
+            const da = (a.date || '') + (a.time || '');
+            const db = (b.date || '') + (b.time || '');
+            return db.localeCompare(da);
         }); 
         sortedDae.forEach(d=>{ 
             const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; 
