@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V72 - Chart Smart Fix</title>
+    <title>Facility Suite V73 - Smart Charts & Utilities</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -275,7 +275,8 @@
                     <div class="arch-group"><span class="arch-label">DA:</span><input type="date" id="arch-date-start" class="arch-input" onchange="renderIngressiArchive()"></div>
                     <div class="arch-group"><span class="arch-label">A:</span><input type="date" id="arch-date-end" class="arch-input" onchange="renderIngressiArchive()"></div>
                     <select id="arch-filter-fascia" class="arch-select" onchange="renderIngressiArchive()"><option value="all">Tutte le Fasce</option><optgroup label="Interna"><option value="Mattina">Mattina</option><option value="Mattina intera">Mattina intera</option><option value="Pranzo">Pranzo</option><option value="Sera">Sera</option><option value="Sabato pom">Sabato pom</option><option value="Domenica">Domenica</option><option value="Festivo">Festivo</option><option value="Unico">Unico</option></optgroup><optgroup label="Esterna"><option value="Estiva - Mattina">Estiva - Mattina</option><option value="Estiva - Pomeriggio">Estiva - Pomeriggio</option><option value="Estiva - Unico">Estiva - Unico</option></optgroup></select>
-                    <select id="arch-filter-meteo" class="arch-select" onchange="renderIngressiArchive()"><option value="all">Tutto il Meteo</option><option value="☀️ Sole">☀️ Sole</option><option value="🔥 Sole + Caldo">🔥 Sole + Caldo</option><option value="❄️ Sole + Freddo">❄️ Sole + Freddo</option><option value="⛅ Variabile">⛅ Variabile</option><option value="☁️ Nuvoloso">☁️ Nuvoloso</option><option value="🌧️ Pioggia">🌧️ Pioggia</option><option value="❓ N/D">❓ N/D</option></select>
+                    <select id="arch-filter-meteo" class="arch-select" onchange="renderIngressiArchive()"><option value="all">Tutto il Meteo</option><option value="☀️ Sole">☀️ Sole</option><option value="🔥 Sole + Caldo">🔥 Sole + Caldo</option><option value="❄️ Sole + Freddo">❄️ Sole + Freddo</option><option value="🌦️ Variabile">🌦️ Variabile</option><option value="🌤️ Parz Nuvoloso">🌤️ Parz Nuvoloso</option><option value="☁️ Nuvoloso">☁️ Nuvoloso</option><option value="🌥️ Nuv + Freddo">🌥️ Nuv + Freddo</option>
+                    <option value="🌧️ Pioggia">🌧️ Pioggia</option><option value="🌨️ Piog + Freddo">🌨️ Piog + Freddo</option><option value="⛈️ Temporale">⛈️ Temporale</option><option value="❓ N/D">❓ N/D</option></select>
                     <select id="arch-sort" class="arch-select" style="min-width:100px" onchange="renderIngressiArchive()"><option value="desc">⬇️ Recenti</option><option value="asc">⬆️ Vecchi</option></select>
                     <button class="btn btn-danger" style="height:36px; width:36px; padding:0" onclick="resetArchiveFilters()">✕</button>
                     <button class="btn btn-primary" style="height:36px; font-size:0.8rem; padding:0 20px" onclick="downloadCSV()">Scarica Excel</button>
@@ -346,19 +347,42 @@
                 <div class="group-actions"><button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveUtenze()">SALVA</button></div>
             </div>
         </div>
+        
         <div class="scroll-area">
-            <div class="chart-card glass-card" style="height:280px; margin-bottom:20px; padding:15px; position:relative">
-                 <div style="display:flex; justify-content:space-between; margin-bottom:10px">
-                     <div class="chart-header" style="font-size:0.8rem;">Andamento Consumi</div>
-                     <select id="u-chart-type" class="filter-select" onchange="renderUtenze()" style="height:30px; font-size:0.8rem; padding:0 10px; border:1px solid #8b5cf6; color:#8b5cf6">
-                        <option value="line">📈 Linea</option>
-                        <option value="bar">📊 Colonne</option>
-                    </select>
-                 </div>
-                 <div class="chart-wrapper"><canvas id="chartUtenze"></canvas></div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px; margin-bottom:25px;">
+                <div class="chart-card glass-card" style="height:250px; padding:15px">
+                     <div class="chart-header" style="font-size:0.85rem; color:#eab308">⚡ Elettricità (kWh)</div>
+                     <div class="chart-wrapper"><canvas id="chartElec"></canvas></div>
+                </div>
+                <div class="chart-card glass-card" style="height:250px; padding:15px">
+                     <div class="chart-header" style="font-size:0.85rem; color:#3b82f6">💧 Acqua (m³)</div>
+                     <div class="chart-wrapper"><canvas id="chartWater"></canvas></div>
+                </div>
+                <div class="chart-card glass-card" style="height:250px; padding:15px">
+                     <div class="chart-header" style="font-size:0.85rem; color:#ef4444">🔥 Gas (m³)</div>
+                     <div class="chart-wrapper"><canvas id="chartGas"></canvas></div>
+                </div>
             </div>
-            <h2 class="page-title">📊 Storico Letture</h2>
-            <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-utenze"><thead><tr><th>Data</th><th>Tipo</th><th>Dettaglio Lettura</th><th>Note</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-utenze"></tbody></table></div></div>
+
+            <h2 class="page-title">📊 Storico Consumi Unificato</h2>
+            
+            <div class="table-wrap glass-card">
+                <div style="overflow-x:auto;">
+                    <table id="table-utenze">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th style="color:#eab308; background:rgba(234, 179, 8, 0.1)">⚡ Totale</th>
+                                <th style="color:#eab308; background:rgba(234, 179, 8, 0.1)">F1 / F2 / F3</th>
+                                <th style="color:#3b82f6; background:rgba(59, 130, 246, 0.1)">💧 Acqua</th>
+                                <th style="color:#ef4444; background:rgba(239, 68, 68, 0.1)">🔥 Gas</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-utenze"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -374,7 +398,7 @@
     let dataIngressi=[], dataVasca=[], dataDae=[], dataUtenze=[]; let editIdIngressi=null, editIdVasca=null;
     const isChartReady = () => typeof Chart !== 'undefined';
 
-    // --- LOGICA DATE INTELLIGENTI (NUOVA IMPLEMENTAZIONE) ---
+    // --- LOGICA DATE INTELLIGENTI ---
     const FESTIVITA_FISSE = ["01-01", "06-01", "25-04", "01-05", "02-06", "15-08", "01-11", "08-12", "25-12", "26-12"];
     
     function getDataConfronto(dataCorrente) {
@@ -384,15 +408,12 @@
         const dataAnnoPrec = new Date(dataCorrente);
 
         if (FESTIVITA_FISSE.includes(chiaveData)) {
-            // Festa fissa: Confronta DATA ESATTA (es. 1 Gen vs 1 Gen), ignora giorno settimana
             dataAnnoPrec.setFullYear(dataCorrente.getFullYear() - 1);
         } else {
-            // Giorno normale: Confronta GIORNO SETTIMANA (es. Lun vs Lun), sottrai 52 settimane
             dataAnnoPrec.setDate(dataCorrente.getDate() - 364);
         }
         return dataAnnoPrec;
     }
-    // --------------------------------------------------------
 
     window.showToast = (msg, type='success') => { const c = document.getElementById('toast-container'); const e = document.createElement('div'); e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); };
     window.doLogin = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch(e) { document.getElementById('login-error').innerText = e.message; } };
@@ -424,7 +445,7 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER HELPERS - AGGIORNATO CON TOOLTIP INTELLIGENTE
+    // RENDER HELPERS - UPDATE WITH SMART TOOLTIP
     let ch={}; 
     function renderDynamicChart(id, labels, datasets, type) {
         if(!isChartReady()) return;
@@ -437,7 +458,6 @@
             pointRadius: isBar ? 0 : 3,
             borderDash: isBar ? [] : (d.borderDash || []),
             tension: 0.4,
-            // Importante per leggere oggetti {x,y} se passati
             parsing: { yAxisKey: 'y' } 
         }));
 
@@ -460,9 +480,7 @@
                         titleFont: { size: 13 },
                         bodyFont: { size: 13, weight: 'bold' },
                         callbacks: {
-                            // TOOLTIP PARLANTE
                             afterBody: function(context) {
-                                // Cerca se nel dataset corrente (di solito il primo, quello blu) c'è la data di riferimento salvata
                                 const punto = context.find(c => c.raw && c.raw.refDate);
                                 if (punto) {
                                     const dRef = new Date(punto.raw.refDate);
@@ -482,7 +500,7 @@
     function renderPie(id,l,d) { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#f59e0b','#ef4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
     function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:ds},options:{responsive:true,maintainAspectRatio:false,indexAxis:ax,plugins:{legend:{display:true}}}}); }
 
-    // OVERVIEW - AGGIORNATA LOGICA 30 GIORNI
+    // OVERVIEW
     window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 
     function renderOverviewKPI() {
@@ -533,18 +551,15 @@
             
             dates.push(`${dt.toLocaleDateString('it-IT',{weekday:'short'})} ${dt.getDate()}/${dt.getMonth()+1}`);
             
-            // --- MODIFICA CORE: Usa la funzione intelligente per la data di confronto ---
             const dtPrev = getDataConfronto(dt);
             const dtPrevStr = dtPrev.toISOString().split('T')[0];
-            // --------------------------------------------------------------------------
 
             const valOggi = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0);
             
-            // Pusha un oggetto invece che un numero per passare i metadati al tooltip
             l30.push({
-                x: dates[dates.length-1], // Label asse X
-                y: valOggi,               // Valore
-                refDate: dtPrevStr        // Metadato per il tooltip (la data precisa usata per il confronto)
+                x: dates[dates.length-1], 
+                y: valOggi,               
+                refDate: dtPrevStr        
             });
 
             l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
@@ -665,9 +680,10 @@
     window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
     function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; const sortedDae = [...dataDae].sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time)); sortedDae.forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${(d.date||'').split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time||'-'}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
 
-    // UTENZE
+    // UTENZE - LOGICA UNIFICATA (3 CHART + TABELLA UNICA)
     window.toggleUtenzeMode = () => { const type = document.getElementById('u-type').value; document.getElementById('u-single-input').classList.toggle('hidden', type==='⚡ Elettricità'); document.getElementById('u-elec-input').classList.toggle('hidden', type!=='⚡ Elettricità'); document.getElementById('u-elec-input').style.display = type==='⚡ Elettricità'?'flex':'none'; };
     window.toggleUtenzeMode(); 
+    
     window.saveUtenze = async () => {
         const d = document.getElementById('u-date').value; const type = document.getElementById('u-type').value; const note = document.getElementById('u-note').value;
         let p = { date: d, type, note };
@@ -678,18 +694,63 @@
         if(!d || (type!=='⚡ Elettricità' && isNaN(p.val))) return showToast("Dati mancanti", "error");
         try { await addDoc(collection(db, "utenze_log"), p); showToast("Salvato"); document.querySelectorAll('#module-utenze input:not([type=date])').forEach(i=>i.value=''); } catch(e){ showToast(e.message, "error"); }
     };
+
     window.renderUtenze = () => {
         if(!isChartReady()) return;
-        const selectedType = document.getElementById('u-type').value;
-        const chartType = document.getElementById('u-chart-type').value;
-        const t = document.getElementById('tbody-utenze'); t.innerHTML = "";
-        const f = dataUtenze.filter(d => d.type === selectedType).sort((a,b) => new Date(b.date) - new Date(a.date));
-        f.forEach(d => {
-             let valDisplay = d.type === '⚡ Elettricità' ? `<span style="font-size:0.8rem">A1:<b>${d.a1||0}</b> | A2:<b>${d.a2||0}</b> | A3:<b>${d.a3||0}</b></span>` : `<span style="font-weight:800; color:var(--primary)">${d.val}</span>`;
-             t.innerHTML += `<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td>${d.type}</td><td>${valDisplay}</td><td style="color:#64748b; font-size:0.85rem">${d.note}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('utenze_log','${d.id}')">🗑️</button></td></tr>`;
+
+        // 1. Raggruppa i dati per data
+        const grouped = {};
+        const sortedData = [...dataUtenze].sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        sortedData.forEach(d => {
+            if(!grouped[d.date]) {
+                grouped[d.date] = { date: d.date, elec: null, water: null, gas: null, notes: [] };
+            }
+            if(d.type === '⚡ Elettricità') grouped[d.date].elec = d;
+            if(d.type === '💧 Acqua') grouped[d.date].water = d;
+            if(d.type === '🔥 Gas Metano') grouped[d.date].gas = d;
+            if(d.note) grouped[d.date].notes.push(d.note);
         });
-        const chartData = [...f].slice(0, 20).reverse();
-        renderDynamicChart('chartUtenze', chartData.map(d=>d.date.split('-').slice(1).reverse().join('/')), [{label: selectedType, data: chartData.map(d=>d.val), borderColor: '#8b5cf6', fill: true}], chartType);
+
+        // 2. Prepara i dati per i 3 Grafici
+        const labels = Object.keys(grouped).sort(); 
+        const dataElec = [], dataWater = [], dataGas = [];
+
+        labels.forEach(date => {
+            const g = grouped[date];
+            dataElec.push(g.elec ? g.elec.val : null); 
+            dataWater.push(g.water ? g.water.val : null);
+            dataGas.push(g.gas ? g.gas.val : null);
+        });
+
+        const labelsFmt = labels.map(d => d.split('-').slice(1).reverse().join('/'));
+
+        renderDynamicChart('chartElec', labelsFmt, [{ label: 'kWh', data: dataElec, borderColor: '#eab308', backgroundColor: '#eab308', fill:true, tension:0.3 }], 'line');
+        renderDynamicChart('chartWater', labelsFmt, [{ label: 'm³', data: dataWater, borderColor: '#3b82f6', backgroundColor: '#3b82f6', fill:true, tension:0.3 }], 'line');
+        renderDynamicChart('chartGas', labelsFmt, [{ label: 'm³', data: dataGas, borderColor: '#ef4444', backgroundColor: '#ef4444', fill:true, tension:0.3 }], 'line');
+
+        // 3. Renderizza la Tabella Unificata (Ordina decrescente)
+        const t = document.getElementById('tbody-utenze'); 
+        t.innerHTML = "";
+        const datesDesc = labels.reverse(); 
+
+        datesDesc.forEach(date => {
+            const g = grouped[date];
+            const makeCell = (obj, color, suffix='') => {
+                if(!obj) return '<span style="color:#ccc">-</span>';
+                return `<div style="display:flex; align-items:center; justify-content:space-between; gap:10px"><span style="font-weight:700; color:${color}">${obj.val} ${suffix}</span><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:#ef4444; border:1px solid #fee2e2" onclick="delDoc('utenze_log','${obj.id}')">×</button></div>`;
+            };
+
+            let elecDet = '-';
+            if(g.elec) {
+                elecDet = `<div style="font-size:0.75rem; color:#64748b">F1: <b>${g.elec.a1||0}</b> | F2: <b>${g.elec.a2||0}</b> | F3: <b>${g.elec.a3||0}</b></div>`;
+            }
+
+            const noteStr = g.notes.length > 0 ? g.notes.join('; ') : '';
+            const dateFmt = date.split('-').reverse().join('/');
+
+            t.innerHTML += `<tr><td style="font-weight:800; color:var(--text-main)">${dateFmt}</td><td style="background:rgba(234, 179, 8, 0.05)">${makeCell(g.elec, '#d97706', 'kWh')}</td><td style="background:rgba(234, 179, 8, 0.05)">${elecDet}</td><td style="background:rgba(59, 130, 246, 0.05)">${makeCell(g.water, '#2563eb', 'm³')}</td><td style="background:rgba(239, 68, 68, 0.05)">${makeCell(g.gas, '#dc2626', 'm³')}</td><td style="font-size:0.8rem; color:#64748b; font-style:italic">${noteStr}</td></tr>`;
+        });
     };
     
     window.saveIngressi = async () => { const d = document.getElementById('i-date').value; if(!d) return showToast("Data mancante","error"); const p = { date:d, type:document.getElementById('i-type').value, fascia:document.getElementById('i-fascia').value, meteo:document.getElementById('i-meteo').value, excludeStats: document.getElementById('i-exclude').checked, int:parseInt(document.getElementById('q-intero').value)||0, rid:parseInt(document.getElementById('q-ridotto').value)||0, grat:parseInt(document.getElementById('q-gratuito').value)||0, abb_int:parseInt(document.getElementById('q-abb-int').value)||0, abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0, totale:(parseInt(document.getElementById('q-intero').value)||0)+(parseInt(document.getElementById('q-ridotto').value)||0)+(parseInt(document.getElementById('q-gratuito').value)||0)+(parseInt(document.getElementById('q-abb-int').value)||0)+(parseInt(document.getElementById('q-abb-rid').value)||0) }; if(p.totale===0) return showToast("Inserisci dati","error"); try { if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), p); showToast("Aggiornato"); cancelEditIngressi(); } else { await addDoc(collection(db,"sessioni"), p); showToast("Salvato"); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; } } catch(e){ showToast(e.message,"error"); } };
