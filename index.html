@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V65 - DAE Fix</title>
+    <title>Piscina Facility Suite V64 - Weekday Alignment</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -368,7 +368,6 @@
     function startListening() {
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc")), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc")), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
-        // FIXED DAE LISTENER
         onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), orderBy("time", "desc")), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
     }
 
@@ -542,6 +541,72 @@
         renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
     };
 
+    window.saveIngressi = async () => { 
+        const date = document.getElementById('i-date').value; 
+        if(!date) return showToast("Data mancante","error"); 
+        
+        const payload = { 
+            date, 
+            type:document.getElementById('i-type').value, 
+            fascia:document.getElementById('i-fascia').value, 
+            meteo:document.getElementById('i-meteo').value, 
+            excludeStats: document.getElementById('i-exclude').checked, 
+            int:parseInt(document.getElementById('q-intero').value)||0, 
+            rid:parseInt(document.getElementById('q-ridotto').value)||0, 
+            grat:parseInt(document.getElementById('q-gratuito').value)||0, 
+            abb_int:parseInt(document.getElementById('q-abb-int').value)||0, 
+            abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0, 
+            totale:(parseInt(document.getElementById('q-intero').value)||0)+(parseInt(document.getElementById('q-ridotto').value)||0)+(parseInt(document.getElementById('q-gratuito').value)||0)+(parseInt(document.getElementById('q-abb-int').value)||0)+(parseInt(document.getElementById('q-abb-rid').value)||0) 
+        }; 
+        if(payload.totale===0) return showToast("Inserisci dati","error"); 
+        try { 
+            if(editIdIngressi) { 
+                await updateDoc(doc(db,"sessioni",editIdIngressi), payload); 
+                showToast("Aggiornato"); 
+                cancelEditIngressi(); 
+            } else { 
+                await addDoc(collection(db,"sessioni"), payload); 
+                showToast("Salvato"); 
+                document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); 
+                document.getElementById('i-exclude').checked = false; 
+            } 
+        } catch(e){ showToast(e.message,"error"); } 
+    };
+
+    window.editIngressi = (id) => { 
+        const d = dataIngressi.find(x=>x.id===id); if(!d) return; 
+        editIdIngressi = id; 
+        document.getElementById('i-date').value=d.date; 
+        document.getElementById('i-type').value=d.type||'standard'; 
+        document.getElementById('i-fascia').value=d.fascia; 
+        document.getElementById('i-meteo').value=d.meteo; 
+        document.getElementById('i-exclude').checked = d.excludeStats || false; 
+        document.getElementById('q-intero').value=d.int; 
+        document.getElementById('q-ridotto').value=d.rid; 
+        document.getElementById('q-gratuito').value=d.grat; 
+        document.getElementById('q-abb-int').value=d.abb_int; 
+        document.getElementById('q-abb-rid').value=d.abb_rid; 
+        document.getElementById('title-ingressi').innerText="Modifica Ingressi"; 
+        document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; 
+        document.getElementById('btn-save-ingressi').style.background="#f59e0b"; 
+        document.getElementById('cancel-ingressi').classList.remove('hidden'); 
+        document.getElementById('cb-ingressi').classList.add('editing'); 
+        window.scrollTo({top:0,behavior:'smooth'}); 
+    };
+    
+    window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; };
+    window.saveVasca = async () => { const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value; if(!date || !time) return showToast("Data/Ora mancanti","error"); const payload = { date, time, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value }; try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); } };
+    window.editVasca = (id) => { const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id; document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time; document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta; document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph; document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc; document.getElementById('v-clt').value=d.clt; document.getElementById('title-vasca').innerText="Modifica Valori"; document.getElementById('btn-save-vasca').innerText="AGGIORNA"; document.getElementById('btn-save-vasca').style.background="#f59e0b"; document.getElementById('cancel-vasca').classList.remove('hidden'); document.getElementById('cb-vasca').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+    window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('title-vasca').innerText="Registrazione Valori"; document.getElementById('btn-save-vasca').innerText="SALVA"; document.getElementById('btn-save-vasca').style.background=""; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
+    window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
+    window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:new Date().toLocaleTimeString(),ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
+    window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
+    
+    // NAVIGATION
+    window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')refreshCurrentView(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); };
+    window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
+    function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
+
     function renderOverview() { 
         const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; 
         const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m && !x.excludeStats}); 
@@ -578,40 +643,18 @@
 
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
     
-    // FIXED DAE RENDER & SAVE
-    window.saveDae = async () => { 
-        const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; 
-        const a=document.getElementById('d-ass').value; 
-        const o=document.getElementById('d-op').value; 
-        // FIX: Prende l'orario direttamente dall'input visibile, non genera un new Date()
-        const tVal = document.getElementById('d-time').value;
-
-        if(!a||!o) return showToast("Compila nomi","error"); 
-        try { 
-            await addDoc(collection(db,"dae_log"),{
-                date:d,
-                time:tVal, // Usa il valore HH:mm dell'input
-                ass:a,
-                op:o,
-                status:document.getElementById('d-status').value
-            }); 
-            document.getElementById('d-ass').value=""; 
-            document.getElementById('d-op').value=""; 
-            showToast("DAE Registrato!"); 
-        } catch(e){ showToast(e.message,"error"); } 
-    };
-
+    // FUNCTION DAE RESTORED
     function renderDae() { 
         const t=document.getElementById('tbody-dae'); 
         t.innerHTML=""; 
-        // FIX: Ordinamento più robusto (concatena con T per formato ISO standard)
-        const sortedDae = [...dataDae].sort((a,b) => new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time)); 
+        const sortedDae = [...dataDae].sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time)); 
         sortedDae.forEach(d=>{ 
             const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; 
             t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; 
         }); 
     }
     
+    // ARCHIVE WITH EXCLUSION TOGGLE
     window.toggleExcludeStats = async (id, currentVal) => {
         try { await updateDoc(doc(db, "sessioni", id), { excludeStats: !currentVal }); showToast(!currentVal ? "Giorno escluso dalla media" : "Giorno reincluso nella media"); } catch(e) { showToast(e.message, "error"); }
     };
