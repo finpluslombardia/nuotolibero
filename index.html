@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V72 - Chart Toggle Fix</title>
+    <title>Piscina Facility Suite V72 - Chart Smart Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -232,14 +232,8 @@
                     <div class="kpi-card glass-card"><div class="kpi-head">Vs Anno Prec.</div><div class="kpi-val" id="ov-yoy">0%</div><div class="kpi-sub" id="ov-yoy-label">-</div></div>
                     <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub" id="ov-forecast-sub">proiezione</div></div>
                 </div>
-                <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec. (Allineato Giorno Settimana) 
-
-[Image of dashboard interface with line chart]
-</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
-                <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Andamento Ultimi 12 Mesi vs Anno Prec. 
-
-[Image of dashboard interface with bar chart]
-</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
+                <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec. (Intelligente)</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
+                <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Andamento Ultimi 12 Mesi vs Anno Prec.</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
             </div>
 
             <div id="sub-stats" class="hidden">
@@ -379,6 +373,26 @@
     let dataIngressi=[], dataVasca=[], dataDae=[], dataUtenze=[]; let editIdIngressi=null, editIdVasca=null;
     const isChartReady = () => typeof Chart !== 'undefined';
 
+    // --- LOGICA DATE INTELLIGENTI (NUOVA IMPLEMENTAZIONE) ---
+    const FESTIVITA_FISSE = ["01-01", "06-01", "25-04", "01-05", "02-06", "15-08", "01-11", "08-12", "25-12", "26-12"];
+    
+    function getDataConfronto(dataCorrente) {
+        const m = String(dataCorrente.getMonth() + 1).padStart(2, '0');
+        const d = String(dataCorrente.getDate()).padStart(2, '0');
+        const chiaveData = `${d}-${m}`;
+        const dataAnnoPrec = new Date(dataCorrente);
+
+        if (FESTIVITA_FISSE.includes(chiaveData)) {
+            // Festa fissa: Confronta DATA ESATTA (es. 1 Gen vs 1 Gen), ignora giorno settimana
+            dataAnnoPrec.setFullYear(dataCorrente.getFullYear() - 1);
+        } else {
+            // Giorno normale: Confronta GIORNO SETTIMANA (es. Lun vs Lun), sottrai 52 settimane
+            dataAnnoPrec.setDate(dataCorrente.getDate() - 364);
+        }
+        return dataAnnoPrec;
+    }
+    // --------------------------------------------------------
+
     window.showToast = (msg, type='success') => { const c = document.getElementById('toast-container'); const e = document.createElement('div'); e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); };
     window.doLogin = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch(e) { document.getElementById('login-error').innerText = e.message; } };
     window.doLogout = () => signOut(auth);
@@ -409,7 +423,7 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER HELPERS
+    // RENDER HELPERS - AGGIORNATO CON TOOLTIP INTELLIGENTE
     let ch={}; 
     function renderDynamicChart(id, labels, datasets, type) {
         if(!isChartReady()) return;
@@ -417,25 +431,57 @@
         const isBar = type === 'bar';
         const optimizedDatasets = datasets.map(d => ({
             ...d,
-            // If BAR: Solid color (use border color as bg). If LINE: Transparent fill if fill=true
             backgroundColor: isBar ? d.borderColor : (d.fill ? d.borderColor + '20' : undefined),
             borderWidth: isBar ? 0 : 2,
             pointRadius: isBar ? 0 : 3,
-            // KEY FIX: Remove borderDash if Bar (avoids ugly dashed bars)
             borderDash: isBar ? [] : (d.borderDash || []),
-            // Ensure tension is kept for lines
-            tension: 0.4 
+            tension: 0.4,
+            // Importante per leggere oggetti {x,y} se passati
+            parsing: { yAxisKey: 'y' } 
         }));
+
         ch[id] = new Chart(document.getElementById(id), {
             type: type,
             data: { labels: labels, datasets: optimizedDatasets },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, layout: { padding: 25 }, scales: { y: { beginAtZero: true } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: { 
+                    legend: { display: true },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        padding: 12,
+                        cornerRadius: 8,
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 13, weight: 'bold' },
+                        callbacks: {
+                            // TOOLTIP PARLANTE
+                            afterBody: function(context) {
+                                // Cerca se nel dataset corrente (di solito il primo, quello blu) c'è la data di riferimento salvata
+                                const punto = context.find(c => c.raw && c.raw.refDate);
+                                if (punto) {
+                                    const dRef = new Date(punto.raw.refDate);
+                                    const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                                    return ['', '------------------', `Confrontato con:\n${dStr}`];
+                                }
+                                return [];
+                            }
+                        }
+                    }
+                }, 
+                layout: { padding: 25 }, 
+                scales: { y: { beginAtZero: true } } 
+            }
         });
     }
     function renderPie(id,l,d) { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#f59e0b','#ef4444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
     function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:ds},options:{responsive:true,maintainAspectRatio:false,indexAxis:ax,plugins:{legend:{display:true}}}}); }
 
-    // OVERVIEW (SPLIT LOGIC FOR STABILITY)
+    // OVERVIEW - AGGIORNATA LOGICA 30 GIORNI
     window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 
     function renderOverviewKPI() {
@@ -478,14 +524,35 @@
         const chartType = document.getElementById('ov-chart-type').value;
         const today = new Date();
         const dates=[], l30=[], l30_prev=[];
+        
         for(let i=29; i>=0; i--) {
-            const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; 
+            const dt=new Date(); 
+            dt.setDate(today.getDate()-i); 
+            const dtStr=dt.toISOString().split('T')[0]; 
+            
             dates.push(`${dt.toLocaleDateString('it-IT',{weekday:'short'})} ${dt.getDate()}/${dt.getMonth()+1}`);
-            const dtPrev=new Date(dt); dtPrev.setDate(dt.getDate()-364); const dtPrevStr=dtPrev.toISOString().split('T')[0];
-            l30.push(dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
+            
+            // --- MODIFICA CORE: Usa la funzione intelligente per la data di confronto ---
+            const dtPrev = getDataConfronto(dt);
+            const dtPrevStr = dtPrev.toISOString().split('T')[0];
+            // --------------------------------------------------------------------------
+
+            const valOggi = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0);
+            
+            // Pusha un oggetto invece che un numero per passare i metadati al tooltip
+            l30.push({
+                x: dates[dates.length-1], // Label asse X
+                y: valOggi,               // Valore
+                refDate: dtPrevStr        // Metadato per il tooltip (la data precisa usata per il confronto)
+            });
+
             l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
         }
-        renderDynamicChart('chartRecent30', dates, [{label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', fill:true},{label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}], chartType);
+        
+        renderDynamicChart('chartRecent30', dates, [
+            {label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', fill:true},
+            {label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}
+        ], chartType);
 
         const m12=[], m12_prev=[], m_labels=[];
         for(let i=11; i>=0; i--) {
