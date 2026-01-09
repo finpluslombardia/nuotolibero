@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V62 - Smart Tagging</title>
+    <title>Piscina Facility Suite V63 - Smart Tagging</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -170,13 +170,6 @@
             <div class="cb-row">
                 <div class="group-ctx">
                     <div class="inp-field" style="flex:0.8"><label>Data</label><input type="date" id="i-date"></div>
-                    
-                    <div class="inp-field" style="flex:0.4; align-items:center; justify-content:center; padding-top:15px">
-                        <label style="cursor:pointer; display:flex; flex-direction:column; align-items:center; color:#ef4444" title="Escludi dal calcolo media (es. chiusure parziali)">
-                            <input type="checkbox" id="i-exclude" style="width:18px; height:18px; accent-color:#ef4444">
-                            <span style="font-size:0.65rem; margin-top:2px; font-weight:700">NO MEDIA</span>
-                        </label>
-                    </div>
 
                     <div class="inp-field" style="flex:1"><label>Tipo Giorno</label>
                         <select id="i-type"><option value="standard">🏢 Standard</option><option value="festivo">🔴 Festivo</option><option value="evento">🏆 Gara/Evento</option><option value="extra">⚠️ Straordinario</option></select>
@@ -197,6 +190,13 @@
                             <option value="⛈️ Temporale">⛈️ Temporale</option>
                             <option value="❓ N/D">❓ N/D</option>
                         </select>
+                    </div>
+
+                    <div class="inp-field" style="flex:0.4; align-items:center; justify-content:center; padding-top:15px">
+                        <label style="cursor:pointer; display:flex; flex-direction:column; align-items:center; color:#ef4444" title="Escludi dal calcolo media (es. chiusure parziali)">
+                            <input type="checkbox" id="i-exclude" style="width:18px; height:18px; accent-color:#ef4444">
+                            <span style="font-size:0.65rem; margin-top:2px; font-weight:700">NO MEDIA</span>
+                        </label>
                     </div>
                 </div>
                 <div class="group-tickets">
@@ -394,7 +394,7 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (V62: EXCLUDE STATS + TYPE FILTER)
+    // RENDER STATS (V63: EXCLUDE STATS + TYPE FILTER)
     window.renderStats = () => {
         const m = document.getElementById('dash-month').value;
         const mode = document.getElementById('stat-mode').value; 
@@ -551,7 +551,7 @@
         renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
     };
 
-    // SAVE LOGIC V62
+    // SAVE LOGIC V63
     window.saveIngressi = async () => { 
         const date = document.getElementById('i-date').value; 
         if(!date) return showToast("Data mancante","error"); 
