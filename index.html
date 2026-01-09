@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Piscina Facility Suite V63 - Smart Tagging</title>
+    <title>Piscina Facility Suite V64 - Weekday Alignment</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -224,7 +224,7 @@
                     <div class="kpi-card glass-card"><div class="kpi-head">Vs Anno Prec.</div><div class="kpi-val" id="ov-yoy">0%</div><div class="kpi-sub" id="ov-yoy-label">-</div></div>
                     <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub" id="ov-forecast-sub">proiezione</div></div>
                 </div>
-                <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec. (Stesso Giorno)</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
+                <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec. (Allineato Giorno Settimana)</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
                 <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Andamento Ultimi 12 Mesi vs Anno Prec.</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
             </div>
 
@@ -394,39 +394,33 @@
     }
     window.addEventListener('click', function(e){ if(!document.querySelector('.multi-select-container').contains(e.target)) document.getElementById('year-dropdown').classList.remove('show'); });
 
-    // RENDER STATS (V63: EXCLUDE STATS + TYPE FILTER)
+    // RENDER STATS
     window.renderStats = () => {
         const m = document.getElementById('dash-month').value;
         const mode = document.getElementById('stat-mode').value; 
         const showHistory = document.getElementById('show-history').checked;
         const dayTypeFilter = document.getElementById('day-type-filter').value;
         
-        // GLOBAL FILTERING (Include logic to remove excluded days from stats)
         const f = dataIngressi.filter(d => {
-            if (d.excludeStats === true) return false; // ESCLUSIONE NUOVA
-            
+            if (d.excludeStats === true) return false; 
             const dt = new Date(d.date);
             const yMatch = selectedYears.length === 0 || selectedYears.includes(dt.getFullYear().toString());
             const mMatch = m === 'all' || (dt.getMonth() + 1).toString() === m;
-            
             const type = d.type || 'standard'; 
             let typeMatch = true;
             if(dayTypeFilter === 'standard') typeMatch = (type === 'standard');
             if(dayTypeFilter === 'special') typeMatch = (type !== 'standard');
-
             return yMatch && mMatch && typeMatch;
         });
 
         document.getElementById('deep-total').innerText = f.reduce((a,b)=>a+b.totale,0).toLocaleString();
         const colors = ['#2563eb', '#a855f7', '#f59e0b', '#10b981', '#ef4444'];
         
-        // 1. CHART YoY (Line)
         let labels=[], sets=[];
         const avgMonthlyTotals = new Array(12).fill(0);
         
-        // Filter history also removing excludeStats
         const historyDataFiltered = dataIngressi.filter(d => {
-             if (d.excludeStats === true) return false; // ESCLUSIONE NUOVA
+             if (d.excludeStats === true) return false;
              const type = d.type || 'standard';
              if(dayTypeFilter === 'standard') return type === 'standard';
              if(dayTypeFilter === 'special') return type !== 'standard';
@@ -443,7 +437,6 @@
             labels = m !== 'all' ? Array.from({length:31},(_,i)=>i+1) : ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
             selectedYears.forEach((year, idx) => {
                 const yd = new Array(labels.length).fill(0);
-                // Use filtered f, but specific to year loop
                 dataIngressi.filter(d => {
                     if (d.excludeStats === true) return false;
                     const dt = new Date(d.date);
@@ -463,7 +456,6 @@
         }
         renderChart('chartYoY', 'line', labels, sets);
 
-        // 2. PIE
         let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
         f.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
         let totalVal = f.reduce((a,b)=>a+b.totale,0); let displayTotal = totalVal; let pieData = Object.values(t);
@@ -471,7 +463,6 @@
         document.getElementById('deep-total').innerText = parseFloat(displayTotal).toLocaleString();
         renderPie('chartPie', Object.keys(t), pieData);
 
-        // HELPER BUILDER
         const buildMultiSeries = (extractor, sortLabels=false) => {
             let yearsToUse = selectedYears.length > 0 ? selectedYears : [];
             let allLabels = new Set();
@@ -512,7 +503,6 @@
         const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}));
         renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
 
-        // 4. WEEK
         const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
         const getJsDay = (i) => (i + 1) % 7; 
         const getDayFromDate = (dateStr) => new Date(dateStr + 'T12:00:00').getDay();
@@ -551,7 +541,6 @@
         renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
     };
 
-    // SAVE LOGIC V63
     window.saveIngressi = async () => { 
         const date = document.getElementById('i-date').value; 
         if(!date) return showToast("Data mancante","error"); 
@@ -561,7 +550,7 @@
             type:document.getElementById('i-type').value, 
             fascia:document.getElementById('i-fascia').value, 
             meteo:document.getElementById('i-meteo').value, 
-            excludeStats: document.getElementById('i-exclude').checked, // SAVE FLAG
+            excludeStats: document.getElementById('i-exclude').checked, 
             int:parseInt(document.getElementById('q-intero').value)||0, 
             rid:parseInt(document.getElementById('q-ridotto').value)||0, 
             grat:parseInt(document.getElementById('q-gratuito').value)||0, 
@@ -591,7 +580,7 @@
         document.getElementById('i-type').value=d.type||'standard'; 
         document.getElementById('i-fascia').value=d.fascia; 
         document.getElementById('i-meteo').value=d.meteo; 
-        document.getElementById('i-exclude').checked = d.excludeStats || false; // LOAD FLAG
+        document.getElementById('i-exclude').checked = d.excludeStats || false; 
         document.getElementById('q-intero').value=d.int; 
         document.getElementById('q-ridotto').value=d.rid; 
         document.getElementById('q-gratuito').value=d.grat; 
@@ -618,26 +607,52 @@
     window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
     function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
 
-    function renderOverview() { const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m && !x.excludeStats}); const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; 
-    const today=new Date(); const dates=[], l30=[], l30_prev=[];
-    for(let i=29; i>=0; i--) {
-        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=dt.toISOString().split('T')[0]; dates.push(`${dt.toLocaleDateString('it-IT',{weekday:'short'})} ${dt.getDate()}/${dt.getMonth()+1}`);
-        const dtPrev=new Date(dt); dtPrev.setDate(dt.getDate()-364); const dtPrevStr=dtPrev.toISOString().split('T')[0];
-        l30.push(dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
-        l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
-    }
-    renderLineChart('chartRecent30', dates, [{label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', fill:true},{label:'Anno Prec. (Stesso Giorno)', data:l30_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
+    function renderOverview() { 
+        const n=new Date(); const y=n.getFullYear(); const m=n.getMonth()+1; 
+        const d=dataIngressi.filter(x=>{const dt=new Date(x.date); return dt.getFullYear()===y && (dt.getMonth()+1)===m && !x.excludeStats}); 
+        const t=d.reduce((a,b)=>a+b.totale,0); const days=new Set(d.map(x=>x.date)).size; 
+        document.getElementById('ov-avg').innerText = days>0?(t/days).toFixed(0):0; 
+        
+        const today=new Date(); const dates=[], l30=[], l30_prev=[];
+        for(let i=29; i>=0; i--) {
+            // Giorno Corrente
+            const dt=new Date(); 
+            dt.setDate(today.getDate()-i); 
+            const dtStr=dt.toISOString().split('T')[0]; 
+            
+            dates.push(`${dt.toLocaleDateString('it-IT',{weekday:'short'})} ${dt.getDate()}/${dt.getMonth()+1}`);
+            
+            // Giorno Anno Precedente (ALLINEATO PER SETTIMANA: -52 settimane = -364 giorni)
+            const dtPrev=new Date(dt); 
+            dtPrev.setDate(dt.getDate()-364); 
+            const dtPrevStr=dtPrev.toISOString().split('T')[0];
+            
+            l30.push(dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
+            l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
+        }
+        renderLineChart('chartRecent30', dates, [{label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', fill:true},{label:'Anno Prec. (Stesso Giorno Settimana)', data:l30_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
 
-    const m12=[], m12_prev=[], m_labels=[];
-    for(let i=11; i>=0; i--) {
-        const d=new Date(today.getFullYear(), today.getMonth()-i, 1); m_labels.push(d.toLocaleString('it-IT',{month:'short'}));
-        m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear() && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
-        m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1) && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
+        const m12=[], m12_prev=[], m_labels=[];
+        for(let i=11; i>=0; i--) {
+            const d=new Date(today.getFullYear(), today.getMonth()-i, 1); m_labels.push(d.toLocaleString('it-IT',{month:'short'}));
+            m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear() && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
+            m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1) && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
+        }
+        renderLineChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
     }
-    renderLineChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}]);
-    }
+
     function renderVasca() { const t=document.getElementById('tbody-vasca'); t.innerHTML=""; const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); [...g.keys()].forEach(k=>{ const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; e.forEach((d,i)=>{ const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; t.innerHTML+=`<tr style="${b}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td><td style="font-weight:600">${d.ph}</td><td>${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; }); }); }
-    function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; const sortedDae = [...dataDae].sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time)); sortedDae.forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
+    
+    // FUNCTION DAE RESTORED
+    function renderDae() { 
+        const t=document.getElementById('tbody-dae'); 
+        t.innerHTML=""; 
+        const sortedDae = [...dataDae].sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time)); 
+        sortedDae.forEach(d=>{ 
+            const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; 
+            t.innerHTML+=`<tr><td style="font-weight:700">${d.date.split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; 
+        }); 
+    }
     
     // ARCHIVE WITH EXCLUSION TOGGLE
     window.toggleExcludeStats = async (id, currentVal) => {
@@ -672,7 +687,6 @@
                 else if(d.type === 'evento') badge = '<span class="badge badge-evt" style="margin-left:5px">🏆 Evento</span>';
                 else if(d.type === 'extra') badge = '<span class="badge badge-summer" style="margin-left:5px">⚠️ Extra</span>';
 
-                // ROW STYLE IF EXCLUDED
                 const isExcluded = d.excludeStats === true;
                 const rowStyle = isExcluded ? "opacity:0.5; background: repeating-linear-gradient(45deg,rgba(0,0,0,0.02),rgba(0,0,0,0.02) 10px,rgba(0,0,0,0.06) 10px,rgba(0,0,0,0.06) 20px);" : "";
                 const excludeIcon = isExcluded ? "✅" : "🚫";
