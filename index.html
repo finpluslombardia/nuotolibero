@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Facility Suite V75 - Performance Boost</title>
+    <title>Facility Suite V76 - Delta Charts Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -366,20 +366,20 @@
         <div class="scroll-area">
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px; margin-bottom:25px;">
                 <div class="chart-card glass-card" style="height:250px; padding:15px">
-                     <div class="chart-header" style="font-size:0.85rem; color:#eab308">⚡ Elettricità (kWh)</div>
+                     <div class="chart-header" style="font-size:0.85rem; color:#eab308">⚡ Consumo Elettrico Giornaliero (kWh)</div>
                      <div class="chart-wrapper"><canvas id="chartElec"></canvas></div>
                 </div>
                 <div class="chart-card glass-card" style="height:250px; padding:15px">
-                     <div class="chart-header" style="font-size:0.85rem; color:#3b82f6">💧 Acqua (m³)</div>
+                     <div class="chart-header" style="font-size:0.85rem; color:#3b82f6">💧 Consumo Acqua Giornaliero (m³)</div>
                      <div class="chart-wrapper"><canvas id="chartWater"></canvas></div>
                 </div>
                 <div class="chart-card glass-card" style="height:250px; padding:15px">
-                     <div class="chart-header" style="font-size:0.85rem; color:#ef4444">🔥 Gas (m³)</div>
+                     <div class="chart-header" style="font-size:0.85rem; color:#ef4444">🔥 Consumo Gas Giornaliero (m³)</div>
                      <div class="chart-wrapper"><canvas id="chartGas"></canvas></div>
                 </div>
             </div>
 
-            <h2 class="page-title">📊 Storico Consumi Unificato</h2>
+            <h2 class="page-title">📊 Storico Letture e Consumi</h2>
             
             <div class="table-wrap glass-card">
                 <div style="overflow-x:auto;">
@@ -387,10 +387,10 @@
                         <thead>
                             <tr>
                                 <th>Data</th>
-                                <th style="color:#eab308; background:rgba(234, 179, 8, 0.1)">⚡ Totale</th>
+                                <th style="color:#eab308; background:rgba(234, 179, 8, 0.1)">⚡ Lettura Totale</th>
                                 <th style="color:#eab308; background:rgba(234, 179, 8, 0.1)">F1 / F2 / F3</th>
-                                <th style="color:#3b82f6; background:rgba(59, 130, 246, 0.1)">💧 Acqua</th>
-                                <th style="color:#ef4444; background:rgba(239, 68, 68, 0.1)">🔥 Gas</th>
+                                <th style="color:#3b82f6; background:rgba(59, 130, 246, 0.1)">💧 Lettura Acqua</th>
+                                <th style="color:#ef4444; background:rgba(239, 68, 68, 0.1)">🔥 Lettura Gas</th>
                                 <th>Note</th>
                             </tr>
                         </thead>
@@ -508,7 +508,7 @@
                     }
                 }, 
                 layout: { padding: 25 }, 
-                scales: { y: { beginAtZero: true } } 
+                scales: { y: { beginAtZero: true } } // IMPORTANTE: True per vedere i consumi reali da 0
             }
         });
     }
@@ -722,7 +722,7 @@
         } catch(e){ showToast(e.message, "error"); }
     };
 
-    // OPTIMIZED RENDER UTENZE (BUFFERED)
+    // OPTIMIZED RENDER UTENZE (BUFFERED + DELTA CONSUMPTION FIX)
     window.renderUtenze = () => {
         if(!isChartReady()) return;
 
@@ -740,24 +740,50 @@
             if(d.note) grouped[d.date].notes.push(d.note);
         });
 
-        // 2. Prepara i dati per i 3 Grafici
+        // 2. Prepara i dati per i 3 Grafici (CALCOLO DELTA CONSUMI)
         const labels = Object.keys(grouped).sort(); 
         const dataElec = [], dataWater = [], dataGas = [];
+        
+        let lastElec = null, lastWater = null, lastGas = null;
 
         labels.forEach(date => {
             const g = grouped[date];
-            // Elettricità: Passa anche il meteo come info extra per il tooltip
-            dataElec.push(g.elec ? { y: g.elec.val, extraInfo: `Meteo: ${g.elec.meteo||'N/D'}` } : null); 
-            dataWater.push(g.water ? g.water.val : null);
-            // Gas: Passa la temperatura come info extra
-            dataGas.push(g.gas ? { y: g.gas.val, extraInfo: g.gas.temp ? `Temp. Media: ${g.gas.temp}°C` : null } : null);
+            
+            // Elettricità: Calcola delta se c'è lettura precedente
+            if(g.elec && lastElec !== null) {
+                const diff = g.elec.val - lastElec;
+                // Ignora valori negativi (es. cambio contatore) o troppo piccoli
+                dataElec.push({ y: diff > 0 ? diff : 0, extraInfo: `Meteo: ${g.elec.meteo||'N/D'}` });
+            } else {
+                dataElec.push(null); // Primo punto o buco nei dati = Nessun consumo calcolabile
+            }
+            if(g.elec) lastElec = g.elec.val; // Aggiorna ultima lettura nota
+
+            // Acqua
+            if(g.water && lastWater !== null) {
+                const diff = g.water.val - lastWater;
+                dataWater.push(diff > 0 ? diff : 0);
+            } else {
+                dataWater.push(null);
+            }
+            if(g.water) lastWater = g.water.val;
+
+            // Gas
+            if(g.gas && lastGas !== null) {
+                const diff = g.gas.val - lastGas;
+                dataGas.push({ y: diff > 0 ? diff : 0, extraInfo: g.gas.temp ? `Temp. Media: ${g.gas.temp}°C` : null });
+            } else {
+                dataGas.push(null);
+            }
+            if(g.gas) lastGas = g.gas.val;
         });
 
         const labelsFmt = labels.map(d => d.split('-').slice(1).reverse().join('/'));
 
-        renderDynamicChart('chartElec', labelsFmt, [{ label: 'kWh', data: dataElec, borderColor: '#eab308', backgroundColor: '#eab308', fill:true, tension:0.3 }], 'line');
-        renderDynamicChart('chartWater', labelsFmt, [{ label: 'm³', data: dataWater, borderColor: '#3b82f6', backgroundColor: '#3b82f6', fill:true, tension:0.3 }], 'line');
-        renderDynamicChart('chartGas', labelsFmt, [{ label: 'm³', data: dataGas, borderColor: '#ef4444', backgroundColor: '#ef4444', fill:true, tension:0.3 }], 'line');
+        // Grafici ora mostrano il CONSUMO GIORNALIERO (Bar Chart è meglio per i consumi)
+        renderDynamicChart('chartElec', labelsFmt, [{ label: 'Consumo (kWh)', data: dataElec, borderColor: '#eab308', backgroundColor: '#eab308', fill:true }], 'bar');
+        renderDynamicChart('chartWater', labelsFmt, [{ label: 'Consumo (m³)', data: dataWater, borderColor: '#3b82f6', backgroundColor: '#3b82f6', fill:true }], 'bar');
+        renderDynamicChart('chartGas', labelsFmt, [{ label: 'Consumo (m³)', data: dataGas, borderColor: '#ef4444', backgroundColor: '#ef4444', fill:true }], 'bar');
 
         // 3. Renderizza la Tabella Unificata (BUFFERED)
         const t = document.getElementById('tbody-utenze'); 
