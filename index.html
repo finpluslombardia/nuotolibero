@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Facility Suite V77 - Utenze Switcher View</title>
+    <title>Facility Suite V78 - Independent Data Series</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -707,18 +707,73 @@
         } catch(e){ showToast(e.message, "error"); }
     };
 
-    // RENDER UTENZE - SWITCH DELTA/TOTAL
+    // RENDER UTENZE - COMPLETAMENTE DISACCOPPIATO
     window.renderUtenze = () => {
         if(!isChartReady()) return;
 
-        // 1. Leggi la modalità (Delta vs Totale)
+        // Funzione helper che crea un dataset isolato per ogni utenza
+        // Ignora le date dove quell'utenza non è stata registrata
+        function prepareChartData(type) {
+            const records = dataUtenze.filter(d => d.type === type).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const labels = [];
+            const dataTotal = [];
+            const dataDelta = [];
+
+            records.forEach((curr, i) => {
+                labels.push(curr.date.split('-').slice(1).reverse().join('/'));
+                
+                // Totale (Lettura Contatore)
+                let extra = "";
+                if(type === '⚡ Elettricità') extra = `Meteo: ${curr.meteo||'N/D'}`;
+                if(type === '🔥 Gas Metano' && curr.temp) extra = `Temp: ${curr.temp}°C`;
+                dataTotal.push({ x: labels[i], y: curr.val, extraInfo: extra });
+
+                // Delta (Consumo)
+                if(i > 0) {
+                    const prev = records[i-1];
+                    let diff = curr.val - prev.val;
+                    if(diff < 0) diff = 0; // Gestione cambio contatore o errore
+                    dataDelta.push({ x: labels[i], y: diff, extraInfo: extra });
+                } else {
+                    dataDelta.push({ x: labels[i], y: 0, extraInfo: extra });
+                }
+            });
+            return { labels, dataTotal, dataDelta };
+        }
+
+        const elecData = prepareChartData('⚡ Elettricità');
+        const waterData = prepareChartData('💧 Acqua');
+        const gasData = prepareChartData('🔥 Gas Metano');
+
         const viewMode = document.getElementById('u-view-mode').value;
-        const isDelta = viewMode === 'delta'; // True = Barre (Consumo), False = Linee (Lettura)
+        const isDelta = viewMode === 'delta'; 
+        const chartType = isDelta ? 'bar' : 'line';
 
+        renderDynamicChart('chartElec', elecData.labels, [{ 
+            label: isDelta ? 'Consumo (kWh)' : 'Lettura (kWh)', 
+            data: isDelta ? elecData.dataDelta : elecData.dataTotal, 
+            borderColor: '#eab308', backgroundColor: '#eab308', fill:true, tension:0.3 
+        }], chartType);
+
+        renderDynamicChart('chartWater', waterData.labels, [{ 
+            label: isDelta ? 'Consumo (m³)' : 'Lettura (m³)', 
+            data: isDelta ? waterData.dataDelta : waterData.dataTotal, 
+            borderColor: '#3b82f6', backgroundColor: '#3b82f6', fill:true, tension:0.3 
+        }], chartType);
+
+        renderDynamicChart('chartGas', gasData.labels, [{ 
+            label: isDelta ? 'Consumo (m³)' : 'Lettura (m³)', 
+            data: isDelta ? gasData.dataDelta : gasData.dataTotal, 
+            borderColor: '#ef4444', backgroundColor: '#ef4444', fill:true, tension:0.3 
+        }], chartType);
+
+        // --- TABELLA UNIFICATA (Rimane raggruppata per data come prima) ---
+        const t = document.getElementById('tbody-utenze'); 
+        t.innerHTML = "";
+        
+        // Ricostruiamo il grouping solo per la tabella
         const grouped = {};
-        const sortedData = [...dataUtenze].sort((a,b) => new Date(a.date) - new Date(b.date));
-
-        sortedData.forEach(d => {
+        dataUtenze.forEach(d => {
             if(!grouped[d.date]) grouped[d.date] = { date: d.date, elec: null, water: null, gas: null, notes: [] };
             if(d.type === '⚡ Elettricità') grouped[d.date].elec = d;
             if(d.type === '💧 Acqua') grouped[d.date].water = d;
@@ -726,65 +781,7 @@
             if(d.note) grouped[d.date].notes.push(d.note);
         });
 
-        const labels = Object.keys(grouped).sort(); 
-        const elecDelta=[], elecTotal=[], waterDelta=[], waterTotal=[], gasDelta=[], gasTotal=[];
-        
-        let lastElec = null, lastWater = null, lastGas = null;
-
-        labels.forEach(date => {
-            const g = grouped[date];
-            
-            // --- ELETTRICITA ---
-            if(g.elec) {
-                elecTotal.push({ y: g.elec.val, extraInfo: `Meteo: ${g.elec.meteo||'N/D'}` });
-                if(lastElec !== null) { const diff = g.elec.val - lastElec; elecDelta.push({ y: diff>0?diff:0, extraInfo: `Meteo: ${g.elec.meteo||'N/D'}` }); } 
-                else { elecDelta.push(null); }
-                lastElec = g.elec.val;
-            } else { elecTotal.push(null); elecDelta.push(null); }
-
-            // --- ACQUA ---
-            if(g.water) {
-                waterTotal.push(g.water.val);
-                if(lastWater !== null) { const diff = g.water.val - lastWater; waterDelta.push(diff>0?diff:0); }
-                else { waterDelta.push(null); }
-                lastWater = g.water.val;
-            } else { waterTotal.push(null); waterDelta.push(null); }
-
-            // --- GAS ---
-            if(g.gas) {
-                gasTotal.push({ y: g.gas.val, extraInfo: g.gas.temp ? `Temp: ${g.gas.temp}°C` : null });
-                if(lastGas !== null) { const diff = g.gas.val - lastGas; gasDelta.push({ y: diff>0?diff:0, extraInfo: g.gas.temp ? `Temp: ${g.gas.temp}°C` : null }); }
-                else { gasDelta.push(null); }
-                lastGas = g.gas.val;
-            } else { gasTotal.push(null); gasDelta.push(null); }
-        });
-
-        const labelsFmt = labels.map(d => d.split('-').slice(1).reverse().join('/'));
-
-        // Selettore Dataset e Tipo Grafico
-        const type = isDelta ? 'bar' : 'line';
-        
-        renderDynamicChart('chartElec', labelsFmt, [{ 
-            label: isDelta ? 'Consumo (kWh)' : 'Lettura (kWh)', 
-            data: isDelta ? elecDelta : elecTotal, 
-            borderColor: '#eab308', backgroundColor: '#eab308', fill:true, tension:0.3 
-        }], type);
-
-        renderDynamicChart('chartWater', labelsFmt, [{ 
-            label: isDelta ? 'Consumo (m³)' : 'Lettura (m³)', 
-            data: isDelta ? waterDelta : waterTotal, 
-            borderColor: '#3b82f6', backgroundColor: '#3b82f6', fill:true, tension:0.3 
-        }], type);
-
-        renderDynamicChart('chartGas', labelsFmt, [{ 
-            label: isDelta ? 'Consumo (m³)' : 'Lettura (m³)', 
-            data: isDelta ? gasDelta : gasTotal, 
-            borderColor: '#ef4444', backgroundColor: '#ef4444', fill:true, tension:0.3 
-        }], type);
-
-        // Tabella
-        const t = document.getElementById('tbody-utenze'); 
-        const datesDesc = labels.reverse(); 
+        const datesDesc = Object.keys(grouped).sort().reverse(); 
         const rowsBuffer = []; 
 
         datesDesc.forEach(date => {
