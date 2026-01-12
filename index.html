@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Facility Suite V79 - Advanced Analytics</title>
+    <title>Facility Suite V80 - Stable Charts</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -729,98 +729,125 @@
         const isDelta = viewMode === 'delta'; 
         const chartType = isDelta ? 'bar' : 'line';
         
+        // Get Range Filter (Default 7 days)
         const rangeDays = parseInt(document.getElementById('u-range').value);
+        const limitDate = new Date();
+        limitDate.setDate(limitDate.getDate() - rangeDays);
+        const limitStr = limitDate.toISOString().split('T')[0];
+
         const showHistory = document.getElementById('u-compare-year').checked;
 
-        // Genera range date (X-Axis)
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const axisLabels = [];
-        const axisDates = [];
-        
-        for(let i=rangeDays-1; i>=0; i--) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - i);
-            axisDates.push(d);
-            axisLabels.push(d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }));
-        }
-
-        // Mappa Dati per accesso veloce
-        const dataMap = {}; // Key: "YYYY-MM-DD_Type", Value: Record
-        dataUtenze.forEach(d => { dataMap[`${d.date}_${d.type}`] = d; });
-
-        // Helper per estrarre serie
-        function getSeries(type, offsetYears, color) {
-            const dataPoints = [];
+        // Funzione helper che crea un dataset isolato per ogni utenza
+        // Esegue il filtro DOPO aver calcolato i delta su tutto lo storico
+        function prepareChartData(type) {
+            // 1. Prendi TUTTI i dati ordinati per calcolare i delta corretti
+            const allRecords = dataUtenze.filter(d => d.type === type).sort((a,b) => new Date(a.date) - new Date(b.date));
             
-            axisDates.forEach((date, i) => {
-                // Calcola data target (es. oggi o anno scorso)
-                const targetDate = new Date(date);
-                targetDate.setFullYear(targetDate.getFullYear() - offsetYears);
-                const dateKey = targetDate.toISOString().split('T')[0];
-                const record = dataMap[`${dateKey}_${type}`];
+            // 2. Filtra per il range selezionato (solo per visualizzazione)
+            // Nota: manteniamo i record filtrati per disegnare
+            const filteredRecords = allRecords.filter(d => d.date >= limitStr);
 
+            const labels = [];
+            const dataTotal = [];
+            const dataDelta = [];
+            const dataHistoryTotal = [];
+            const dataHistoryDelta = [];
+
+            filteredRecords.forEach((curr) => {
+                // Label
+                labels.push(curr.date.split('-').slice(1).reverse().join('/'));
+                
+                // Extra Info Tooltip
                 let extra = "";
-                if(record) {
-                    if(type === '⚡ Elettricità') extra = `Meteo: ${record.meteo||'N/D'}`;
-                    if(type === '🔥 Gas Metano' && record.temp) extra = `Temp: ${record.temp}°C`;
+                if(type === '⚡ Elettricità') extra = `Meteo: ${curr.meteo||'N/D'}`;
+                if(type === '🔥 Gas Metano' && curr.temp) extra = `Temp: ${curr.temp}°C`;
+
+                // --- DATA CORRENTE ---
+                // Totale
+                dataTotal.push({ x: labels[labels.length-1], y: curr.val, extraInfo: extra });
+
+                // Delta (Cerca il record precedente in ALL RECORDS, non solo filtered)
+                const currIndex = allRecords.findIndex(r => r.id === curr.id);
+                if(currIndex > 0) {
+                    const prev = allRecords[currIndex-1];
+                    let diff = curr.val - prev.val;
+                    if(diff < 0) diff = 0;
+                    dataDelta.push({ x: labels[labels.length-1], y: diff, extraInfo: extra });
+                } else {
+                    dataDelta.push({ x: labels[labels.length-1], y: 0, extraInfo: extra });
                 }
 
-                if(!isDelta) {
-                    // MODO TOTALE (Lettura)
-                    dataPoints.push(record ? { x: axisLabels[i], y: record.val, extraInfo: extra } : null);
-                } else {
-                    // MODO DELTA (Consumo)
-                    // Cerchiamo il giorno prima DEL TARGET DATE per fare la differenza
-                    const prevDate = new Date(targetDate);
-                    prevDate.setDate(prevDate.getDate() - 1);
-                    const prevKey = prevDate.toISOString().split('T')[0];
-                    const prevRecord = dataMap[`${prevKey}_${type}`];
-
-                    if(record && prevRecord) {
-                        let diff = record.val - prevRecord.val;
-                        if(diff < 0) diff = 0;
-                        dataPoints.push({ x: axisLabels[i], y: diff, extraInfo: extra });
+                // --- DATA STORICA (ANNO PRECEDENTE) ---
+                if(showHistory) {
+                    // Calcola la data esatta dell'anno scorso
+                    const dObj = new Date(curr.date);
+                    dObj.setFullYear(dObj.getFullYear() - 1);
+                    const prevYearStr = dObj.toISOString().split('T')[0];
+                    
+                    // Cerca record esatto
+                    const histRecord = dataUtenze.find(d => d.date === prevYearStr && d.type === type);
+                    
+                    if(histRecord) {
+                        dataHistoryTotal.push({ x: labels[labels.length-1], y: histRecord.val });
+                        
+                        // Cerca il delta storico
+                        // Dobbiamo trovare il record PRIMA di quello storico per fare il delta
+                        // Questo è costoso ma necessario per la precisione
+                        const allHistRecords = dataUtenze.filter(d => d.type === type).sort((a,b) => new Date(a.date) - new Date(b.date));
+                        const histIndex = allHistRecords.findIndex(r => r.id === histRecord.id);
+                        
+                        if(histIndex > 0) {
+                            const prevHist = allHistRecords[histIndex-1];
+                            let diffHist = histRecord.val - prevHist.val;
+                            if(diffHist < 0) diffHist = 0;
+                            dataHistoryDelta.push({ x: labels[labels.length-1], y: diffHist });
+                        } else {
+                            dataHistoryDelta.push(null);
+                        }
                     } else {
-                        dataPoints.push(null);
+                        dataHistoryTotal.push(null);
+                        dataHistoryDelta.push(null);
                     }
                 }
             });
 
-            return {
-                label: offsetYears === 0 ? (isDelta ? 'Consumo' : 'Lettura') : (isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.'),
-                data: dataPoints,
-                borderColor: color,
-                backgroundColor: color,
-                borderDash: offsetYears > 0 ? [5, 5] : [], // Tratteggiato se storico
-                opacity: offsetYears > 0 ? 0.5 : 1,
-                fill: !isDelta && offsetYears === 0, // Riempi solo il corrente in modo Linea
-                tension: 0.3,
-                pointRadius: offsetYears > 0 ? 0 : 3
-            };
+            return { labels, dataTotal, dataDelta, dataHistoryTotal, dataHistoryDelta };
         }
 
-        // Costruisci i 3 Grafici
-        const configElec = [ getSeries('⚡ Elettricità', 0, '#eab308') ];
-        if(showHistory) configElec.push(getSeries('⚡ Elettricità', 1, '#ca8a04'));
+        const elecData = prepareChartData('⚡ Elettricità');
+        const waterData = prepareChartData('💧 Acqua');
+        const gasData = prepareChartData('🔥 Gas Metano');
 
-        const configWater = [ getSeries('💧 Acqua', 0, '#3b82f6') ];
-        if(showHistory) configWater.push(getSeries('💧 Acqua', 1, '#1d4ed8'));
+        // Configurazione Dataset Helper
+        function makeDatasets(mainData, historyData, colorMain, colorHist) {
+            const ds = [{
+                label: isDelta ? 'Consumo' : 'Lettura',
+                data: isDelta ? mainData.dataDelta : mainData.dataTotal,
+                borderColor: colorMain, backgroundColor: colorMain,
+                fill: true, tension: 0.3, order: 1
+            }];
+            
+            if(showHistory) {
+                ds.push({
+                    label: isDelta ? 'Consumo Anno Prec.' : 'Lettura Anno Prec.',
+                    data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal,
+                    borderColor: colorHist, backgroundColor: 'transparent',
+                    borderDash: [5,5], borderWidth: 2, pointRadius: 0,
+                    fill: false, tension: 0.3, order: 2
+                });
+            }
+            return ds;
+        }
 
-        const configGas = [ getSeries('🔥 Gas Metano', 0, '#ef4444') ];
-        if(showHistory) configGas.push(getSeries('🔥 Gas Metano', 1, '#b91c1c'));
+        renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#854d0e'), chartType);
+        renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#1e3a8a'), chartType);
+        renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#991b1b'), chartType);
 
-        renderDynamicChart('chartElec', axisLabels, configElec, chartType);
-        renderDynamicChart('chartWater', axisLabels, configWater, chartType);
-        renderDynamicChart('chartGas', axisLabels, configGas, chartType);
-
-        // --- TABELLA (Logica invariata, mostra solo le date selezionate se range piccolo, o tutto?) 
-        // Meglio mostrare sempre TUTTO lo storico in tabella per consultazione, o filtrare?
-        // Il rendering precedente mostrava tutto raggruppato. Manteniamolo per coerenza.
+        // --- TABELLA UNIFICATA (Rimane raggruppata per data come prima) ---
         const t = document.getElementById('tbody-utenze'); 
         t.innerHTML = "";
         
-        // Raggruppamento per Tabella
+        // Ricostruiamo il grouping solo per la tabella
         const grouped = {};
         dataUtenze.forEach(d => {
             if(!grouped[d.date]) grouped[d.date] = { date: d.date, elec: null, water: null, gas: null, notes: [] };
