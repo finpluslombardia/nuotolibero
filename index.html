@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Facility Suite V81 - Deduplicated Charts</title>
+    <title>Facility Suite V82 - Edit Utenze</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -324,8 +324,11 @@
     </div>
 
     <div id="module-utenze" class="module-container hidden" style="display:flex; flex-direction:column; height:100%">
-        <div class="control-bar">
-            <div class="cb-header"><span class="cb-title">Registrazione Letture Utenze</span></div>
+        <div class="control-bar" id="cb-utenze">
+            <div class="cb-header">
+                <span class="cb-title" id="title-utenze">Registrazione Letture Utenze</span>
+                <button class="btn btn-danger hidden" id="cancel-utenze" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditUtenze()">Annulla Modifica</button>
+            </div>
             <div class="cb-row">
                 <div class="group-ctx">
                     <div class="inp-field" style="flex:0.5"><label>Data</label><input type="date" id="u-date"></div>
@@ -359,7 +362,7 @@
 
                     <div class="inp-field" style="flex:1.5"><label>Note</label><input type="text" id="u-note" placeholder="Opzionale..."></div>
                 </div>
-                <div class="group-actions"><button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveUtenze()">SALVA</button></div>
+                <div class="group-actions"><button id="btn-save-utenze" class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveUtenze()">SALVA</button></div>
             </div>
         </div>
         
@@ -432,7 +435,7 @@
 
     const firebaseConfig = { apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0", authDomain: "piscinastats-64519.firebaseapp.com", projectId: "piscinastats-64519", storageBucket: "piscinastats-64519.firebasestorage.app", messagingSenderId: "297663099794", appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b" };
     const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
-    let dataIngressi=[], dataVasca=[], dataDae=[], dataUtenze=[]; let editIdIngressi=null, editIdVasca=null;
+    let dataIngressi=[], dataVasca=[], dataDae=[], dataUtenze=[]; let editIdIngressi=null, editIdVasca=null, editIdUtenze=null;
     const isChartReady = () => typeof Chart !== 'undefined';
 
     const FESTIVITA_FISSE = ["01-01", "06-01", "25-04", "01-05", "02-06", "15-08", "01-11", "08-12", "25-12", "26-12"];
@@ -714,11 +717,66 @@
             if(type === '🔥 Gas Metano') { p.temp = parseFloat(document.getElementById('u-temp').value) || null; }
         }
         if(!d || (type!=='⚡ Elettricità' && isNaN(p.val))) return showToast("Dati mancanti", "error");
+        
         try { 
-            await addDoc(collection(db, "utenze_log"), p); 
-            showToast("Salvato"); 
-            document.querySelectorAll('#module-utenze input:not([type=date])').forEach(i=>i.value=''); 
+            if(editIdUtenze) {
+                await updateDoc(doc(db, "utenze_log", editIdUtenze), p);
+                showToast("Modifica salvata!");
+                cancelEditUtenze();
+            } else {
+                await addDoc(collection(db, "utenze_log"), p); 
+                showToast("Salvato"); 
+                document.querySelectorAll('#module-utenze input:not([type=date])').forEach(i=>i.value=''); 
+            }
         } catch(e){ showToast(e.message, "error"); }
+    };
+
+    window.editUtenze = (id) => {
+        const d = dataUtenze.find(x => x.id === id);
+        if(!d) return;
+        editIdUtenze = id;
+        
+        // Popola i campi
+        document.getElementById('u-date').value = d.date;
+        document.getElementById('u-type').value = d.type;
+        document.getElementById('u-note').value = d.note || '';
+        
+        // Forza l'aggiornamento della UI per mostrare i campi giusti
+        toggleUtenzeMode();
+
+        if(d.type === '⚡ Elettricità') {
+            document.getElementById('u-a1').value = d.a1;
+            document.getElementById('u-a2').value = d.a2;
+            document.getElementById('u-a3').value = d.a3;
+            document.getElementById('u-meteo').value = d.meteo || '☀️ Sole';
+        } else {
+            document.getElementById('u-val').value = d.val;
+            if(d.type === '🔥 Gas Metano') {
+                document.getElementById('u-temp').value = d.temp || '';
+            }
+        }
+
+        // Cambio stato UI
+        document.getElementById('title-utenze').innerText = "Modifica Utenza";
+        document.getElementById('btn-save-utenze').innerText = "AGGIORNA";
+        document.getElementById('btn-save-utenze').style.background = "#f59e0b"; // Arancione
+        document.getElementById('cb-utenze').classList.add('editing');
+        document.getElementById('cancel-utenze').classList.remove('hidden');
+        
+        window.scrollTo({top:0, behavior:'smooth'});
+    };
+
+    window.cancelEditUtenze = () => {
+        editIdUtenze = null;
+        document.getElementById('title-utenze').innerText = "Registrazione Letture Utenze";
+        document.getElementById('btn-save-utenze').innerText = "SALVA";
+        document.getElementById('btn-save-utenze').style.background = ""; // Reset colore
+        document.getElementById('cb-utenze').classList.remove('editing');
+        document.getElementById('cancel-utenze').classList.add('hidden');
+        
+        // Pulisci campi
+        document.querySelectorAll('#module-utenze input:not([type=date])').forEach(i=>i.value='');
+        toggleUtenzeMode();
     };
 
     // RENDER UTENZE - DEDUPLICATED & CLEAN
@@ -737,16 +795,15 @@
         const showHistory = document.getElementById('u-compare-year').checked;
 
         function prepareChartData(type) {
-            // 1. Filtra per tipo
-            const rawRecords = dataUtenze.filter(d => d.type === type);
+            // 1. Filtra per tipo e ordina
+            const rawRecords = dataUtenze.filter(d => d.type === type).sort((a,b) => new Date(a.date) - new Date(b.date));
             
             // 2. DEDUPLICAZIONE: Mantieni solo l'ultima registrazione per ogni data
             const uniqueMap = new Map();
-            rawRecords.forEach(r => { uniqueMap.set(r.date, r); });
-            // Converti in array e ordina
-            const allRecords = Array.from(uniqueMap.values()).sort((a,b) => new Date(a.date) - new Date(b.date));
+            rawRecords.forEach(r => { uniqueMap.set(r.date, r); }); // Sovrascrive se data duplicata
+            const allRecords = Array.from(uniqueMap.values()); // Array pulito
 
-            // 3. Filtra per visualizzazione
+            // 3. Filtra per visualizzazione (Range temporale)
             const filteredRecords = allRecords.filter(d => d.date >= limitStr);
 
             const labels = [];
@@ -766,7 +823,7 @@
                 dataTotal.push({ x: labels[labels.length-1], y: curr.val, extraInfo: extra });
 
                 // DELTA (Cerca in ALL RECORDS il precedente)
-                const currIndex = allRecords.findIndex(r => r.id === curr.id);
+                const currIndex = allRecords.findIndex(r => r.date === curr.date);
                 if(currIndex > 0) {
                     const prev = allRecords[currIndex-1];
                     let diff = curr.val - prev.val;
@@ -782,13 +839,16 @@
                     dObj.setFullYear(dObj.getFullYear() - 1);
                     const prevYearStr = dObj.toISOString().split('T')[0];
                     
-                    // Cerca nello storico completo (anche deduplicato se necessario, qui usiamo raw per semplicità ma meglio deduplicare anche storico)
-                    const histRecord = dataUtenze.find(d => d.date === prevYearStr && d.type === type);
+                    // Cerca nello storico completo deduplicato (potremmo dover ricreare la map per l'anno scorso se vogliamo essere precisi, ma cerchiamo nei raw per semplicità qui)
+                    // Meglio: cerchiamo in allRecords se il range lo copre, altrimenti in rawRecords
+                    // Per sicurezza usiamo rawRecords filtrati e deduplicati al volo per quella data
+                    const histCandidates = dataUtenze.filter(d => d.date === prevYearStr && d.type === type);
+                    const histRecord = histCandidates.length > 0 ? histCandidates[histCandidates.length-1] : null;
                     
                     if(histRecord) {
                         dataHistoryTotal.push({ x: labels[labels.length-1], y: histRecord.val });
-                        // Delta storico approssimativo (migliorabile ma ok per confronto rapido)
-                        dataHistoryDelta.push(null); // Per ora null per non complicare, l'importante è il totale
+                        // Delta storico non implementato qui per brevità, mostriamo solo il totale se richiesto
+                        dataHistoryDelta.push(null);
                     } else {
                         dataHistoryTotal.push(null);
                         dataHistoryDelta.push(null);
@@ -813,7 +873,7 @@
             
             if(showHistory) {
                 ds.push({
-                    label: 'Anno Prec.',
+                    label: isDelta ? 'Consumo Anno Prec.' : 'Lettura Anno Prec.',
                     data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal,
                     borderColor: colorHist, backgroundColor: 'transparent',
                     borderDash: [5,5], borderWidth: 2, pointRadius: 0,
@@ -848,7 +908,13 @@
             const g = grouped[date];
             const makeCell = (obj, color, suffix='') => {
                 if(!obj) return '<span style="color:#ccc">-</span>';
-                return `<div style="display:flex; align-items:center; justify-content:space-between; gap:10px"><span style="font-weight:700; color:${color}">${obj.val} ${suffix}</span><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:#ef4444; border:1px solid #fee2e2" onclick="delDoc('utenze_log','${obj.id}')">×</button></div>`;
+                return `<div style="display:flex; align-items:center; justify-content:space-between; gap:5px">
+                            <span style="font-weight:700; color:${color}">${obj.val} ${suffix}</span>
+                            <div style="display:flex; gap:2px">
+                                <button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:var(--primary); border:1px solid #dbeafe; background:#eff6ff" onclick="editUtenze('${obj.id}')">✏️</button>
+                                <button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:#ef4444; border:1px solid #fee2e2; background:#fef2f2" onclick="delDoc('utenze_log','${obj.id}')">×</button>
+                            </div>
+                        </div>`;
             };
             let elecDet = '-';
             if(g.elec) {
