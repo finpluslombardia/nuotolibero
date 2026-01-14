@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Facility Suite V85 - Data History Fix</title>
+    <title>Facility Suite V86 - KPI Date Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -456,8 +456,8 @@
 
     function startListening() {
         try {
-            // AUMENTATO LIMIT A 1000 PER VEDERE LO STORICO ANNO PRECEDENTE
-            onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(1000)), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
+            // FIX: LIMIT 1500 to Ensure 2 Years of history
+            onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(1500)), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
             onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
             onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), limit(200)), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
             onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc"), limit(500)), (snap) => { dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze(); });
@@ -541,8 +541,14 @@
         if(!dataIngressi || dataIngressi.length === 0) return;
         const today = new Date();
         const currentMonthStr = today.toISOString().slice(0, 7); 
-        const prevMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const prevMonthStr = prevMonthDate.toISOString().slice(0, 7);
+        
+        // FIX DATE CALCULATION (TIMEZONE SAFE)
+        const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
+        
+        const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+        const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
+
         const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats);
         const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
         const daysCurrent = new Set(dCurrent.map(x=>x.date)).size; 
@@ -551,14 +557,12 @@
         const dPrev = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats);
         const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
         
-        // LOGICA N/D FIX: Mostra % se ci sono record, anche se totale 0
         let momHtml = "";
+        // SHOW DATA IF EXISTS (Even if 0)
         if (dPrev.length > 0) {
-             // Ci sono dati. Se 0, l'incremento è assoluto (es. +100%)
              let diff = 0;
              if (totalPrev > 0) diff = ((totalCurrent - totalPrev) / totalPrev) * 100;
              else if (totalCurrent > 0) diff = 100;
-             
              const color = diff >= 0 ? "#16a34a" : "#dc2626";
              const sign = diff > 0 ? "+" : "";
              momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
@@ -566,10 +570,8 @@
              momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`;
         }
         document.getElementById('ov-mom').innerHTML = momHtml;
-        document.getElementById('ov-mom-label').innerText = `vs ${prevMonthDate.toLocaleString('it-IT',{month:'long'})}`;
+        document.getElementById('ov-mom-label').innerText = `vs ${pm.toLocaleString('it-IT',{month:'long'})}`;
 
-        const yoyDate = new Date(today.getFullYear() - 1, today.getMonth(), 1);
-        const yoyStr = yoyDate.toISOString().slice(0, 7);
         const dYoy = dataIngressi.filter(x => x.date.startsWith(yoyStr) && !x.excludeStats);
         const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
         
@@ -578,7 +580,6 @@
              let diff = 0;
              if (totalYoy > 0) diff = ((totalCurrent - totalYoy) / totalYoy) * 100;
              else if (totalCurrent > 0) diff = 100;
-             
              const color = diff >= 0 ? "#16a34a" : "#dc2626";
              const sign = diff > 0 ? "+" : "";
              yoyHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
@@ -586,7 +587,7 @@
              yoyHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`;
         }
         document.getElementById('ov-yoy').innerHTML = yoyHtml;
-        document.getElementById('ov-yoy-label').innerText = `vs ${yoyDate.getFullYear()}`;
+        document.getElementById('ov-yoy-label').innerText = `vs ${ym.getFullYear()}`;
 
         const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
         if(daysCurrent > 0) { document.getElementById('ov-forecast').innerText = ((totalCurrent / today.getDate()) * daysInMonth).toFixed(0); } 
