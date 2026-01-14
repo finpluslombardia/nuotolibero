@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Facility Suite V88 - Custom Period Stats</title>
+    <title>Facility Suite V89 - Final Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -371,8 +371,6 @@
                              <option value="⛅ Variabile">⛅ Variabile</option>
                              <option value="☁️ Nuvoloso">☁️ Nuvoloso</option>
                              <option value="🌧️ Pioggia">🌧️ Pioggia</option>
-                             <option value="❄️ Freddo/Neve">❄️ Freddo/Neve</option>
-                             <option value="🔥 Caldo Estremo">🔥 Caldo Estremo</option>
                         </select>
                     </div>
 
@@ -478,6 +476,7 @@
 
     function startListening() {
         try {
+            // LIMIT A 1000 PER VEDERE STORICO DI 3 ANNI
             onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(1500)), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
             onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
             onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), limit(200)), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
@@ -1013,6 +1012,53 @@
         t.innerHTML = rowsBuffer.join(''); 
     };
     
+    // SAVE INGRESSI FIX
+    window.saveIngressi = async () => { 
+        const d = document.getElementById('i-date').value; 
+        if(!d) return showToast("Data mancante","error"); 
+        
+        const p = { 
+            date:d, 
+            type:document.getElementById('i-type').value, 
+            fascia:document.getElementById('i-fascia').value, 
+            meteo:document.getElementById('i-meteo').value, 
+            excludeStats: document.getElementById('i-exclude').checked, 
+            int:parseInt(document.getElementById('q-intero').value)||0, 
+            rid:parseInt(document.getElementById('q-ridotto').value)||0, 
+            grat:parseInt(document.getElementById('q-gratuito').value)||0, 
+            abb_int:parseInt(document.getElementById('q-abb-int').value)||0, 
+            abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0 
+        };
+        
+        p.totale = p.int + p.rid + p.grat + p.abb_int + p.abb_rid;
+        
+        if(p.totale===0 && !p.excludeStats) return showToast("Inserisci dati","error"); 
+        
+        try { 
+            if(editIdIngressi) { 
+                await updateDoc(doc(db,"sessioni",editIdIngressi), p); 
+                showToast("Aggiornato"); 
+                cancelEditIngressi(); 
+            } else { 
+                await addDoc(collection(db,"sessioni"), p); 
+                showToast("Salvato"); 
+                document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); 
+                document.getElementById('i-exclude').checked = false; 
+            } 
+        } catch(e){ 
+            showToast(e.message,"error"); 
+        } 
+    };
+
+    window.editIngressi = (id) => { const d = dataIngressi.find(x=>x.id===id); if(!d) return; editIdIngressi = id; document.getElementById('i-date').value=d.date; document.getElementById('i-type').value=d.type||'standard'; document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo; document.getElementById('i-exclude').checked = d.excludeStats || false; document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid; document.getElementById('q-gratuito').value=d.grat; document.getElementById('q-abb-int').value=d.abb_int; document.getElementById('q-abb-rid').value=d.abb_rid; document.getElementById('title-ingressi').innerText="Modifica Ingressi"; document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; document.getElementById('btn-save-ingressi').style.background="#f59e0b"; document.getElementById('cancel-ingressi').classList.remove('hidden'); document.getElementById('cb-ingressi').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+    window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; };
+    window.saveVasca = async () => { const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value; if(!date || !time) return showToast("Data/Ora mancanti","error"); const payload = { date, time, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value }; try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); } };
+    window.editVasca = (id) => { const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id; document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time; document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta; document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph; document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc; document.getElementById('v-clt').value=d.clt; document.getElementById('title-vasca').innerText="Modifica Valori"; document.getElementById('btn-save-vasca').innerText="AGGIORNA"; document.getElementById('btn-save-vasca').style.background="#f59e0b"; document.getElementById('cancel-vasca').classList.remove('hidden'); document.getElementById('cb-vasca').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+    window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('title-vasca').innerText="Registrazione Valori"; document.getElementById('btn-save-vasca').innerText="SALVA"; document.getElementById('btn-save-vasca').style.background=""; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
+    window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
+    window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
+    
+    window.toggleExcludeStats = async (id, currentVal) => { try { await updateDoc(doc(db, "sessioni", id), { excludeStats: !currentVal }); showToast(!currentVal ? "Giorno escluso dalla media" : "Giorno reincluso nella media"); } catch(e) { showToast(e.message, "error"); } };
     window.renderIngressiArchive = () => { 
         const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const sort = document.getElementById('arch-sort').value;
         const f = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; });
