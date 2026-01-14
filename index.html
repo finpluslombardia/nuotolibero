@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Facility Suite V86 - KPI Date Fix</title>
+    <title>Facility Suite V87 - Electricity Weather Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -347,10 +347,9 @@
                     <div id="u-extra-elec-meteo" class="inp-field hidden" style="flex:1"><label>Meteo Giornata</label>
                         <select id="u-meteo">
                              <option value="☀️ Sole">☀️ Sole</option>
+                             <option value="⛅ Variabile">⛅ Variabile</option>
                              <option value="☁️ Nuvoloso">☁️ Nuvoloso</option>
                              <option value="🌧️ Pioggia">🌧️ Pioggia</option>
-                             <option value="❄️ Freddo/Neve">❄️ Freddo/Neve</option>
-                             <option value="🔥 Caldo Estremo">🔥 Caldo Estremo</option>
                         </select>
                     </div>
 
@@ -456,8 +455,8 @@
 
     function startListening() {
         try {
-            // FIX: LIMIT 1500 to Ensure 2 Years of history
-            onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(1500)), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
+            // LIMIT A 1000 PER VEDERE STORICO DI 3 ANNI
+            onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(1000)), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
             onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
             onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), limit(200)), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
             onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc"), limit(500)), (snap) => { dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze(); });
@@ -542,13 +541,16 @@
         const today = new Date();
         const currentMonthStr = today.toISOString().slice(0, 7); 
         
-        // FIX DATE CALCULATION (TIMEZONE SAFE)
+        // FIX TIMEZONE DATE CONSTRUCTION
+        // Crea le date usando (Year, MonthIndex) per evitare casini di UTC
         const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
-        
         const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+        
+        // Formatta manualmente "YYYY-MM" per essere sicuri
+        const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
         const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
 
+        // Filtra
         const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats);
         const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
         const daysCurrent = new Set(dCurrent.map(x=>x.date)).size; 
@@ -558,11 +560,12 @@
         const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
         
         let momHtml = "";
-        // SHOW DATA IF EXISTS (Even if 0)
+        // Se c'è almeno un record nel mese precedente (anche se totale 0), mostra %
         if (dPrev.length > 0) {
              let diff = 0;
              if (totalPrev > 0) diff = ((totalCurrent - totalPrev) / totalPrev) * 100;
-             else if (totalCurrent > 0) diff = 100;
+             else if (totalCurrent > 0) diff = 100; // Da 0 a X è +100% (simbolico)
+             
              const color = diff >= 0 ? "#16a34a" : "#dc2626";
              const sign = diff > 0 ? "+" : "";
              momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
@@ -570,6 +573,7 @@
              momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`;
         }
         document.getElementById('ov-mom').innerHTML = momHtml;
+        // Usa toLocaleString con 'it-IT' per il nome mese corretto
         document.getElementById('ov-mom-label').innerText = `vs ${pm.toLocaleString('it-IT',{month:'long'})}`;
 
         const dYoy = dataIngressi.filter(x => x.date.startsWith(yoyStr) && !x.excludeStats);
@@ -580,6 +584,7 @@
              let diff = 0;
              if (totalYoy > 0) diff = ((totalCurrent - totalYoy) / totalYoy) * 100;
              else if (totalCurrent > 0) diff = 100;
+             
              const color = diff >= 0 ? "#16a34a" : "#dc2626";
              const sign = diff > 0 ? "+" : "";
              yoyHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
@@ -865,9 +870,7 @@
                     dObj.setFullYear(dObj.getFullYear() - 1);
                     const prevYearStr = dObj.toISOString().split('T')[0];
                     
-                    // Cerca nello storico completo deduplicato (potremmo dover ricreare la map per l'anno scorso se vogliamo essere precisi, ma cerchiamo nei raw per semplicità qui)
-                    // Meglio: cerchiamo in allRecords se il range lo copre, altrimenti in rawRecords
-                    // Per sicurezza usiamo rawRecords filtrati e deduplicati al volo per quella data
+                    // Cerca nello storico completo deduplicato
                     const histCandidates = dataUtenze.filter(d => d.date === prevYearStr && d.type === type);
                     const histRecord = histCandidates.length > 0 ? histCandidates[histCandidates.length-1] : null;
                     
