@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Facility Suite V83 - Fix Save</title>
+    <title>Facility Suite V84 - Smart KPI Fix</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
@@ -548,20 +548,37 @@
         document.getElementById('ov-avg').innerText = daysCurrent > 0 ? (totalCurrent/daysCurrent).toFixed(0) : 0; 
         const dPrev = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats);
         const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
-        let mom = totalPrev > 0 ? ((totalCurrent - totalPrev) / totalPrev) * 100 : (totalCurrent > 0 ? 100 : 0);
-        const momEl = document.getElementById('ov-mom');
-        momEl.innerText = (mom > 0 ? "+" : "") + mom.toFixed(1) + "%";
-        momEl.style.color = mom >= 0 ? "#16a34a" : "#dc2626";
+        
+        // FIX KPI: Handle 0 prev data better
+        let momHtml = "";
+        if(totalPrev > 0) {
+            const diff = ((totalCurrent - totalPrev) / totalPrev) * 100;
+            const color = diff >= 0 ? "#16a34a" : "#dc2626";
+            const sign = diff > 0 ? "+" : "";
+            momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
+        } else {
+            momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`;
+        }
+        document.getElementById('ov-mom').innerHTML = momHtml;
         document.getElementById('ov-mom-label').innerText = `vs ${prevMonthDate.toLocaleString('it-IT',{month:'long'})}`;
+
         const yoyDate = new Date(today.getFullYear() - 1, today.getMonth(), 1);
         const yoyStr = yoyDate.toISOString().slice(0, 7);
         const dYoy = dataIngressi.filter(x => x.date.startsWith(yoyStr) && !x.excludeStats);
         const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
-        let yoy = totalYoy > 0 ? ((totalCurrent - totalYoy) / totalYoy) * 100 : (totalCurrent > 0 ? 100 : 0);
-        const yoyEl = document.getElementById('ov-yoy');
-        yoyEl.innerText = (yoy > 0 ? "+" : "") + yoy.toFixed(1) + "%";
-        yoyEl.style.color = yoy >= 0 ? "#16a34a" : "#dc2626";
+        
+        let yoyHtml = "";
+        if(totalYoy > 0) {
+            const diff = ((totalCurrent - totalYoy) / totalYoy) * 100;
+            const color = diff >= 0 ? "#16a34a" : "#dc2626";
+            const sign = diff > 0 ? "+" : "";
+            yoyHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
+        } else {
+            yoyHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`;
+        }
+        document.getElementById('ov-yoy').innerHTML = yoyHtml;
         document.getElementById('ov-yoy-label').innerText = `vs ${yoyDate.getFullYear()}`;
+
         const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
         if(daysCurrent > 0) { document.getElementById('ov-forecast').innerText = ((totalCurrent / today.getDate()) * daysInMonth).toFixed(0); } 
         else { document.getElementById('ov-forecast').innerText = "-"; }
