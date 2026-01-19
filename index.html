@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Stacked Weekly</title>
+<title>Facility Suite V94 - Clean Lines</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -553,7 +553,6 @@ function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
     if(!isChartReady()) return;
     if(ch[id]) ch[id].destroy();
     
-    // Configurazione specifica per assi
     const scalesConfig = { 
         y: { beginAtZero: type==='bar', stacked: isStacked },
         x: { stacked: isStacked }
@@ -562,6 +561,7 @@ function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
     const isBar = type === 'bar';
     const optimizedDatasets = datasets.map(d => ({
         ...d,
+        // LOGIC FIX: If bar, solid color. If line, transparent/light.
         backgroundColor: d.backgroundColor ? d.backgroundColor : (isBar ? '#2563eb' : (d.fill ? d.borderColor + '20' : undefined)),
         borderWidth: isBar ? 0 : 2,
         pointRadius: isBar ? 0 : 3,
@@ -674,9 +674,14 @@ window.renderOverviewCharts = () => {
         l30.push({ x: dates[dates.length-1], y: valOggi, refDate: dtPrevStr });
         l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
+    
+    // COLOR LOGIC FIX:
+    const bgMain = chartType === 'bar' ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
+    const bgComp = chartType === 'bar' ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
+
     renderDynamicChart('chartRecent30', dates, [
-        {label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', backgroundColor:'#2563eb', fill:true},
-        {label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', backgroundColor:'#cbd5e1', borderDash:[5,5], fill:false}
+        {label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},
+        {label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}
     ], chartType);
     const m12=[], m12_prev=[], m_labels=[];
     for(let i=11; i>=0; i--) {
@@ -684,7 +689,7 @@ window.renderOverviewCharts = () => {
         m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear() && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
         m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1) && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
     }
-    renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', backgroundColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', backgroundColor:'#cbd5e1', borderDash:[5,5], fill:false}], chartType);
+    renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}], chartType);
 }
 
 // HELPERS COLORS
@@ -742,7 +747,12 @@ window.renderStats = () => {
     document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
     if(!isChartReady()) return;
 
-    // --- CHART YOY (Seasonality) ---
+    // COLOR LOGIC FOR STATS
+    const isBar = chartType === 'bar';
+    const bgMain = isBar ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
+    const bgComp = isBar ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
+
+    // --- CHART YOY ---
     let labels = [];
     let mainData = [];
     let compData = [];
@@ -811,23 +821,21 @@ window.renderStats = () => {
         }
     }
 
-    const mainDatasets = [{ label: mode==='year' ? `Anno ${yearMain}` : 'Periodo Selezionato', data: mainData, borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.4, fill: true }];
+    const mainDatasets = [{ label: mode==='year' ? `Anno ${yearMain}` : 'Periodo Selezionato', data: mainData, borderColor: '#2563eb', backgroundColor: bgMain, tension: 0.4, fill: true }];
     if(yearCompVal !== 'none') {
-        mainDatasets.push({ label: compLabel, data: compData, borderColor: '#94a3b8', backgroundColor: '#cbd5e1', borderDash: [5,5], fill: false, tension:0.4 });
+        mainDatasets.push({ label: compLabel, data: compData, borderColor: '#94a3b8', backgroundColor: bgComp, borderDash: [5,5], fill: false, tension:0.4 });
     }
     renderDynamicChart('chartYoY', labels, mainDatasets, chartType);
 
-    // --- WEEKLY CHART (Stacked Logic) ---
+    // --- WEEKLY CHART ---
     const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
     const getJsDay = (i) => (i + 1) % 7;
     let weekDatasets = [];
     let isStacked = false;
 
     if(chartType === 'bar') {
-        // STACKED LOGIC
         isStacked = true;
         const uniqueFasce = [...new Set(fMain.map(d => d.fascia))];
-        
         weekDatasets = uniqueFasce.map(fascia => {
             const data = weekLabels.map((_, i) => {
                 let subset = fMain.filter(d => new Date(d.date).getDay() === getJsDay(i) && d.fascia === fascia);
@@ -839,12 +847,9 @@ window.renderStats = () => {
                 backgroundColor: getFasciaColor(fascia)
             };
         });
-
-        // Add Comparison as a LINE (to stay visible over stacks)
         if(yearCompVal !== 'none') {
             let compSet = [];
             if(yearCompVal === 'avg') {
-                 // Avg of all valid history excluding main selection
                  compSet = dataIngressi.filter(d => !fMain.includes(d) && !d.excludeStats);
             } else {
                  compSet = filterBase(dataIngressi, parseInt(yearCompVal));
@@ -853,11 +858,10 @@ window.renderStats = () => {
                 let subset = compSet.filter(d => new Date(d.date).getDay() === getJsDay(i));
                 return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
             });
-            
             weekDatasets.push({
                 label: compLabel + ' (Totale)',
                 data: compDataWeekly,
-                type: 'line', // Override to Line
+                type: 'line', 
                 borderColor: '#94a3b8',
                 borderDash: [5,5],
                 borderWidth: 2,
@@ -865,17 +869,14 @@ window.renderStats = () => {
                 fill: false
             });
         }
-
     } else {
-        // STANDARD LINE LOGIC (Total Only)
         const calcWeekly = (dataset) => {
             return weekLabels.map((_, i) => {
                 let subset = dataset.filter(d => new Date(d.date).getDay() === getJsDay(i));
                 return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
             });
         };
-        weekDatasets = [{ label: `Media Selezionata`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', fill: true }];
-        
+        weekDatasets = [{ label: `Media Selezionata`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true }];
         if(yearCompVal !== 'none') {
             let compSet = [];
             if(yearCompVal === 'avg') {
