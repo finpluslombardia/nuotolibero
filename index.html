@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V98 - Stable</title>
+<title>Facility Suite V99 - Complete</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -64,7 +64,7 @@ body {
 
 .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
 
-/* FIX: Removed @extend, duplicated styles for stability */
+/* FIX: Removed @extend */
 .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
 .kpi-card { background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 20px; height: 130px; justify-content: center; display: flex; flex-direction: column; }
 .chart-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; height: 360px; }
@@ -812,7 +812,6 @@ window.cancelEditUtenze = () => {
     editIdUtenze = null; document.getElementById('title-utenze').innerText = "Registrazione Letture Utenze"; document.getElementById('btn-save-utenze').innerText = "SALVA"; document.getElementById('btn-save-utenze').style.background = ""; document.getElementById('cb-utenze').classList.remove('editing'); document.getElementById('cancel-utenze').classList.add('hidden'); document.querySelectorAll('#module-utenze input:not([type=date])').forEach(i=>i.value=''); toggleUtenzeMode();
 };
 
-// FIX: UTENZE RENDER - SAFE & SIDE BY SIDE
 window.renderUtenze = () => {
     try {
         if(!isChartReady()) return;
@@ -845,15 +844,12 @@ window.renderUtenze = () => {
             if(g.gas) { if(prevVals.gas !== null) { let d = g.gas.val - prevVals.gas; if(d < 0) d = 0; deltas[date].gas = d; } else { deltas[date].gas = 0; } prevVals.gas = g.gas.val; }
         });
 
-        // DEFINED HERE TO AVOID SCOPE ISSUES
         const makeDatasets = (mainData, historyData, colorMain, colorHist) => {
             if(isDelta) {
-                // SIDE BY SIDE BARS
                 const ds = [{ label: 'Corrente', data: mainData.dataDelta, backgroundColor: colorMain, borderColor: colorMain, borderWidth: 1, order: 1 }];
                 if(showHistory) { ds.push({ label: 'Anno Prec.', data: historyData.dataHistoryDelta, backgroundColor: '#cbd5e1', borderColor: '#94a3b8', borderWidth: 1, order: 2 }); }
                 return ds;
             } else {
-                // LINES FOR TOTALS
                 const ds = [{ label: 'Lettura', data: mainData.dataTotal, borderColor: colorMain, backgroundColor: colorMain, fill: true, tension: 0.3, order: 2 }];
                 if(showHistory) { ds.push({ label: 'Anno Prec.', data: historyData.dataHistoryTotal, borderColor: colorHist, backgroundColor: 'transparent', borderDash: [4,4], borderWidth: 3, pointRadius: 2, type: 'line', fill: false, tension: 0.3, order: 1 }); }
                 return ds;
@@ -919,6 +915,42 @@ window.renderUtenze = () => {
         });
 
     } catch(e) { console.error("Render Utenze Error:", e); showToast("Errore Grafici: " + e.message, "error"); }
+};
+
+window.renderIngressiArchive = () => {
+    const start = document.getElementById('arch-date-start').value; 
+    const end = document.getElementById('arch-date-end').value; 
+    const fascia = document.getElementById('arch-filter-fascia').value; 
+    const meteo = document.getElementById('arch-filter-meteo').value; 
+    const sort = document.getElementById('arch-sort').value;
+    
+    const f = dataIngressi.filter(d => { 
+        if (start && d.date < start) return false; 
+        if (end && d.date > end) return false; 
+        if (fascia !== 'all' && d.fascia !== fascia) return false; 
+        if (meteo !== 'all' && d.meteo !== meteo) return false; 
+        return true; 
+    });
+    
+    f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return sort==='desc'?db-da:da-db});
+    
+    const t=document.getElementById('tbody-ingressi'); t.innerHTML="";
+    if(f.length === 0) { t.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px;">Nessun dato trovato.</td></tr>'; return; }
+    
+    const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)});
+    
+    [...g.keys()].forEach(k=>{
+        const e=g.get(k);
+        const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`;
+        e.forEach((d,i)=>{
+            const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)";
+            let badge = d.type === 'festivo' ? '<span class="badge badge-ko" style="margin-left:5px">🔴 Festivo</span>' : d.type === 'evento' ? '<span class="badge badge-evt" style="margin-left:5px">🏆 Evento</span>' : d.type === 'extra' ? '<span class="badge badge-summer" style="margin-left:5px">⚠️ Extra</span>' : '';
+            const isExcluded = d.excludeStats === true;
+            const rowStyle = isExcluded ? "opacity:0.5; background: repeating-linear-gradient(45deg,rgba(0,0,0,0.02),rgba(0,0,0,0.02) 10px,rgba(0,0,0,0.06) 10px,rgba(0,0,0,0.06) 20px);" : "";
+            const excludeIcon = isExcluded ? "✅" : "🚫";
+            t.innerHTML += `<tr style="${b}; ${rowStyle}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b>${badge}<br><small style="color:#64748b">${d.meteo}</small>${isExcluded?'<br><b style="color:#ef4444;font-size:0.65rem">ESCLUSO MEDIA</b>':''}</td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right; min-width:110px"><button class="btn btn-icon" style="color:#64748b;background:transparent;border:1px solid #e2e8f0;margin-right:5px;width:30px;height:30px" onclick="toggleExcludeStats('${d.id}', ${isExcluded})">${excludeIcon}</button><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`;
+        });
+    });
 };
 
 window.downloadCSV = () => {
