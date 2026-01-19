@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Clean Lines</title>
+<title>Facility Suite V94 - Side-by-Side Stacked</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -561,7 +561,6 @@ function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
     const isBar = type === 'bar';
     const optimizedDatasets = datasets.map(d => ({
         ...d,
-        // LOGIC FIX: If bar, solid color. If line, transparent/light.
         backgroundColor: d.backgroundColor ? d.backgroundColor : (isBar ? '#2563eb' : (d.fill ? d.borderColor + '20' : undefined)),
         borderWidth: isBar ? 0 : 2,
         pointRadius: isBar ? 0 : 3,
@@ -834,7 +833,9 @@ window.renderStats = () => {
     let isStacked = false;
 
     if(chartType === 'bar') {
-        isStacked = true;
+        isStacked = true; // IMPORTANT for ChartJS
+        
+        // 1. MAIN DATA (Stacked by Fascia)
         const uniqueFasce = [...new Set(fMain.map(d => d.fascia))];
         weekDatasets = uniqueFasce.map(fascia => {
             const data = weekLabels.map((_, i) => {
@@ -844,9 +845,12 @@ window.renderStats = () => {
             return {
                 label: fascia,
                 data: data,
-                backgroundColor: getFasciaColor(fascia)
+                backgroundColor: getFasciaColor(fascia),
+                stack: 'main' // KEY: Groups all fasce into one stack
             };
         });
+
+        // 2. COMPARISON DATA (Side-by-Side Bar)
         if(yearCompVal !== 'none') {
             let compSet = [];
             if(yearCompVal === 'avg') {
@@ -858,18 +862,18 @@ window.renderStats = () => {
                 let subset = compSet.filter(d => new Date(d.date).getDay() === getJsDay(i));
                 return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
             });
+            
             weekDatasets.push({
                 label: compLabel + ' (Totale)',
                 data: compDataWeekly,
-                type: 'line', 
-                borderColor: '#94a3b8',
-                borderDash: [5,5],
-                borderWidth: 2,
-                pointRadius: 0,
-                fill: false
+                type: 'bar', // Explicitly BAR
+                backgroundColor: '#cbd5e1', // Solid Grey
+                stack: 'comp', // KEY: Separate stack group
+                order: 1
             });
         }
     } else {
+        // STANDARD LINE LOGIC
         const calcWeekly = (dataset) => {
             return weekLabels.map((_, i) => {
                 let subset = dataset.filter(d => new Date(d.date).getDay() === getJsDay(i));
