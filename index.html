@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Final Layout & Colors</title>
+<title>Facility Suite V94 - Stats Upgrade</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -50,11 +50,7 @@
     
     /* CB-ROW BASE */
     .cb-row { display: flex; gap: 15px; align-items: flex-end; width: 100%; }
-    
-    /* LAYOUT UTENZE (Wrap) */
     #cb-utenze .cb-row { flex-wrap: wrap; }
-
-    /* LAYOUT INGRESSI (No Wrap, Custom Gaps) */
     #cb-ingressi .cb-row { flex-wrap: nowrap; gap: 15px; }
     
     /* INPUT FIELDS STANDARD */
@@ -62,18 +58,15 @@
     .inp-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .inp-field input, .inp-field select { padding: 0 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); font-size: 0.9rem; height: 44px; color: var(--text-main); font-family: inherit; font-weight: 500; transition: all 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); width: 100%; }
     .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
-    
     .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; border: 1px solid rgba(0,0,0,0.1) !important; }
     
-    /* GRUPPI DEL LAYOUT INGRESSI - RICALIBRATI */
-    .group-ctx { display: flex; gap: 10px; flex: 1.6; align-items: flex-end; min-width: 0; } /* Aumentato il flex (Più largo) */
-    .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.35); padding: 5px 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; } /* Ridotto il flex (Più stretto) e gap */
+    /* GRUPPI DEL LAYOUT INGRESSI */
+    .group-ctx { display: flex; gap: 10px; flex: 1.6; align-items: flex-end; min-width: 0; }
+    .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.35); padding: 5px 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     .group-actions { display: flex; align-items: flex-end; gap: 10px; flex: 0 0 auto; }
-
-    /* GRUPPO LAYOUT VASCA */
     .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
     
-    /* TICKET BOX (Compatti) */
+    /* TICKET BOX */
     .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; }
     .t-box label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; text-align: center; width: 100%; opacity: 0.8; letter-spacing: -0.5px; }
     .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
@@ -236,7 +229,7 @@
         <div id="sub-stats" class="hidden">
             <div class="filter-row" style="justify-content:space-between; align-items:flex-end; background:rgba(255,255,255,0.4); padding:15px; border-radius:16px; border:var(--glass-border)">
                 <div style="display:flex; gap:10px; flex-wrap:wrap">
-                    <div class="inp-field" style="width:140px"><label>Anno</label><select id="stat-year" onchange="renderStats()" style="font-weight:700"></select></div>
+                    <div class="inp-field" style="width:140px"><label>Anno (Periodo)</label><select id="stat-year" onchange="renderStats()" style="font-weight:700"></select></div>
                     <div class="inp-field" style="width:140px"><label>Confronta con</label><select id="stat-compare-year" onchange="renderStats()" style="font-weight:700; color:#64748b"></select></div>
                     <div class="inp-field" style="width:160px"><label>Vasca</label><select id="stat-pool-filter" onchange="renderStats()" style="font-weight:700"><option value="all">🏊 Tutte</option><option value="indoor">🏢 Interna</option><option value="outdoor">☀️ Esterna</option></select></div>
                 </div>
@@ -325,7 +318,6 @@
                 <label>Data</label>
                 <input type="date" id="u-date">
             </div>
-
             <div class="inp-field" style="flex:1;">
                 <label>Tipo Utenza</label>
                 <select id="u-type" onchange="toggleUtenzeMode()">
@@ -334,7 +326,6 @@
                     <option value="🔥 Gas Metano">🔥 Gas Metano (m³)</option>
                 </select>
             </div>
-
             <div id="u-extra-elec-meteo" class="inp-field hidden" style="flex:1;">
                 <label>Meteo Giornata</label>
                 <select id="u-meteo">
@@ -344,7 +335,6 @@
                     <option value="🌧️ Pioggia">🌧️ Pioggia</option>
                 </select>
             </div>
-
             <div id="u-elec-input" style="display:contents;">
                 <div class="inp-field" style="flex:1">
                     <label>A1 (F1)</label>
@@ -359,22 +349,18 @@
                     <input type="number" id="u-a3" step="any">
                 </div>
             </div>
-
             <div id="u-single-input" class="inp-field hidden" style="flex:1;">
                 <label>Lettura Contatore</label>
                 <input type="number" id="u-val" placeholder="Es. 12500" step="any">
             </div>
-
             <div id="u-extra-gas" class="inp-field hidden" style="width:100px; flex:none;">
                 <label>Temp. (°C)</label>
                 <input type="number" id="u-temp" placeholder="°C" step="0.1">
             </div>
-
             <div class="inp-field" style="flex:1.5;">
                 <label>Note</label>
                 <input type="text" id="u-note" placeholder="Opzionale...">
             </div>
-
             <div style="width:120px; flex:none;">
                 <button id="btn-save-utenze" class="btn btn-primary" style="height:44px; width:100%" onclick="saveUtenze()">SALVA</button>
             </div>
@@ -482,20 +468,28 @@ window.populateStatFilters = () => {
     const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
     const yearSel = document.getElementById('stat-year');
     const compSel = document.getElementById('stat-compare-year');
+    
+    // Save current selection if exists
     const currYear = yearSel.value;
     const currComp = compSel.value;
+    
     yearSel.innerHTML = "";
-    compSel.innerHTML = '<option value="none">Nessuno</option>';
+    compSel.innerHTML = '<option value="avg" selected>📊 Media Storica</option><option value="none">Nessuno</option>';
+    
     years.forEach(y => {
         yearSel.innerHTML += `<option value="${y}">${y}</option>`;
         compSel.innerHTML += `<option value="${y}">${y}</option>`;
     });
+    
     const todayYear = new Date().getFullYear();
     yearSel.value = currYear && years.includes(parseInt(currYear)) ? currYear : (years.includes(todayYear) ? todayYear : years[0]);
-    if(!currComp) {
-        const prevYear = parseInt(yearSel.value) - 1;
-        if(years.includes(prevYear)) compSel.value = prevYear;
-    } else { compSel.value = currComp; }
+    
+    if(currComp && (currComp === 'avg' || currComp === 'none' || years.includes(parseInt(currComp)))) {
+        compSel.value = currComp;
+    } else {
+        compSel.value = 'avg'; // Default to Average
+    }
+    
     renderStats();
 };
 
@@ -634,7 +628,7 @@ window.renderOverviewCharts = () => {
 window.renderStats = () => {
     if(!dataIngressi.length) return;
     const yearMain = parseInt(document.getElementById('stat-year').value);
-    const yearComp = document.getElementById('stat-compare-year').value;
+    const yearCompVal = document.getElementById('stat-compare-year').value;
     const poolFilter = document.getElementById('stat-pool-filter').value;
     const dayTypeFilter = document.getElementById('day-type-filter').value;
     const chartType = document.getElementById('stat-chart-type').value;
@@ -642,7 +636,9 @@ window.renderStats = () => {
     const filterData = (data, year) => {
         return data.filter(d => {
             if(d.excludeStats) return false;
-            if(new Date(d.date).getFullYear() !== year) return false;
+            // Year Filter is explicit for Main, implicit for Avg
+            if(year !== 'avg' && new Date(d.date).getFullYear() !== year) return false;
+            
             const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
             if(poolFilter === 'indoor' && isOutdoor) return false;
             if(poolFilter === 'outdoor' && !isOutdoor) return false;
@@ -654,33 +650,70 @@ window.renderStats = () => {
 
     const fMain = filterData(dataIngressi, yearMain);
     document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
-    let fComp = []; let showComp = false;
-    if(yearComp !== 'none') { fComp = filterData(dataIngressi, parseInt(yearComp)); showComp = true; }
+    
     if(!isChartReady()) return;
 
+    // --- CHART YOY (SEASONALITY) ---
     const months = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
     const mainMonthly = new Array(12).fill(0);
     fMain.forEach(d => { mainMonthly[new Date(d.date).getMonth()] += d.totale; });
     const yoyDatasets = [{ label: `Anno ${yearMain}`, data: mainMonthly, borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.4, fill: true }];
-    if(showComp) {
+
+    // COMPARISON LOGIC
+    if(yearCompVal === 'avg') {
+        const avgMonthly = new Array(12).fill(0);
+        // Get all unique years excluding current main year
+        const allYears = [...new Set(dataIngressi.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== yearMain);
+        
+        for(let m=0; m<12; m++) {
+            let sum = 0; let count = 0;
+            allYears.forEach(y => {
+                // Get totals for this specific Month/Year combo applying other filters
+                const subset = filterData(dataIngressi, y).filter(d => new Date(d.date).getMonth() === m);
+                const val = subset.reduce((a,b)=>a+b.totale, 0);
+                if(subset.length > 0) { // If there was data for this month
+                    sum += val; count++;
+                }
+            });
+            avgMonthly[m] = count > 0 ? (sum / count) : 0;
+        }
+        yoyDatasets.push({ label: `Media Storica`, data: avgMonthly, borderColor: '#94a3b8', backgroundColor: '#cbd5e1', borderDash: [5,5], fill: false, tension:0.4 });
+    } else if (yearCompVal !== 'none') {
+        const yearComp = parseInt(yearCompVal);
+        const fComp = filterData(dataIngressi, yearComp);
         const compMonthly = new Array(12).fill(0);
         fComp.forEach(d => { compMonthly[new Date(d.date).getMonth()] += d.totale; });
-        yoyDatasets.push({ label: `Anno ${yearComp}`, data: compMonthly, borderColor: '#94a3b8', borderDash: [5,5], fill: false, tension:0.4 });
+        yoyDatasets.push({ label: `Anno ${yearComp}`, data: compMonthly, borderColor: '#94a3b8', backgroundColor: '#cbd5e1', borderDash: [5,5], fill: false, tension:0.4 });
     }
     renderDynamicChart('chartYoY', months, yoyDatasets, chartType);
 
+    // --- WEEKLY CHART ---
     const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
     const getJsDay = (i) => (i + 1) % 7;
+    
     const calcWeekly = (dataset) => {
         return weekLabels.map((_, i) => {
             let subset = dataset.filter(d => new Date(d.date).getDay() === getJsDay(i));
             return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
         });
     };
+
     const weekDatasets = [{ label: `Media ${yearMain}`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', fill: true }];
-    if(showComp) { weekDatasets.push({ label: `Media ${yearComp}`, data: calcWeekly(fComp), borderColor: '#94a3b8', borderDash: [5,5], fill: false }); }
+    
+    if(yearCompVal === 'avg') {
+        const avgWeekly = weekLabels.map((_, i) => {
+            // All data excluding main year, matching day of week
+            let subset = filterData(dataIngressi, 'avg').filter(d => new Date(d.date).getFullYear() !== yearMain && new Date(d.date).getDay() === getJsDay(i));
+            return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
+        });
+        weekDatasets.push({ label: `Media Storica`, data: avgWeekly, borderColor: '#94a3b8', borderDash: [5,5], fill: false });
+    } else if (yearCompVal !== 'none') {
+        const fComp = filterData(dataIngressi, parseInt(yearCompVal));
+        weekDatasets.push({ label: `Media ${yearCompVal}`, data: calcWeekly(fComp), borderColor: '#94a3b8', borderDash: [5,5], fill: false });
+    }
     renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType);
 
+    // --- PIE & OTHERS ---
     let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
     fMain.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
     renderPie('chartPie', Object.keys(t), Object.values(t));
