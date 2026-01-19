@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V97 - Emergency Fix</title>
+<title>Facility Suite V98 - Stable</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -480,6 +480,7 @@ return dataAnnoPrec;
 window.showToast = (msg, type='success') => { const c = document.getElementById('toast-container'); const e = document.createElement('div'); e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); };
 window.doLogin = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch(e) { document.getElementById('login-error').innerText = e.message; } };
 window.doLogout = () => signOut(auth);
+
 // GLOBAL NAVIGATION FIX
 window.switchModule = (m) => {
     try {
@@ -492,6 +493,26 @@ window.switchModule = (m) => {
         if(m==='dae')renderDae(); 
         if(m==='utenze')renderUtenze();
     } catch(e) { console.error("Nav Error:", e); }
+};
+
+window.switchSubView = (s) => { 
+    ['overview','stats','archive'].forEach(v => { 
+        const el = document.getElementById('sub-'+v);
+        const btn = document.getElementById('btn-sub-'+v);
+        if(el) el.classList.add('hidden'); 
+        if(btn) btn.classList.remove('btn-primary'); 
+    }); 
+    const target = document.getElementById('sub-'+s);
+    const targetBtn = document.getElementById('btn-sub-'+s);
+    if(target) target.classList.remove('hidden'); 
+    if(targetBtn) targetBtn.classList.add('btn-primary'); 
+    refreshCurrentView(); 
+};
+
+window.refreshCurrentView = () => { 
+    if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); 
+    if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); 
+    if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); 
 };
 
 onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen').classList.add('hidden'); document.getElementById('user-display').innerText=u.email.split('@')[0]; startListening(); } else { document.getElementById('login-screen').classList.remove('hidden'); } });
@@ -750,9 +771,6 @@ function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML
 
 window.toggleUtenzeMode = () => {
     const type = document.getElementById('u-type').value;
-    document.getElementById('u-single-input').classList.toggle('hidden', type !== '⚡ Elettricità');
-    document.getElementById('u-single-input').classList.toggle('hidden', type === '⚡ Elettricità'); 
-    // ^ FIX: Logic above was redundant/wrong. Correcting:
     const isElec = type === '⚡ Elettricità';
     document.getElementById('u-single-input').style.display = isElec ? 'none' : 'flex';
     document.getElementById('u-elec-input').style.display = isElec ? 'flex' : 'none';
