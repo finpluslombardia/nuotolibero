@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V92 - Final Fix</title>
+<title>Facility Suite V93 - Final Fix</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -484,8 +484,8 @@ try {
 onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(1500)), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateYearFilters(); refreshCurrentView(); });
 onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
 onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), limit(200)), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
-// FIX: Increased limit to 1000 to ensure we have data from last year for comparison
-onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc"), limit(1000)), (snap) => { dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze(); });
+// FIX: Increased limit to 4000 to ensure we have data from last year for comparison
+onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc"), limit(4000)), (snap) => { dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze(); });
 } catch(e) { console.error(e); }
 }
 
@@ -910,8 +910,7 @@ window.renderUtenze = () => {
     const limitStr = limitDate.toISOString().split('T')[0];
     const showHistory = document.getElementById('u-compare-year').checked;
 
-    // 2. Data Processing (Must happen FIRST)
-    // FIX: Moved variable definition to top
+    // 2. Data Processing - Raggruppamento
     const grouped = {};
     dataUtenze.forEach(d => {
         if(!grouped[d.date]) grouped[d.date] = { date: d.date, elec: null, water: null, gas: null, notes: [] };
@@ -921,7 +920,7 @@ window.renderUtenze = () => {
         if(d.note) grouped[d.date].notes.push(d.note);
     });
 
-    // 3. Calculate Deltas
+    // 3. Calculate Deltas Globali (per tutto lo storico scaricato)
     const allDatesAsc = Object.keys(grouped).sort();
     let prevVals = { elec: null, water: null, gas: null };
     const deltas = {};
@@ -930,13 +929,16 @@ window.renderUtenze = () => {
         deltas[date] = { elec: null, water: null, gas: null };
         const g = grouped[date];
         
+        // Calcolo Delta Elettricità
         if(g.elec) {
             if(prevVals.elec !== null) {
-                let d = g.elec.val - prevVals.elec; if(d < 0) d = 0;
+                let d = g.elec.val - prevVals.elec; 
+                if(d < 0) d = 0; 
                 deltas[date].elec = d;
             } else { deltas[date].elec = 0; }
             prevVals.elec = g.elec.val;
         }
+        // Calcolo Delta Acqua
         if(g.water) {
             if(prevVals.water !== null) {
                 let d = g.water.val - prevVals.water; if(d < 0) d = 0;
@@ -944,6 +946,7 @@ window.renderUtenze = () => {
             } else { deltas[date].water = 0; }
             prevVals.water = g.water.val;
         }
+        // Calcolo Delta Gas
         if(g.gas) {
             if(prevVals.gas !== null) {
                 let d = g.gas.val - prevVals.gas; if(d < 0) d = 0;
@@ -953,9 +956,9 @@ window.renderUtenze = () => {
         }
     });
 
-    // 4. Prepare Charts
+    // 4. Prepare Charts Data
     function prepareChartData(type) {
-        // Filter by date limit
+        // Filtra solo le date richieste dal range
         const filteredDates = allDatesAsc.filter(d => d >= limitStr);
         
         const labels = [];
@@ -967,22 +970,28 @@ window.renderUtenze = () => {
 
         filteredDates.forEach((dateStr) => {
             const curr = grouped[dateStr];
-            labels.push(dateStr.split('-').slice(1).reverse().join('/'));
+            // Format data label
+            const dateObj = new Date(dateStr);
+            const label = dateObj.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+            labels.push(label);
 
+            // Valori Correnti
             let val = 0;
             let extra = "";
             if(typeKey === 'elec' && curr.elec) { val = curr.elec.val; extra = `Meteo: ${curr.elec.meteo||'N/D'}`; }
             if(typeKey === 'water' && curr.water) { val = curr.water.val; }
             if(typeKey === 'gas' && curr.gas) { val = curr.gas.val; extra = curr.gas.temp ? `Temp: ${curr.gas.temp}°C` : ''; }
 
-            dataTotal.push({ x: labels[labels.length-1], y: val, extraInfo: extra });
+            dataTotal.push({ x: label, y: val, extraInfo: extra, rawDate: dateStr });
 
             const dVal = deltas[dateStr] ? deltas[dateStr][typeKey] : 0;
-            dataDelta.push({ x: labels[labels.length-1], y: dVal, extraInfo: extra });
+            dataDelta.push({ x: label, y: dVal, extraInfo: extra, rawDate: dateStr });
 
+            // Valori Storici (Anno precedente)
             if(showHistory) {
                 const dObj = new Date(dateStr);
                 dObj.setFullYear(dObj.getFullYear() - 1);
+                // Gestione anno bisestile grossolana ma efficace per i grafici
                 const prevYearStr = dObj.toISOString().split('T')[0];
 
                 // Historical Total
@@ -992,14 +1001,15 @@ window.renderUtenze = () => {
                      if(typeKey==='water' && grouped[prevYearStr].water) hVal = grouped[prevYearStr].water.val;
                      if(typeKey==='gas' && grouped[prevYearStr].gas) hVal = grouped[prevYearStr].gas.val;
                 }
-                dataHistoryTotal.push(hVal !== null ? { x: labels[labels.length-1], y: hVal } : null);
+                
+                dataHistoryTotal.push(hVal !== null ? { x: label, y: hVal, refDate: prevYearStr } : null);
 
                 // Historical Delta
                 let hDelta = null;
                 if(deltas[prevYearStr] && deltas[prevYearStr][typeKey] !== null) {
                     hDelta = deltas[prevYearStr][typeKey];
                 }
-                dataHistoryDelta.push(hDelta !== null ? { x: labels[labels.length-1], y: hDelta } : null);
+                dataHistoryDelta.push(hDelta !== null ? { x: label, y: hDelta, refDate: prevYearStr } : null);
             }
         });
         return { labels, dataTotal, dataDelta, dataHistoryTotal, dataHistoryDelta };
@@ -1014,16 +1024,16 @@ window.renderUtenze = () => {
             label: isDelta ? 'Consumo' : 'Lettura',
             data: isDelta ? mainData.dataDelta : mainData.dataTotal,
             borderColor: colorMain, backgroundColor: colorMain,
-            fill: true, tension: 0.3, order: 1
+            fill: true, tension: 0.3, order: 2
         }];
         if(showHistory) {
             ds.push({
                 label: isDelta ? 'Consumo Anno Prec.' : 'Lettura Anno Prec.',
                 data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal,
-                borderColor: colorHist, backgroundColor: 'transparent',
-                borderDash: [5,5], borderWidth: 2, pointRadius: 0,
-                type: 'line', 
-                fill: false, tension: 0.3, order: 0
+                borderColor: colorHist, backgroundColor: colorHist,
+                borderDash: [4,4], borderWidth: 3, pointRadius: 2,
+                type: 'line', // Forziamo sempre linea per lo storico
+                fill: false, tension: 0.3, order: 1
             });
         }
         return ds;
@@ -1033,7 +1043,7 @@ window.renderUtenze = () => {
     renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#1e3a8a'), chartType);
     renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#991b1b'), chartType);
 
-    // 6. Render Table
+    // 6. Render Table (Invariato, ma rigenera la tabella con i dati corretti)
     const t = document.getElementById('tbody-utenze');
     t.innerHTML = "";
     
@@ -1049,7 +1059,9 @@ window.renderUtenze = () => {
             if(!obj) return '<span style="color:#ccc">-</span>';
             let deltaHtml = '';
             if(deltaVal !== null) {
-                deltaHtml = `<div style="font-size:0.75rem; color:${color}; opacity:0.8; font-weight:700">Consumo: +${deltaVal.toLocaleString('it-IT', {maximumFractionDigits: 1})} ${suffix}</div>`;
+                // Evidenzia delta anomali > 1000 come possibile errore
+                const warnStyle = (deltaVal > 1000 && suffix!=='kWh') ? 'color:#ef4444; text-decoration:underline' : `color:${color}`;
+                deltaHtml = `<div style="font-size:0.75rem; ${warnStyle}; opacity:0.8; font-weight:700">Consumo: +${deltaVal.toLocaleString('it-IT', {maximumFractionDigits: 1})} ${suffix}</div>`;
             } else {
                 deltaHtml = `<div style="font-size:0.75rem; color:#94a3b8">Primo dato</div>`;
             }
