@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - High Performance</title>
+<title>Facility Suite V94 - Performance Fix</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -187,6 +187,7 @@
                     </label>
                 </div>
             </div>
+
             <div class="group-tickets">
                 <div class="t-box"><label>INTERO</label><input type="number" id="q-intero" value="0" onfocus="this.select()"></div>
                 <div class="t-box"><label>RIDOTTO</label><input type="number" id="q-ridotto" value="0" onfocus="this.select()"></div>
@@ -194,6 +195,7 @@
                 <div class="t-box"><label>ABB. 11</label><input type="number" id="q-abb-rid" value="0" onfocus="this.select()"></div>
                 <div class="t-box"><label>GRATUITO</label><input type="number" id="q-gratuito" value="0" onfocus="this.select()"></div>
             </div>
+
             <div class="group-actions">
                 <button id="btn-save-ingressi" class="btn btn-primary" style="height:44px; min-width:100px" onclick="saveIngressi()">SALVA</button>
             </div>
@@ -238,9 +240,10 @@
                         <label>Anno</label>
                         <select id="stat-year" onchange="renderStats()" style="font-weight:700"></select>
                     </div>
-                    <div id="stat-custom-cont" class="hidden" style="display:flex; gap:10px">
-                        <div class="inp-field" style="width:130px"><label>Dal</label><input type="date" id="stat-date-start" onchange="renderStats()"></div>
-                        <div class="inp-field" style="width:130px"><label>Al</label><input type="date" id="stat-date-end" onchange="renderStats()"></div>
+                    <div id="stat-custom-cont" class="hidden" style="display:flex; gap:10px; align-items:flex-end">
+                        <div class="inp-field" style="width:130px"><label>Dal</label><input type="date" id="stat-date-start"></div>
+                        <div class="inp-field" style="width:130px"><label>Al</label><input type="date" id="stat-date-end"></div>
+                        <button class="btn btn-primary" onclick="renderStats()" style="height:44px; padding:0 15px; font-size:1.1rem" title="Applica Filtro">🔎</button>
                     </div>
                     <div class="inp-field" style="width:150px">
                         <label>Confronta con</label>
@@ -342,6 +345,7 @@
             <span class="cb-title" id="title-utenze">Registrazione Letture Utenze</span>
             <button class="btn btn-danger hidden" id="cancel-utenze" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditUtenze()">Annulla Modifica</button>
         </div>
+        
         <div class="cb-row">
             <div class="inp-field" style="width:140px; flex:none;">
                 <label>Data</label>
@@ -680,7 +684,6 @@ window.renderStats = () => {
         yearMain = startDate.getFullYear(); 
     }
 
-    // PRE-FILTER DATA FOR PERFORMANCE
     const filteredSource = dataIngressi.filter(d => {
         if(d.excludeStats) return false;
         const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
@@ -691,7 +694,6 @@ window.renderStats = () => {
         return true;
     });
 
-    // MAP for O(1) Lookup
     const dataMap = {};
     filteredSource.forEach(d => {
         const k = d.date;
@@ -699,7 +701,6 @@ window.renderStats = () => {
         dataMap[k].push(d);
     });
 
-    // Main Range Data
     let fMain = [];
     for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
         const k = d.toISOString().split('T')[0];
@@ -709,12 +710,10 @@ window.renderStats = () => {
     document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
     if(!isChartReady()) return;
 
-    // COLOR LOGIC
     const isBar = chartType === 'bar';
     const bgMain = isBar ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
     const bgComp = isBar ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
 
-    // --- CHART YOY ---
     let labels = [];
     let mainData = [];
     let compData = [];
@@ -731,7 +730,6 @@ window.renderStats = () => {
             for(let m=0; m<12; m++) {
                 let sum=0, count=0;
                 if(yearCompVal === 'avg') {
-                    // Avg of all years excluding main
                     const allYears = [...new Set(filteredSource.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== yearMain);
                     allYears.forEach(y => {
                         const val = filteredSource.filter(d => new Date(d.date).getFullYear() === y && new Date(d.date).getMonth() === m).reduce((a,b)=>a+b.totale,0);
@@ -746,14 +744,12 @@ window.renderStats = () => {
             }
         }
     } else {
-        // OPTIMIZED CUSTOM RANGE LOOP
         const days = [];
         for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
             days.push(new Date(d));
             labels.push(d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}));
         }
         
-        // Fill Main Data using Map
         days.forEach(d => {
             const k = d.toISOString().split('T')[0];
             const val = dataMap[k] ? dataMap[k].reduce((a,b)=>a+b.totale, 0) : 0;
@@ -763,12 +759,10 @@ window.renderStats = () => {
 
         if(yearCompVal !== 'none') {
             compLabel = yearCompVal === 'avg' ? 'Media Storica' : `Anno ${yearCompVal}`;
-            
-            // Build Historical Map for Comparison
-            const histMap = {}; // Key: MM-DD, Value: [sum, count]
+            const histMap = {}; 
             filteredSource.forEach(d => {
                 const dDate = new Date(d.date);
-                if(dDate.getFullYear() === yearMain) return; // Skip main year
+                if(dDate.getFullYear() === yearMain) return; 
                 const k = `${dDate.getMonth()}-${dDate.getDate()}`;
                 if(!histMap[k]) histMap[k] = [];
                 histMap[k].push(d);
@@ -780,7 +774,6 @@ window.renderStats = () => {
                 const k = `${month}-${day}`;
                 
                 if(yearCompVal === 'avg') {
-                    // Fast lookup in histMap
                     let sum = 0, count = 0;
                     if(histMap[k]) {
                         const yearsInDay = [...new Set(histMap[k].map(x=>new Date(x.date).getFullYear()))];
@@ -792,7 +785,6 @@ window.renderStats = () => {
                     compData.push(count>0 ? sum/count : 0);
                 } else {
                     const y = parseInt(yearCompVal);
-                    // Filter specifically for year Y
                     const val = filteredSource.filter(x => {
                         const xd = new Date(x.date);
                         return xd.getFullYear() === y && xd.getMonth() === month && xd.getDate() === day;
@@ -809,7 +801,6 @@ window.renderStats = () => {
     }
     renderDynamicChart('chartYoY', labels, mainDatasets, chartType);
 
-    // --- WEEKLY CHART ---
     const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
     const getJsDay = (i) => (i + 1) % 7;
     let weekDatasets = [];
@@ -845,7 +836,7 @@ window.renderStats = () => {
             weekDatasets.push({
                 label: compLabel + ' (Totale)',
                 data: compDataWeekly,
-                type: 'bar', // SIDE BY SIDE BAR
+                type: 'bar', 
                 backgroundColor: '#cbd5e1', 
                 stack: 'comp', 
                 order: 1
