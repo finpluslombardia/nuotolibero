@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Stats Upgrade</title>
+<title>Facility Suite V94 - Custom Range</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -228,24 +228,62 @@
 
         <div id="sub-stats" class="hidden">
             <div class="filter-row" style="justify-content:space-between; align-items:flex-end; background:rgba(255,255,255,0.4); padding:15px; border-radius:16px; border:var(--glass-border)">
-                <div style="display:flex; gap:10px; flex-wrap:wrap">
-                    <div class="inp-field" style="width:140px"><label>Anno (Periodo)</label><select id="stat-year" onchange="renderStats()" style="font-weight:700"></select></div>
-                    <div class="inp-field" style="width:140px"><label>Confronta con</label><select id="stat-compare-year" onchange="renderStats()" style="font-weight:700; color:#64748b"></select></div>
-                    <div class="inp-field" style="width:160px"><label>Vasca</label><select id="stat-pool-filter" onchange="renderStats()" style="font-weight:700"><option value="all">🏊 Tutte</option><option value="indoor">🏢 Interna</option><option value="outdoor">☀️ Esterna</option></select></div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end">
+                    
+                    <div class="inp-field" style="width:160px">
+                        <label>Modalità Analisi</label>
+                        <select id="stat-mode" onchange="toggleStatMode()" style="font-weight:700; border-color:var(--primary); color:var(--primary)">
+                            <option value="year">📅 Anno Intero</option>
+                            <option value="custom">📆 Periodo Personalizz.</option>
+                        </select>
+                    </div>
+
+                    <div class="inp-field" id="stat-year-cont" style="width:100px">
+                        <label>Anno</label>
+                        <select id="stat-year" onchange="renderStats()" style="font-weight:700"></select>
+                    </div>
+
+                    <div id="stat-custom-cont" class="hidden" style="display:flex; gap:10px">
+                        <div class="inp-field" style="width:130px"><label>Dal</label><input type="date" id="stat-date-start" onchange="renderStats()"></div>
+                        <div class="inp-field" style="width:130px"><label>Al</label><input type="date" id="stat-date-end" onchange="renderStats()"></div>
+                    </div>
+
+                    <div class="inp-field" style="width:150px">
+                        <label>Confronta con</label>
+                        <select id="stat-compare-year" onchange="renderStats()" style="font-weight:700; color:#64748b"></select>
+                    </div>
+                    
+                    <div class="inp-field" style="width:140px">
+                        <label>Vasca</label>
+                        <select id="stat-pool-filter" onchange="renderStats()" style="font-weight:700">
+                            <option value="all">🏊 Tutte</option>
+                            <option value="indoor">🏢 Interna</option>
+                            <option value="outdoor">☀️ Esterna</option>
+                        </select>
+                    </div>
                 </div>
+
                 <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap">
-                    <select id="stat-chart-type" class="filter-select" onchange="renderStats()" style="font-weight:700; border:1px solid var(--primary); color:var(--primary)"><option value="line">📈 Linea</option><option value="bar">📊 Colonne</option></select>
-                    <select id="day-type-filter" class="filter-select" onchange="renderStats()" style="font-weight:700; border:2px solid #a855f7; color:#6b21a8"><option value="all">📅 Includi Tutti i Giorni</option><option value="standard">🏢 Solo Giorni Standard</option><option value="special">🏆 Solo Eventi/Festivi</option></select>
+                    <select id="stat-chart-type" class="filter-select" onchange="renderStats()" style="font-weight:700; border:1px solid var(--primary); color:var(--primary)">
+                        <option value="line">📈 Linea</option>
+                        <option value="bar">📊 Colonne</option>
+                    </select>
+                    <select id="day-type-filter" class="filter-select" onchange="renderStats()" style="font-weight:700; border:2px solid #a855f7; color:#6b21a8">
+                        <option value="all">📅 Tutti i Giorni</option>
+                        <option value="standard">🏢 Solo Standard</option>
+                        <option value="special">🏆 Solo Eventi/Festivi</option>
+                    </select>
                 </div>
             </div>
-            <div class="charts-row-main"><div class="chart-card glass-card"><div class="chart-header" id="yoy-title">Andamento Stagionale (Confronto Anni)</div><div class="chart-wrapper"><canvas id="chartYoY"></canvas></div></div></div>
+
+            <div class="charts-row-main"><div class="chart-card glass-card"><div class="chart-header" id="yoy-title">Andamento Stagionale</div><div class="chart-wrapper"><canvas id="chartYoY"></canvas></div></div></div>
             <div class="charts-row-main"><div class="chart-card glass-card"><div class="chart-header">Performance Settimanale (Lunedì - Domenica)</div><div class="chart-wrapper" style="padding:0 15px"><canvas id="chartWeek"></canvas></div></div></div>
             <div class="charts-row-split">
                 <div class="chart-card glass-card" style="justify-content:center; text-align:center">
-                    <div class="chart-header" style="width:100%; text-align:left">Composizione Dettagliata (Anno Selezionato)</div>
+                    <div class="chart-header" style="width:100%; text-align:left">Composizione (Periodo Selezionato)</div>
                     <div class="chart-wrapper" style="max-height:220px; display:flex; justify-content:center"><canvas id="chartPie"></canvas></div>
                     <div style="margin-top:auto; width:100%; padding-top:15px; border-top:1px solid rgba(0,0,0,0.05)">
-                        <div style="font-size:0.8rem; color:#64748b; margin-bottom:5px; font-weight:700" id="pie-label-text">TOTALE ANNO SELEZIONATO</div>
+                        <div style="font-size:0.8rem; color:#64748b; margin-bottom:5px; font-weight:700" id="pie-label-text">TOTALE PERIODO</div>
                         <div id="deep-total" style="color:var(--primary); font-size:1.8rem; font-weight:900">0</div>
                     </div>
                 </div>
@@ -468,8 +506,6 @@ window.populateStatFilters = () => {
     const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
     const yearSel = document.getElementById('stat-year');
     const compSel = document.getElementById('stat-compare-year');
-    
-    // Save current selection if exists
     const currYear = yearSel.value;
     const currComp = compSel.value;
     
@@ -482,14 +518,35 @@ window.populateStatFilters = () => {
     });
     
     const todayYear = new Date().getFullYear();
-    yearSel.value = currYear && years.includes(parseInt(currYear)) ? currYear : (years.includes(todayYear) ? todayYear : years[0]);
+    if(!currYear) yearSel.value = years.includes(todayYear) ? todayYear : years[0];
+    else yearSel.value = currYear;
+
+    if(currComp && (currComp === 'avg' || currComp === 'none' || years.includes(parseInt(currComp)))) compSel.value = currComp;
+    else compSel.value = 'avg';
     
-    if(currComp && (currComp === 'avg' || currComp === 'none' || years.includes(parseInt(currComp)))) {
-        compSel.value = currComp;
+    renderStats();
+};
+
+window.toggleStatMode = () => {
+    const mode = document.getElementById('stat-mode').value;
+    const yCont = document.getElementById('stat-year-cont');
+    const cCont = document.getElementById('stat-custom-cont');
+    if(mode === 'year') {
+        yCont.classList.remove('hidden');
+        cCont.classList.add('hidden');
     } else {
-        compSel.value = 'avg'; // Default to Average
+        yCont.classList.add('hidden');
+        cCont.classList.remove('hidden');
+        cCont.style.display = 'flex';
+        // Set default dates if empty
+        if(!document.getElementById('stat-date-start').value) {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            document.getElementById('stat-date-start').value = firstDay;
+            document.getElementById('stat-date-end').value = lastDay;
+        }
     }
-    
     renderStats();
 };
 
@@ -517,29 +574,7 @@ function renderDynamicChart(id, labels, datasets, type) {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: { display: true },
-                tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                    padding: 12,
-                    cornerRadius: 8,
-                    titleFont: { size: 13 },
-                    bodyFont: { size: 13, weight: 'bold' },
-                    callbacks: {
-                        afterBody: function(context) {
-                            const punto = context.find(c => c.raw);
-                            if(!punto) return [];
-                            if (punto.raw.refDate) {
-                                const dRef = new Date(punto.raw.refDate);
-                                const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-                                return ['', '------------------', `Confrontato con:\n${dStr}`];
-                            }
-                            if (punto.raw.extraInfo) return ['', `📝 ${punto.raw.extraInfo}`];
-                            return [];
-                        }
-                    }
-                }
-            },
+            plugins: { legend: { display: true } },
             layout: { padding: 25 },
             scales: { y: { beginAtZero: type==='bar' } }
         }
@@ -627,17 +662,37 @@ window.renderOverviewCharts = () => {
 
 window.renderStats = () => {
     if(!dataIngressi.length) return;
-    const yearMain = parseInt(document.getElementById('stat-year').value);
+    const mode = document.getElementById('stat-mode').value;
     const yearCompVal = document.getElementById('stat-compare-year').value;
     const poolFilter = document.getElementById('stat-pool-filter').value;
     const dayTypeFilter = document.getElementById('day-type-filter').value;
     const chartType = document.getElementById('stat-chart-type').value;
 
-    const filterData = (data, year) => {
+    let startDate, endDate, yearMain;
+    if(mode === 'year') {
+        yearMain = parseInt(document.getElementById('stat-year').value);
+        startDate = new Date(yearMain, 0, 1);
+        endDate = new Date(yearMain, 11, 31);
+    } else {
+        const sVal = document.getElementById('stat-date-start').value;
+        const eVal = document.getElementById('stat-date-end').value;
+        if(!sVal || !eVal) return;
+        startDate = new Date(sVal);
+        endDate = new Date(eVal);
+        yearMain = startDate.getFullYear(); // Reference year
+    }
+
+    const filterBase = (data, forceYear = null) => {
         return data.filter(d => {
             if(d.excludeStats) return false;
-            // Year Filter is explicit for Main, implicit for Avg
-            if(year !== 'avg' && new Date(d.date).getFullYear() !== year) return false;
+            const dDate = new Date(d.date);
+            // If filtering for main view:
+            if(forceYear === 'main') {
+                if(dDate < startDate || dDate > endDate) return false;
+            } else if (forceYear !== null && forceYear !== 'avg') {
+                // If filtering for specific comp year
+                if(dDate.getFullYear() !== forceYear) return false;
+            }
             
             const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
             if(poolFilter === 'indoor' && isOutdoor) return false;
@@ -648,46 +703,107 @@ window.renderStats = () => {
         });
     };
 
-    const fMain = filterData(dataIngressi, yearMain);
+    const fMain = filterBase(dataIngressi, 'main');
     document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
-    
     if(!isChartReady()) return;
 
-    // --- CHART YOY (SEASONALITY) ---
-    const months = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
-    const mainMonthly = new Array(12).fill(0);
-    fMain.forEach(d => { mainMonthly[new Date(d.date).getMonth()] += d.totale; });
-    const yoyDatasets = [{ label: `Anno ${yearMain}`, data: mainMonthly, borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.4, fill: true }];
+    // --- CHART MAIN (Seasonality or Daily Trend) ---
+    let labels = [];
+    let mainData = [];
+    let compData = [];
+    let compLabel = '';
 
-    // COMPARISON LOGIC
-    if(yearCompVal === 'avg') {
-        const avgMonthly = new Array(12).fill(0);
-        // Get all unique years excluding current main year
-        const allYears = [...new Set(dataIngressi.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== yearMain);
-        
-        for(let m=0; m<12; m++) {
-            let sum = 0; let count = 0;
-            allYears.forEach(y => {
-                // Get totals for this specific Month/Year combo applying other filters
-                const subset = filterData(dataIngressi, y).filter(d => new Date(d.date).getMonth() === m);
-                const val = subset.reduce((a,b)=>a+b.totale, 0);
-                if(subset.length > 0) { // If there was data for this month
-                    sum += val; count++;
+    if(mode === 'year') {
+        // MONTHLY AGGREGATION
+        labels = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+        mainData = new Array(12).fill(0);
+        fMain.forEach(d => { mainData[new Date(d.date).getMonth()] += d.totale; });
+        document.getElementById('yoy-title').innerText = `Andamento Stagionale (${yearMain})`;
+
+        // Compare Logic Year Mode
+        if(yearCompVal === 'avg') {
+            compLabel = 'Media Storica';
+            const allYears = [...new Set(dataIngressi.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== yearMain);
+            for(let m=0; m<12; m++) {
+                let sum=0, count=0;
+                allYears.forEach(y => {
+                    const subset = filterBase(dataIngressi, y).filter(d => new Date(d.date).getMonth() === m);
+                    if(subset.length>0) { sum += subset.reduce((a,b)=>a+b.totale,0); count++; }
+                });
+                compData.push(count>0 ? sum/count : 0);
+            }
+        } else if(yearCompVal !== 'none') {
+            compLabel = `Anno ${yearCompVal}`;
+            const fComp = filterBase(dataIngressi, parseInt(yearCompVal));
+            const cMonth = new Array(12).fill(0);
+            fComp.forEach(d => { cMonth[new Date(d.date).getMonth()] += d.totale; });
+            compData = cMonth;
+        }
+
+    } else {
+        // CUSTOM RANGE (DAILY AGGREGATION for simplicity on X Axis)
+        // Generate Labels (Dates)
+        for(let dt=new Date(startDate); dt<=endDate; dt.setDate(dt.getDate()+1)) {
+            labels.push(dt.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}));
+        }
+        // Fill Main Data
+        labels.forEach((lbl, idx) => {
+            // Find data matching this specific date index in range
+            const targetDate = new Date(startDate); 
+            targetDate.setDate(startDate.getDate() + idx);
+            const targetStr = targetDate.toISOString().split('T')[0];
+            const val = fMain.filter(d => d.date === targetStr).reduce((a,b)=>a+b.totale, 0);
+            mainData.push(val);
+        });
+        document.getElementById('yoy-title').innerText = `Andamento Periodo (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`;
+
+        // Compare Logic Custom Mode
+        if(yearCompVal !== 'none') {
+            compLabel = yearCompVal === 'avg' ? 'Media Storica (stessi giorni)' : `Anno ${yearCompVal}`;
+            
+            labels.forEach((lbl, idx) => {
+                const targetDate = new Date(startDate); 
+                targetDate.setDate(startDate.getDate() + idx);
+                const day = targetDate.getDate();
+                const month = targetDate.getMonth();
+                
+                if(yearCompVal === 'avg') {
+                    // Avg of this Day/Month across all other years
+                    const allYears = [...new Set(dataIngressi.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== targetDate.getFullYear());
+                    let sum=0, count=0;
+                    allYears.forEach(y => {
+                        // Filter using general filters but for specific year Y
+                        const yearlyData = filterBase(dataIngressi, y);
+                        const dayVal = yearlyData.filter(d => {
+                            const x = new Date(d.date);
+                            return x.getDate() === day && x.getMonth() === month;
+                        }).reduce((a,b)=>a+b.totale,0);
+                        // Only count if the gym was open/record exists? Or count 0? Let's count 0 if date exists.
+                        // Ideally checking if date passed.
+                        sum += dayVal; count++;
+                    });
+                    compData.push(count>0 ? sum/count : 0);
+                } else {
+                    // Specific Year
+                    const y = parseInt(yearCompVal);
+                    const yearlyData = filterBase(dataIngressi, y);
+                    const val = yearlyData.filter(d => {
+                        const x = new Date(d.date);
+                        return x.getDate() === day && x.getMonth() === month;
+                    }).reduce((a,b)=>a+b.totale,0);
+                    compData.push(val);
                 }
             });
-            avgMonthly[m] = count > 0 ? (sum / count) : 0;
         }
-        yoyDatasets.push({ label: `Media Storica`, data: avgMonthly, borderColor: '#94a3b8', backgroundColor: '#cbd5e1', borderDash: [5,5], fill: false, tension:0.4 });
-    } else if (yearCompVal !== 'none') {
-        const yearComp = parseInt(yearCompVal);
-        const fComp = filterData(dataIngressi, yearComp);
-        const compMonthly = new Array(12).fill(0);
-        fComp.forEach(d => { compMonthly[new Date(d.date).getMonth()] += d.totale; });
-        yoyDatasets.push({ label: `Anno ${yearComp}`, data: compMonthly, borderColor: '#94a3b8', backgroundColor: '#cbd5e1', borderDash: [5,5], fill: false, tension:0.4 });
     }
-    renderDynamicChart('chartYoY', months, yoyDatasets, chartType);
 
-    // --- WEEKLY CHART ---
+    const mainDatasets = [{ label: mode==='year' ? `Anno ${yearMain}` : 'Periodo Selezionato', data: mainData, borderColor: '#2563eb', backgroundColor: '#2563eb', tension: 0.4, fill: true }];
+    if(yearCompVal !== 'none') {
+        mainDatasets.push({ label: compLabel, data: compData, borderColor: '#94a3b8', backgroundColor: '#cbd5e1', borderDash: [5,5], fill: false, tension:0.4 });
+    }
+    renderDynamicChart('chartYoY', labels, mainDatasets, chartType);
+
+    // --- WEEKLY CHART (Aggregation Logic) ---
     const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
     const getJsDay = (i) => (i + 1) % 7;
     
@@ -698,18 +814,20 @@ window.renderStats = () => {
         });
     };
 
-    const weekDatasets = [{ label: `Media ${yearMain}`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', fill: true }];
+    const weekDatasets = [{ label: `Media Selezionata`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', fill: true }];
     
-    if(yearCompVal === 'avg') {
-        const avgWeekly = weekLabels.map((_, i) => {
-            // All data excluding main year, matching day of week
-            let subset = filterData(dataIngressi, 'avg').filter(d => new Date(d.date).getFullYear() !== yearMain && new Date(d.date).getDay() === getJsDay(i));
-            return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
-        });
-        weekDatasets.push({ label: `Media Storica`, data: avgWeekly, borderColor: '#94a3b8', borderDash: [5,5], fill: false });
-    } else if (yearCompVal !== 'none') {
-        const fComp = filterData(dataIngressi, parseInt(yearCompVal));
-        weekDatasets.push({ label: `Media ${yearCompVal}`, data: calcWeekly(fComp), borderColor: '#94a3b8', borderDash: [5,5], fill: false });
+    // Add comparison weekly
+    if(yearCompVal !== 'none') {
+        let compSetForWeekly = [];
+        if(yearCompVal === 'avg') {
+             // Get ALL valid data excluding the main selection range
+             // For simplicity, avg of all history except current selection years
+             const allOther = dataIngressi.filter(d => !fMain.includes(d) && !d.excludeStats); // Rough approx
+             compSetForWeekly = allOther;
+        } else {
+             compSetForWeekly = filterBase(dataIngressi, parseInt(yearCompVal));
+        }
+        weekDatasets.push({ label: compLabel, data: calcWeekly(compSetForWeekly), borderColor: '#94a3b8', borderDash: [5,5], fill: false });
     }
     renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType);
 
@@ -725,7 +843,7 @@ window.renderStats = () => {
             let subset = fMain.filter(d => extractor(d).key === l);
             return subset.reduce((a,b)=>a+extractor(b).val,0);
         });
-        return { labels: sortedL, datasets: [{ label: `Totale ${yearMain}`, data: dp, backgroundColor: '#2563eb' }] };
+        return { labels: sortedL, datasets: [{ label: `Totale`, data: dp, backgroundColor: '#2563eb' }] };
     };
     const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}));
     renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
