@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Final Layout</title>
+<title>Facility Suite V94 - Final Layout & Colors</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -619,8 +619,8 @@ window.renderOverviewCharts = () => {
         l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
     renderDynamicChart('chartRecent30', dates, [
-        {label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', fill:true},
-        {label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}
+        {label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', backgroundColor:'#2563eb', fill:true},
+        {label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', backgroundColor:'#cbd5e1', borderDash:[5,5], fill:false}
     ], chartType);
     const m12=[], m12_prev=[], m_labels=[];
     for(let i=11; i>=0; i--) {
@@ -628,7 +628,7 @@ window.renderOverviewCharts = () => {
         m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear() && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
         m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1) && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
     }
-    renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', borderDash:[5,5], fill:false}], chartType);
+    renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', backgroundColor:'#2563eb', fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', backgroundColor:'#cbd5e1', borderDash:[5,5], fill:false}], chartType);
 }
 
 window.renderStats = () => {
