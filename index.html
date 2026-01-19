@@ -238,24 +238,24 @@ tr.day-end td { border-bottom: 2px solid rgba(0,0,0,0.1) !important; }
 <div id="sub-stats" class="hidden">
 <div class="filter-row" style="justify-content:space-between; align-items:flex-end; background:rgba(255,255,255,0.4); padding:15px; border-radius:16px; border:var(--glass-border)">
 <div style="display:flex; gap:10px; flex-wrap:wrap">
-    
-    <div class="inp-field" style="width:140px">
-        <label>Anno</label>
-        <select id="stat-year" onchange="renderStats()" style="font-weight:700"></select>
-    </div>
-    <div class="inp-field" style="width:140px">
-        <label>Confronta con</label>
-        <select id="stat-compare-year" onchange="renderStats()" style="font-weight:700; color:#64748b"></select>
-    </div>
-    
-    <div class="inp-field" style="width:160px">
-        <label>Vasca</label>
-        <select id="stat-pool-filter" onchange="renderStats()" style="font-weight:700">
-            <option value="all">🏊 Tutte</option>
-            <option value="indoor">🏢 Interna</option>
-            <option value="outdoor">☀️ Esterna</option>
-        </select>
-    </div>
+    
+    <div class="inp-field" style="width:140px">
+        <label>Anno</label>
+        <select id="stat-year" onchange="renderStats()" style="font-weight:700"></select>
+    </div>
+    <div class="inp-field" style="width:140px">
+        <label>Confronta con</label>
+        <select id="stat-compare-year" onchange="renderStats()" style="font-weight:700; color:#64748b"></select>
+    </div>
+    
+    <div class="inp-field" style="width:160px">
+        <label>Vasca</label>
+        <select id="stat-pool-filter" onchange="renderStats()" style="font-weight:700">
+            <option value="all">🏊 Tutte</option>
+            <option value="indoor">🏢 Interna</option>
+            <option value="outdoor">☀️ Esterna</option>
+        </select>
+    </div>
 </div>
 
 <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap">
@@ -369,18 +369,18 @@ tr.day-end td { border-bottom: 2px solid rgba(0,0,0,0.1) !important; }
 </div>
 
 <div id="u-elec-input" class="group-ctx" style="flex:2.5; gap:10px">
-    <div class="t-box">
-        <label>A1 (F1)</label>
-        <input type="number" id="u-a1" step="any" style="font-size:1.1rem; border:1px solid rgba(255,255,255,0.8); background:rgba(255,255,255,0.65); border-radius:8px; padding:5px">
-    </div>
-    <div class="t-box">
-        <label>A2 (F2)</label>
-        <input type="number" id="u-a2" step="any" style="font-size:1.1rem; border:1px solid rgba(255,255,255,0.8); background:rgba(255,255,255,0.65); border-radius:8px; padding:5px">
-    </div>
-    <div class="t-box">
-        <label>A3 (F3)</label>
-        <input type="number" id="u-a3" step="any" style="font-size:1.1rem; border:1px solid rgba(255,255,255,0.8); background:rgba(255,255,255,0.65); border-radius:8px; padding:5px">
-    </div>
+    <div class="t-box">
+        <label>A1 (F1)</label>
+        <input type="number" id="u-a1" step="any" style="font-size:1.1rem; border:1px solid rgba(255,255,255,0.8); background:rgba(255,255,255,0.65); border-radius:8px; padding:5px">
+    </div>
+    <div class="t-box">
+        <label>A2 (F2)</label>
+        <input type="number" id="u-a2" step="any" style="font-size:1.1rem; border:1px solid rgba(255,255,255,0.8); background:rgba(255,255,255,0.65); border-radius:8px; padding:5px">
+    </div>
+    <div class="t-box">
+        <label>A3 (F3)</label>
+        <input type="number" id="u-a3" step="any" style="font-size:1.1rem; border:1px solid rgba(255,255,255,0.8); background:rgba(255,255,255,0.65); border-radius:8px; padding:5px">
+    </div>
 </div>
 
 <div class="inp-field" style="flex:1.5"><label>Note</label><input type="text" id="u-note" placeholder="Opzionale..."></div>
@@ -490,37 +490,37 @@ onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc"), limit(40
 
 // NUOVA FUNZIONE: Popola i filtri anni dinamicamente
 window.populateStatFilters = () => {
-    if(!dataIngressi.length) return;
-    const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
-    
-    const yearSel = document.getElementById('stat-year');
-    const compSel = document.getElementById('stat-compare-year');
-    
-    // Salva selezioni correnti se esistono
-    const currYear = yearSel.value;
-    const currComp = compSel.value;
+    if(!dataIngressi.length) return;
+    const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
+    
+    const yearSel = document.getElementById('stat-year');
+    const compSel = document.getElementById('stat-compare-year');
+    
+    // Salva selezioni correnti se esistono
+    const currYear = yearSel.value;
+    const currComp = compSel.value;
 
-    yearSel.innerHTML = "";
-    compSel.innerHTML = '<option value="none">Nessuno</option>';
+    yearSel.innerHTML = "";
+    compSel.innerHTML = '<option value="none">Nessuno</option>';
 
-    years.forEach(y => {
-        yearSel.innerHTML += `<option value="${y}">${y}</option>`;
-        compSel.innerHTML += `<option value="${y}">${y}</option>`;
-    });
+    years.forEach(y => {
+        yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+        compSel.innerHTML += `<option value="${y}">${y}</option>`;
+    });
 
-    // Ripristina o imposta default (Anno corrente e Anno prec)
-    const todayYear = new Date().getFullYear();
-    yearSel.value = currYear && years.includes(parseInt(currYear)) ? currYear : (years.includes(todayYear) ? todayYear : years[0]);
-    
-    if(!currComp) {
-        // Default comparison: previous year
-        const prevYear = parseInt(yearSel.value) - 1;
-        if(years.includes(prevYear)) compSel.value = prevYear;
-    } else {
-        compSel.value = currComp;
-    }
-    
-    renderStats(); // Prima renderizzazione stats
+    // Ripristina o imposta default (Anno corrente e Anno prec)
+    const todayYear = new Date().getFullYear();
+    yearSel.value = currYear && years.includes(parseInt(currYear)) ? currYear : (years.includes(todayYear) ? todayYear : years[0]);
+    
+    if(!currComp) {
+        // Default comparison: previous year
+        const prevYear = parseInt(yearSel.value) - 1;
+        if(years.includes(prevYear)) compSel.value = prevYear;
+    } else {
+        compSel.value = currComp;
+    }
+    
+    renderStats(); // Prima renderizzazione stats
 };
 
 window.applyStatPreset = () => {
@@ -539,11 +539,11 @@ if(ch[id]) ch[id].destroy();
 const isBar = type === 'bar';
 const optimizedDatasets = datasets.map(d => ({
 ...d,
-backgroundColor: isBar ? d.borderColor : (d.fill ? d.borderColor + '20' : undefined),
+backgroundColor: isBar ? d.backgroundColor : (d.fill ? d.borderColor + '20' : undefined),
 borderWidth: isBar ? 0 : 2,
 pointRadius: isBar ? 0 : 3,
 // FIX: Force line type if mixed chart
-type: d.type || type, 
+type: d.type || type, 
 borderDash: isBar ? [] : (d.borderDash || []),
 tension: 0.4,
 parsing: { yAxisKey: 'y' }
@@ -591,62 +591,62 @@ function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])
 // OVERVIEW
 window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 function renderOverviewKPI() {
-    if(!dataIngressi || dataIngressi.length === 0) return;
-    const today = new Date();
-    const currentMonthStr = today.toISOString().slice(0, 7);
-    const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
-    const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
-    const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
+    if(!dataIngressi || dataIngressi.length === 0) return;
+    const today = new Date();
+    const currentMonthStr = today.toISOString().slice(0, 7);
+    const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
+    const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+    const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
 
-    // MODIFICA: Aggiunto filtro "&& x.totale > 0" per escludere giorni di chiusura dalla media
-    const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats && x.totale > 0);
-    const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
-    const daysCurrent = new Set(dCurrent.map(x=>x.date)).size;
+    // MODIFICA: Aggiunto filtro "&& x.totale > 0" per escludere giorni di chiusura dalla media
+    const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats && x.totale > 0);
+    const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
+    const daysCurrent = new Set(dCurrent.map(x=>x.date)).size;
 
-    document.getElementById('ov-avg').innerText = daysCurrent > 0 ? (totalCurrent/daysCurrent).toFixed(0) : 0;
-    
-    // Logica confronto mese precedente
-    const dPrev = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0);
-    const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
-    let momHtml = "";
-    if (dPrev.length > 0) {
-        let diff = 0;
-        if (totalPrev > 0) diff = ((totalCurrent - totalPrev) / totalPrev) * 100;
-        else if (totalCurrent > 0) diff = 100;
-        const color = diff >= 0 ? "#16a34a" : "#dc2626";
-        const sign = diff > 0 ? "+" : "";
-        momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
-    } else {
-        momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`;
-    }
-    document.getElementById('ov-mom').innerHTML = momHtml;
-    document.getElementById('ov-mom-label').innerText = `vs ${pm.toLocaleString('it-IT',{month:'long'})}`;
+    document.getElementById('ov-avg').innerText = daysCurrent > 0 ? (totalCurrent/daysCurrent).toFixed(0) : 0;
+    
+    // Logica confronto mese precedente
+    const dPrev = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0);
+    const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
+    let momHtml = "";
+    if (dPrev.length > 0) {
+        let diff = 0;
+        if (totalPrev > 0) diff = ((totalCurrent - totalPrev) / totalPrev) * 100;
+        else if (totalCurrent > 0) diff = 100;
+        const color = diff >= 0 ? "#16a34a" : "#dc2626";
+        const sign = diff > 0 ? "+" : "";
+        momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
+    } else {
+        momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`;
+    }
+    document.getElementById('ov-mom').innerHTML = momHtml;
+    document.getElementById('ov-mom-label').innerText = `vs ${pm.toLocaleString('it-IT',{month:'long'})}`;
 
-    // Logica confronto anno precedente
-    const dYoy = dataIngressi.filter(x => x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0);
-    const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
-    let yoyHtml = "";
-    if (dYoy.length > 0) {
-        let diff = 0;
-        if (totalYoy > 0) diff = ((totalCurrent - totalYoy) / totalYoy) * 100;
-        else if (totalCurrent > 0) diff = 100;
-        const color = diff >= 0 ? "#16a34a" : "#dc2626";
-        const sign = diff > 0 ? "+" : "";
-        yoyHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
-    } else {
-        yoyHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`;
-    }
-    document.getElementById('ov-yoy').innerHTML = yoyHtml;
-    document.getElementById('ov-yoy-label').innerText = `vs ${ym.getFullYear()}`;
+    // Logica confronto anno precedente
+    const dYoy = dataIngressi.filter(x => x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0);
+    const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
+    let yoyHtml = "";
+    if (dYoy.length > 0) {
+        let diff = 0;
+        if (totalYoy > 0) diff = ((totalCurrent - totalYoy) / totalYoy) * 100;
+        else if (totalCurrent > 0) diff = 100;
+        const color = diff >= 0 ? "#16a34a" : "#dc2626";
+        const sign = diff > 0 ? "+" : "";
+        yoyHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
+    } else {
+        yoyHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`;
+    }
+    document.getElementById('ov-yoy').innerHTML = yoyHtml;
+    document.getElementById('ov-yoy-label').innerText = `vs ${ym.getFullYear()}`;
 
-    // Stima proiezione (basata sulla media dei giorni APERTI, proiettata su tutto il mese)
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    if(daysCurrent > 0) { 
-        document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
-        document.getElementById('ov-forecast-sub').innerText = "proiezione (su giorni aperti)";
-    }
-    else { document.getElementById('ov-forecast').innerText = "-"; }
+    // Stima proiezione (basata sulla media dei giorni APERTI, proiettata su tutto il mese)
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    if(daysCurrent > 0) { 
+        document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
+        document.getElementById('ov-forecast-sub').innerText = "proiezione (su giorni aperti)";
+    }
+    else { document.getElementById('ov-forecast').innerText = "-"; }
 }
 
 window.renderOverviewCharts = () => {
@@ -678,163 +678,163 @@ renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, b
 
 // STATS - YEAR COMPARISON LOGIC
 window.renderStats = () => {
-    if(!dataIngressi.length) return;
-    
-    // Get Filters
-    const yearMain = parseInt(document.getElementById('stat-year').value);
-    const yearComp = document.getElementById('stat-compare-year').value;
-    const poolFilter = document.getElementById('stat-pool-filter').value;
-    const dayTypeFilter = document.getElementById('day-type-filter').value;
-    const chartType = document.getElementById('stat-chart-type').value;
+    if(!dataIngressi.length) return;
+    
+    // Get Filters
+    const yearMain = parseInt(document.getElementById('stat-year').value);
+    const yearComp = document.getElementById('stat-compare-year').value;
+    const poolFilter = document.getElementById('stat-pool-filter').value;
+    const dayTypeFilter = document.getElementById('day-type-filter').value;
+    const chartType = document.getElementById('stat-chart-type').value;
 
-    // Helper Filter Function
-    const filterData = (data, year) => {
-        return data.filter(d => {
-            if(d.excludeStats) return false;
-            
-            // Year Filter
-            if(new Date(d.date).getFullYear() !== year) return false;
+    // Helper Filter Function
+    const filterData = (data, year) => {
+        return data.filter(d => {
+            if(d.excludeStats) return false;
+            
+            // Year Filter
+            if(new Date(d.date).getFullYear() !== year) return false;
 
-            // Pool Filter
-            // Logica: Estiva = Outdoor. Tutto il resto = Indoor.
-            const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
-            if(poolFilter === 'indoor' && isOutdoor) return false;
-            if(poolFilter === 'outdoor' && !isOutdoor) return false;
+            // Pool Filter
+            // Logica: Estiva = Outdoor. Tutto il resto = Indoor.
+            const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
+            if(poolFilter === 'indoor' && isOutdoor) return false;
+            if(poolFilter === 'outdoor' && !isOutdoor) return false;
 
-            // Day Type Filter
-            if(dayTypeFilter === 'standard' && d.type !== 'standard') return false;
-            if(dayTypeFilter === 'special' && d.type === 'standard') return false;
+            // Day Type Filter
+            if(dayTypeFilter === 'standard' && d.type !== 'standard') return false;
+            if(dayTypeFilter === 'special' && d.type === 'standard') return false;
 
-            return true;
-        });
-    };
+            return true;
+        });
+    };
 
-    // Prepare Datasets
-    const fMain = filterData(dataIngressi, yearMain);
-    document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
+    // Prepare Datasets
+    const fMain = filterData(dataIngressi, yearMain);
+    document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
 
-    let fComp = [];
-    let showComp = false;
-    if(yearComp !== 'none') {
-        fComp = filterData(dataIngressi, parseInt(yearComp));
-        showComp = true;
-    }
+    let fComp = [];
+    let showComp = false;
+    if(yearComp !== 'none') {
+        fComp = filterData(dataIngressi, parseInt(yearComp));
+        showComp = true;
+    }
 
-    if(!isChartReady()) return;
+    if(!isChartReady()) return;
 
-    // --- CHART YOY (SEASONALITY) ---
-    const months = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
-    const mainMonthly = new Array(12).fill(0);
-    fMain.forEach(d => { mainMonthly[new Date(d.date).getMonth()] += d.totale; });
-    
-    const yoyDatasets = [{
-        label: `Anno ${yearMain}`,
-        data: mainMonthly,
-        borderColor: '#2563eb', backgroundColor: '#2563eb',
-        tension: 0.4, fill: true
-    }];
+    // --- CHART YOY (SEASONALITY) ---
+    const months = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+    const mainMonthly = new Array(12).fill(0);
+    fMain.forEach(d => { mainMonthly[new Date(d.date).getMonth()] += d.totale; });
+    
+    const yoyDatasets = [{
+        label: `Anno ${yearMain}`,
+        data: mainMonthly,
+        borderColor: '#2563eb', backgroundColor: '#2563eb',
+        tension: 0.4, fill: true
+    }];
 
-    if(showComp) {
-        const compMonthly = new Array(12).fill(0);
-        fComp.forEach(d => { compMonthly[new Date(d.date).getMonth()] += d.totale; });
-        yoyDatasets.push({
-            label: `Anno ${yearComp}`,
-            data: compMonthly,
-            borderColor: '#94a3b8', borderDash: [5,5], fill: false, tension:0.4
-        });
-    }
-    renderDynamicChart('chartYoY', months, yoyDatasets, chartType);
+    if(showComp) {
+        const compMonthly = new Array(12).fill(0);
+        fComp.forEach(d => { compMonthly[new Date(d.date).getMonth()] += d.totale; });
+        yoyDatasets.push({
+            label: `Anno ${yearComp}`,
+            data: compMonthly,
+            borderColor: '#94a3b8', borderDash: [5,5], fill: false, tension:0.4
+        });
+    }
+    renderDynamicChart('chartYoY', months, yoyDatasets, chartType);
 
-    // --- WEEKLY CHART ---
-    const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
-    const getJsDay = (i) => (i + 1) % 7;
-    
-    const calcWeekly = (dataset) => {
-        return weekLabels.map((_, i) => {
-            let subset = dataset.filter(d => new Date(d.date).getDay() === getJsDay(i));
-            return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
-        });
-    };
+    // --- WEEKLY CHART ---
+    const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+    const getJsDay = (i) => (i + 1) % 7;
+    
+    const calcWeekly = (dataset) => {
+        return weekLabels.map((_, i) => {
+            let subset = dataset.filter(d => new Date(d.date).getDay() === getJsDay(i));
+            return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
+        });
+    };
 
-    const weekDatasets = [{
-        label: `Media ${yearMain}`,
-        data: calcWeekly(fMain),
-        borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', fill: true
-    }];
+    const weekDatasets = [{
+        label: `Media ${yearMain}`,
+        data: calcWeekly(fMain),
+        borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', fill: true
+    }];
 
-    if(showComp) {
-        weekDatasets.push({
-            label: `Media ${yearComp}`,
-            data: calcWeekly(fComp),
-            borderColor: '#94a3b8', borderDash: [5,5], fill: false
-        });
-    }
-    renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType);
+    if(showComp) {
+        weekDatasets.push({
+            label: `Media ${yearComp}`,
+            data: calcWeekly(fComp),
+            borderColor: '#94a3b8', borderDash: [5,5], fill: false
+        });
+    }
+    renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType);
 
-    // --- PIE CHART (Solo Anno Principale) ---
-    let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
-    fMain.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
-    renderPie('chartPie', Object.keys(t), Object.values(t));
+    // --- PIE CHART (Solo Anno Principale) ---
+    let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
+    fMain.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
+    renderPie('chartPie', Object.keys(t), Object.values(t));
 
-    // --- MULTI BAR CHARTS (Solo Anno Principale) ---
-    const buildMultiSeries = (extractor) => {
-        let allLabels = new Set(); fMain.forEach(d => allLabels.add(extractor(d).key));
-        let sortedL = Array.from(allLabels).sort();
-        let dp = sortedL.map(l => {
-            let subset = fMain.filter(d => extractor(d).key === l);
-            return subset.reduce((a,b)=>a+extractor(b).val,0);
-        });
-        return { labels: sortedL, datasets: [{ label: `Totale ${yearMain}`, data: dp, backgroundColor: '#2563eb' }] };
-    };
+    // --- MULTI BAR CHARTS (Solo Anno Principale) ---
+    const buildMultiSeries = (extractor) => {
+        let allLabels = new Set(); fMain.forEach(d => allLabels.add(extractor(d).key));
+        let sortedL = Array.from(allLabels).sort();
+        let dp = sortedL.map(l => {
+            let subset = fMain.filter(d => extractor(d).key === l);
+            return subset.reduce((a,b)=>a+extractor(b).val,0);
+        });
+        return { labels: sortedL, datasets: [{ label: `Totale ${yearMain}`, data: dp, backgroundColor: '#2563eb' }] };
+    };
 
-    const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}));
-    renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
-    const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}));
-    renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
+    const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}));
+    renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
+    const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}));
+    renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
 };
 
-function renderVasca() { 
-    const t=document.getElementById('tbody-vasca'); 
-    t.innerHTML=""; 
-    const g=new Map(); 
-    dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); 
-    
-    [...g.keys()].forEach(k=>{ 
-        const e=g.get(k); 
-        e.sort((a,b)=>b.time.localeCompare(a.time)); 
-        const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; 
-        
-        e.forEach((d,i)=>{ 
-            const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; 
-            
-            // LOGICA ALLARMI
-            const phVal = parseFloat(d.ph);
-            const phAlert = (phVal < 6.5 || phVal > 7.5);
-            const phStyle = phAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : 'font-weight:600';
-            const phIcon = phAlert ? ' ⚠️' : '';
+function renderVasca() { 
+    const t=document.getElementById('tbody-vasca'); 
+    t.innerHTML=""; 
+    const g=new Map(); 
+    dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); 
+    
+    [...g.keys()].forEach(k=>{ 
+        const e=g.get(k); 
+        e.sort((a,b)=>b.time.localeCompare(a.time)); 
+        const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; 
+        
+        e.forEach((d,i)=>{ 
+            const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; 
+            
+            // LOGICA ALLARMI
+            const phVal = parseFloat(d.ph);
+            const phAlert = (phVal < 6.5 || phVal > 7.5);
+            const phStyle = phAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : 'font-weight:600';
+            const phIcon = phAlert ? ' ⚠️' : '';
 
-            const clVal = parseFloat(d.cll);
-            const clAlert = (clVal < 0.8 || clVal > 1.7);
-            const clStyle = clAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : '';
-            const clIcon = clAlert ? ' ⚠️' : '';
+            const clVal = parseFloat(d.cll);
+            const clAlert = (clVal < 0.8 || clVal > 1.7);
+            const clStyle = clAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : '';
+            const clIcon = clAlert ? ' ⚠️' : '';
 
-            t.innerHTML+=`<tr style="${b}">
-                ${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} 
-                <td style="font-weight:700;color:#2563eb">${d.time}</td>
-                <td>${d.bag}</td>
-                <td>${d.ta}°</td>
-                <td>${d.th}°</td>
-                <td style="${phStyle}">${d.ph}${phIcon}</td>
-                <td style="${clStyle}">${d.cll}${clIcon}</td>
-                <td>${d.clc}</td>
-                <td style="font-weight:700">${d.clt}</td> 
-                <td style="text-align:right">
-                    <button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button>
-                    <button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button>
-                </td>
-            </tr>`; 
-        }); 
-    }); 
+            t.innerHTML+=`<tr style="${b}">
+                ${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} 
+                <td style="font-weight:700;color:#2563eb">${d.time}</td>
+                <td>${d.bag}</td>
+                <td>${d.ta}°</td>
+                <td>${d.th}°</td>
+                <td style="${phStyle}">${d.ph}${phIcon}</td>
+                <td style="${clStyle}">${d.cll}${clIcon}</td>
+                <td>${d.clc}</td>
+                <td style="font-weight:700">${d.clt}</td> 
+                <td style="text-align:right">
+                    <button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button>
+                    <button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button>
+                </td>
+            </tr>`; 
+        }); 
+    }); 
 }
 
 window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
@@ -930,7 +930,7 @@ window.renderUtenze = () => {
     // 1. Setup Filters
     const viewMode = document.getElementById('u-view-mode').value;
     const isDelta = viewMode === 'delta';
-    const chartType = isDelta ? 'bar' : 'line';
+    const chartType = isDelta ? 'bar' : 'line'; // Il tipo base del grafico
     const rangeDays = parseInt(document.getElementById('u-range').value);
     const limitDate = new Date();
     limitDate.setDate(limitDate.getDate() - rangeDays);
@@ -947,7 +947,7 @@ window.renderUtenze = () => {
         if(d.note) grouped[d.date].notes.push(d.note);
     });
 
-    // 3. Calculate Deltas Globali (per tutto lo storico scaricato)
+    // 3. Calculate Deltas Globali
     const allDatesAsc = Object.keys(grouped).sort();
     let prevVals = { elec: null, water: null, gas: null };
     const deltas = {};
@@ -956,38 +956,26 @@ window.renderUtenze = () => {
         deltas[date] = { elec: null, water: null, gas: null };
         const g = grouped[date];
         
-        // Calcolo Delta Elettricità
-        if(g.elec) {
-            if(prevVals.elec !== null) {
-                let d = g.elec.val - prevVals.elec; 
-                if(d < 0) d = 0; 
-                deltas[date].elec = d;
-            } else { deltas[date].elec = 0; }
-            prevVals.elec = g.elec.val;
-        }
-        // Calcolo Delta Acqua
-        if(g.water) {
-            if(prevVals.water !== null) {
-                let d = g.water.val - prevVals.water; if(d < 0) d = 0;
-                deltas[date].water = d;
-            } else { deltas[date].water = 0; }
-            prevVals.water = g.water.val;
-        }
-        // Calcolo Delta Gas
-        if(g.gas) {
-            if(prevVals.gas !== null) {
-                let d = g.gas.val - prevVals.gas; if(d < 0) d = 0;
-                deltas[date].gas = d;
-            } else { deltas[date].gas = 0; }
-            prevVals.gas = g.gas.val;
-        }
+        // Helper calcolo delta
+        const calcDelta = (key, valObj) => {
+            if(valObj) {
+                if(prevVals[key] !== null) {
+                    let d = valObj.val - prevVals[key]; 
+                    if(d < 0) d = 0; 
+                    deltas[date][key] = d;
+                } else { deltas[date][key] = 0; }
+                prevVals[key] = valObj.val;
+            }
+        };
+
+        calcDelta('elec', g.elec);
+        calcDelta('water', g.water);
+        calcDelta('gas', g.gas);
     });
 
     // 4. Prepare Charts Data
     function prepareChartData(type) {
-        // Filtra solo le date richieste dal range
         const filteredDates = allDatesAsc.filter(d => d >= limitStr);
-        
         const labels = [];
         const dataTotal = [];
         const dataDelta = [];
@@ -997,7 +985,6 @@ window.renderUtenze = () => {
 
         filteredDates.forEach((dateStr) => {
             const curr = grouped[dateStr];
-            // Format data label
             const dateObj = new Date(dateStr);
             const label = dateObj.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
             labels.push(label);
@@ -1010,28 +997,23 @@ window.renderUtenze = () => {
             if(typeKey === 'gas' && curr.gas) { val = curr.gas.val; extra = curr.gas.temp ? `Temp: ${curr.gas.temp}°C` : ''; }
 
             dataTotal.push({ x: label, y: val, extraInfo: extra, rawDate: dateStr });
-
             const dVal = deltas[dateStr] ? deltas[dateStr][typeKey] : 0;
             dataDelta.push({ x: label, y: dVal, extraInfo: extra, rawDate: dateStr });
 
-            // Valori Storici (Anno precedente)
+            // Valori Storici
             if(showHistory) {
                 const dObj = new Date(dateStr);
                 dObj.setFullYear(dObj.getFullYear() - 1);
-                // Gestione anno bisestile grossolana ma efficace per i grafici
                 const prevYearStr = dObj.toISOString().split('T')[0];
 
-                // Historical Total
                 let hVal = null;
                 if(grouped[prevYearStr]) {
                      if(typeKey==='elec' && grouped[prevYearStr].elec) hVal = grouped[prevYearStr].elec.val;
                      if(typeKey==='water' && grouped[prevYearStr].water) hVal = grouped[prevYearStr].water.val;
                      if(typeKey==='gas' && grouped[prevYearStr].gas) hVal = grouped[prevYearStr].gas.val;
                 }
-                
                 dataHistoryTotal.push(hVal !== null ? { x: label, y: hVal, refDate: prevYearStr } : null);
 
-                // Historical Delta
                 let hDelta = null;
                 if(deltas[prevYearStr] && deltas[prevYearStr][typeKey] !== null) {
                     hDelta = deltas[prevYearStr][typeKey];
@@ -1046,38 +1028,48 @@ window.renderUtenze = () => {
     const waterData = prepareChartData('💧 Acqua');
     const gasData = prepareChartData('🔥 Gas Metano');
 
+    // --- MODIFICA QUI SOTTO PER LE COLONNE AFFIANCATE ---
     function makeDatasets(mainData, historyData, colorMain, colorHist) {
         const ds = [{
             label: isDelta ? 'Consumo' : 'Lettura',
             data: isDelta ? mainData.dataDelta : mainData.dataTotal,
-            borderColor: colorMain, backgroundColor: colorMain,
-            fill: true, tension: 0.3, order: 2
+            borderColor: colorMain, 
+            backgroundColor: colorMain,
+            fill: true, tension: 0.3, order: 1, // Order basso = in primo piano
+            type: isDelta ? 'bar' : 'line' // Se delta, usa barre
         }];
+        
         if(showHistory) {
+            // Se siamo in visualizzazione DELTA, vogliamo barre anche per lo storico
+            // Se siamo in visualizzazione TOTALE (lettura), manteniamo la linea per pulizia
+            const histType = isDelta ? 'bar' : 'line';
+            
             ds.push({
-                label: isDelta ? 'Consumo Anno Prec.' : 'Lettura Anno Prec.',
+                label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.',
                 data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal,
-                borderColor: colorHist, backgroundColor: colorHist,
-                borderDash: [4,4], borderWidth: 3, pointRadius: 2,
-                type: 'line', // Forziamo sempre linea per lo storico
-                fill: false, tension: 0.3, order: 1
+                borderColor: colorHist, 
+                backgroundColor: isDelta ? colorHist : 'transparent', // Se barre, usa colore pieno
+                borderDash: isDelta ? [] : [4,4], // Niente tratteggio se sono barre
+                borderWidth: isDelta ? 0 : 2,
+                pointRadius: isDelta ? 0 : 2,
+                type: histType, 
+                order: 2, // Order alto = dietro o accanto
+                fill: false, tension: 0.3
             });
         }
         return ds;
     }
 
-    renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#854d0e'), chartType);
-    renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#1e3a8a'), chartType);
-    renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#991b1b'), chartType);
+    renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#fde047'), chartType);
+    renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd'), chartType);
+    renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5'), chartType);
 
-    // 6. Render Table (Invariato, ma rigenera la tabella con i dati corretti)
+    // 6. Render Table
     const t = document.getElementById('tbody-utenze');
     t.innerHTML = "";
-    
-    // Sort descending for table view
     const datesDesc = [...allDatesAsc].reverse();
-
     const rowsBuffer = [];
+    
     datesDesc.forEach(date => {
         const g = grouped[date];
         const d = deltas[date];
@@ -1086,13 +1078,11 @@ window.renderUtenze = () => {
             if(!obj) return '<span style="color:#ccc">-</span>';
             let deltaHtml = '';
             if(deltaVal !== null) {
-                // Evidenzia delta anomali > 1000 come possibile errore
                 const warnStyle = (deltaVal > 1000 && suffix!=='kWh') ? 'color:#ef4444; text-decoration:underline' : `color:${color}`;
                 deltaHtml = `<div style="font-size:0.75rem; ${warnStyle}; opacity:0.8; font-weight:700">Consumo: +${deltaVal.toLocaleString('it-IT', {maximumFractionDigits: 1})} ${suffix}</div>`;
             } else {
                 deltaHtml = `<div style="font-size:0.75rem; color:#94a3b8">Primo dato</div>`;
             }
-
             return `<div style="display:flex; flex-direction:column; gap:2px">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:5px">
                     <span style="font-weight:800; font-size:1rem; color:${color}">${obj.val.toLocaleString('it-IT')}</span>
