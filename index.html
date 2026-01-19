@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V95 - Hybrid Compare</title>
+<title>Facility Suite V96 - Side by Side</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -1120,19 +1120,43 @@ window.renderUtenze = () => {
     const gasData = prepareChartData('🔥 Gas Metano');
 
     function makeDatasets(mainData, historyData, colorMain, colorHist) {
+        // Se siamo in modalità DELTA (Consumo), vogliamo barre affiancate
+        if(isDelta) {
+            return [
+                {
+                    label: 'Consumo Corrente',
+                    data: mainData.dataDelta,
+                    backgroundColor: colorMain,
+                    borderColor: colorMain,
+                    borderWidth: 1,
+                    order: 1
+                },
+                {
+                    label: 'Consumo Anno Prec.',
+                    data: historyData.dataHistoryDelta,
+                    backgroundColor: colorHist, // Colore più scuro/diverso
+                    borderColor: colorHist,
+                    borderWidth: 1,
+                    // type: 'bar' è implicito se il grafico è bar
+                    order: 2
+                }
+            ];
+        }
+        
+        // Altrimenti (Lettura Totale), usiamo Linee come prima
         const ds = [{
-            label: isDelta ? 'Consumo' : 'Lettura',
-            data: isDelta ? mainData.dataDelta : mainData.dataTotal,
+            label: 'Lettura',
+            data: mainData.dataTotal,
             borderColor: colorMain, backgroundColor: colorMain,
             fill: true, tension: 0.3, order: 2
         }];
         if(showHistory) {
             ds.push({
-                label: isDelta ? 'Consumo Anno Prec.' : 'Lettura Anno Prec.',
-                data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal,
-                borderColor: colorHist, backgroundColor: colorHist,
+                label: 'Lettura Anno Prec.',
+                data: historyData.dataHistoryTotal,
+                borderColor: colorHist, backgroundColor: 'transparent',
                 borderDash: [4,4], borderWidth: 3, pointRadius: 2,
-                type: 'line', // Forziamo sempre linea per lo storico
+                type: 'line', 
                 fill: false, tension: 0.3, order: 1
             });
         }
