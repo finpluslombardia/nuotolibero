@@ -47,7 +47,9 @@
     .control-bar.editing { background: rgba(254, 243, 199, 0.9); border-bottom: 2px solid #f59e0b; }
     .cb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
     .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
-    .cb-row { display: flex; gap: 20px; align-items: stretch; }
+    
+    /* CORREZIONE ALLINEAMENTO ROW */
+    .cb-row { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
     
     /* INPUT FIELDS STANDARD */
     .inp-field { display: flex; flex-direction: column; flex: 1; min-width: 0; }
@@ -58,12 +60,12 @@
     .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; border: 1px solid rgba(0,0,0,0.1) !important; }
     
     /* GROUPS SPECIFICI */
-    .group-ctx { display: flex; gap: 15px; flex: 1; }
+    .group-ctx { display: flex; gap: 15px; flex: 1; align-items: flex-end; }
     .group-tickets { display: flex; gap: 15px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
     .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
     
     /* TICKET BOX (Solo per Ingressi/Numeri grandi trasparenti) */
-    .group-actions { display: flex; align-items: stretch; gap: 10px; }
+    .group-actions { display: flex; align-items: flex-end; gap: 10px; }
     .t-box { text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .t-box label { font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; text-align: center; width: 100%; opacity: 0.8; }
     .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.3rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; text-shadow: 0 1px 1px rgba(255,255,255,0.8); }
@@ -191,7 +193,7 @@
                 <div class="t-box"><label>ABB. 11 INGR.</label><input type="number" id="q-abb-rid" value="0" onfocus="this.select()"></div>
                 <div class="t-box"><label>GRATUITO</label><input type="number" id="q-gratuito" value="0" onfocus="this.select()"></div>
             </div>
-            <div class="group-actions"><button id="btn-save-ingressi" class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveIngressi()">SALVA</button></div>
+            <div class="group-actions"><button id="btn-save-ingressi" class="btn btn-primary" style="height:44px; min-width:120px" onclick="saveIngressi()">SALVA</button></div>
         </div>
     </div>
 
@@ -272,7 +274,7 @@
         <div class="cb-row">
             <div class="group-ctx" style="flex:0.6"><div class="inp-field"><label>Data</label><input type="date" id="v-date"></div><div class="inp-field"><label>Orario</label><input type="time" id="v-time"></div></div>
             <div class="group-chem"><div class="t-box"><label>BAGNANTI</label><input type="number" id="v-bag" value="0"></div><div class="t-box"><label>T. ARIA</label><input type="number" step="0.1" id="v-ta" value="0"></div><div class="t-box"><label>T. H2O</label><input type="number" step="0.1" id="v-th" value="0"></div><div class="t-box"><label>pH</label><input type="number" step="0.1" id="v-ph" value="0"></div><div class="t-box"><label>CL LIB.</label><input type="number" step="0.1" id="v-cll" value="0" oninput="calcClTot()"></div><div class="t-box"><label>CL COMB.</label><input type="number" step="0.1" id="v-clc" value="0" oninput="calcClTot()"></div><div class="t-box"><label>CL TOT.</label><input type="number" step="0.1" id="v-clt" value="0"></div></div>
-            <div class="group-actions"><button id="btn-save-vasca" class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveVasca()">SALVA</button></div>
+            <div class="group-actions"><button id="btn-save-vasca" class="btn btn-primary" style="height:44px; min-width:120px" onclick="saveVasca()">SALVA</button></div>
         </div>
     </div>
     <div class="scroll-area">
@@ -290,7 +292,7 @@
                 <div class="inp-field" style="flex:0.8"><label>Stato</label><select id="d-status"><option value="OK">✅ Funzionante</option><option value="GUASTO">❌ Guasto / Anomalie</option></select></div>
                 <div class="inp-field" style="flex:1"><label>Assistente Bagnanti</label><input type="text" id="d-ass" placeholder="Nome Cognome"></div><div class="inp-field" style="flex:1"><label>Operatore Segreteria</label><input type="text" id="d-op" placeholder="Nome Cognome"></div>
             </div>
-            <div class="group-actions"><button class="btn btn-primary" style="height:100%; min-width:120px" onclick="saveDae()">REGISTRA</button></div>
+            <div class="group-actions"><button class="btn btn-primary" style="height:44px; min-width:120px" onclick="saveDae()">REGISTRA</button></div>
         </div>
     </div>
     <div class="scroll-area">
@@ -307,12 +309,13 @@
         </div>
         
         <div class="cb-row">
+            
             <div class="inp-field" style="width:140px; flex:none;">
                 <label>Data</label>
                 <input type="date" id="u-date">
             </div>
 
-            <div class="inp-field" style="flex:1.2;">
+            <div class="inp-field" style="flex:1;">
                 <label>Tipo Utenza</label>
                 <select id="u-type" onchange="toggleUtenzeMode()">
                     <option value="⚡ Elettricità">⚡ Elettricità</option>
@@ -331,7 +334,7 @@
                 </select>
             </div>
 
-            <div id="u-elec-input" style="display:flex; gap:10px; flex:2.5;">
+            <div id="u-elec-input" style="display:contents;">
                 <div class="inp-field" style="flex:1">
                     <label>A1 (F1)</label>
                     <input type="number" id="u-a1" step="any">
@@ -346,7 +349,7 @@
                 </div>
             </div>
 
-            <div id="u-single-input" class="inp-field hidden" style="flex:1.5;">
+            <div id="u-single-input" class="inp-field hidden" style="flex:1;">
                 <label>Lettura Contatore</label>
                 <input type="number" id="u-val" placeholder="Es. 12500" step="any">
             </div>
@@ -356,14 +359,15 @@
                 <input type="number" id="u-temp" placeholder="°C" step="0.1">
             </div>
 
-            <div class="inp-field" style="flex:2;">
+            <div class="inp-field" style="flex:1.5;">
                 <label>Note</label>
                 <input type="text" id="u-note" placeholder="Opzionale...">
             </div>
 
-            <div class="group-actions" style="width:120px; flex:none;">
-                <button id="btn-save-utenze" class="btn btn-primary" style="height:100%; width:100%" onclick="saveUtenze()">SALVA</button>
+            <div style="width:120px; flex:none;">
+                <button id="btn-save-utenze" class="btn btn-primary" style="height:44px; width:100%" onclick="saveUtenze()">SALVA</button>
             </div>
+
         </div>
     </div>
 
@@ -716,8 +720,7 @@ window.toggleUtenzeMode = () => {
     const isSingle = type !== '⚡ Elettricità';
     document.getElementById('u-single-input').classList.toggle('hidden', !isSingle);
     const isElec = type === '⚡ Elettricità';
-    document.getElementById('u-elec-input').classList.toggle('hidden', !isElec);
-    document.getElementById('u-elec-input').style.display = isElec ? 'flex' : 'none';
+    document.getElementById('u-elec-input').style.display = isElec ? 'contents' : 'none'; // FIX: Use contents to align with parent grid/flex
     document.getElementById('u-extra-elec-meteo').classList.toggle('hidden', !isElec);
     const isGas = type === '🔥 Gas Metano';
     document.getElementById('u-extra-gas').classList.toggle('hidden', !isGas);
