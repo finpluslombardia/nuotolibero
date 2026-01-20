@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Performance Fix</title>
+<title>Facility Suite V94 - Monthly KPIs</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -438,6 +438,24 @@
             </div>
         </div>
 
+        <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 25px;">
+            <div class="kpi-card glass-card" style="border-left: 4px solid #eab308">
+                <div class="kpi-head" id="u-kpi-elec-title">Mese Corrente</div>
+                <div class="kpi-val" id="u-kpi-elec-val">0 kWh</div>
+                <div class="kpi-sub" id="u-kpi-elec-sub">- vs Anno Prec.</div>
+            </div>
+            <div class="kpi-card glass-card" style="border-left: 4px solid #3b82f6">
+                <div class="kpi-head" id="u-kpi-water-title">Mese Corrente</div>
+                <div class="kpi-val" id="u-kpi-water-val">0 m³</div>
+                <div class="kpi-sub" id="u-kpi-water-sub">- vs Anno Prec.</div>
+            </div>
+            <div class="kpi-card glass-card" style="border-left: 4px solid #ef4444">
+                <div class="kpi-head" id="u-kpi-gas-title">Mese Corrente</div>
+                <div class="kpi-val" id="u-kpi-gas-val">0 m³</div>
+                <div class="kpi-sub" id="u-kpi-gas-sub">- vs Anno Prec.</div>
+            </div>
+        </div>
+
         <h2 class="page-title">📝 Storico Dettagliato</h2>
         <div class="table-wrap glass-card">
             <div style="overflow-x:auto;">
@@ -501,17 +519,28 @@ window.populateStatFilters = () => {
     const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
     const yearSel = document.getElementById('stat-year');
     const compSel = document.getElementById('stat-compare-year');
+    
+    // Save current selection if exists
     const currYear = yearSel.value;
     const currComp = compSel.value;
+    
     yearSel.innerHTML = "";
     compSel.innerHTML = '<option value="avg" selected>📊 Media Storica</option><option value="none">Nessuno</option>';
+    
     years.forEach(y => {
         yearSel.innerHTML += `<option value="${y}">${y}</option>`;
         compSel.innerHTML += `<option value="${y}">${y}</option>`;
     });
+    
     const todayYear = new Date().getFullYear();
     yearSel.value = currYear && years.includes(parseInt(currYear)) ? currYear : (years.includes(todayYear) ? todayYear : years[0]);
-    if(currComp && (currComp === 'avg' || currComp === 'none' || years.includes(parseInt(currComp)))) { compSel.value = currComp; } else { compSel.value = 'avg'; }
+    
+    if(currComp && (currComp === 'avg' || currComp === 'none' || years.includes(parseInt(currComp)))) {
+        compSel.value = currComp;
+    } else {
+        compSel.value = 'avg'; // Default to Average
+    }
+    
     renderStats();
 };
 
@@ -526,6 +555,7 @@ window.toggleStatMode = () => {
         yCont.classList.add('hidden');
         cCont.classList.remove('hidden');
         cCont.style.display = 'flex';
+        // Set default dates if empty
         if(!document.getElementById('stat-date-start').value) {
             const now = new Date();
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -567,7 +597,29 @@ function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { display: true } },
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 13, weight: 'bold' },
+                    callbacks: {
+                        afterBody: function(context) {
+                            const punto = context.find(c => c.raw);
+                            if(!punto) return [];
+                            if (punto.raw.refDate) {
+                                const dRef = new Date(punto.raw.refDate);
+                                const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                                return ['', '------------------', `Confrontato con:\n${dStr}`];
+                            }
+                            if (punto.raw.extraInfo) return ['', `📝 ${punto.raw.extraInfo}`];
+                            return [];
+                        }
+                    }
+                }
+            },
             layout: { padding: 25 },
             scales: scalesConfig
         }
@@ -641,6 +693,7 @@ window.renderOverviewCharts = () => {
         l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
     
+    // COLOR LOGIC FIX:
     const bgMain = chartType === 'bar' ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
     const bgComp = chartType === 'bar' ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
 
@@ -657,8 +710,14 @@ window.renderOverviewCharts = () => {
     renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}], chartType);
 }
 
+// HELPERS COLORS
 const getFasciaColor = (f) => {
-    const map = { "Mattina": "#60a5fa", "Mattina intera": "#3b82f6", "Pranzo": "#f59e0b", "Sera": "#1e40af", "Sabato pom": "#8b5cf6", "Domenica": "#ec4899", "Festivo": "#ef4444", "Unico": "#10b981", "Estiva - Mattina": "#fcd34d", "Estiva - Pomeriggio": "#f97316", "Estiva - Unico": "#facc15" };
+    const map = {
+        "Mattina": "#60a5fa", "Mattina intera": "#3b82f6", "Pranzo": "#f59e0b",
+        "Sera": "#1e40af", "Sabato pom": "#8b5cf6", "Domenica": "#ec4899",
+        "Festivo": "#ef4444", "Unico": "#10b981",
+        "Estiva - Mattina": "#fcd34d", "Estiva - Pomeriggio": "#f97316", "Estiva - Unico": "#facc15"
+    };
     return map[f] || "#94a3b8";
 };
 
@@ -684,36 +743,34 @@ window.renderStats = () => {
         yearMain = startDate.getFullYear(); 
     }
 
-    const filteredSource = dataIngressi.filter(d => {
-        if(d.excludeStats) return false;
-        const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
-        if(poolFilter === 'indoor' && isOutdoor) return false;
-        if(poolFilter === 'outdoor' && !isOutdoor) return false;
-        if(dayTypeFilter === 'standard' && d.type !== 'standard') return false;
-        if(dayTypeFilter === 'special' && d.type === 'standard') return false;
-        return true;
-    });
+    const filterBase = (data, forceYear = null) => {
+        return data.filter(d => {
+            if(d.excludeStats) return false;
+            const dDate = new Date(d.date);
+            if(forceYear === 'main') {
+                if(dDate < startDate || dDate > endDate) return false;
+            } else if (forceYear !== null && forceYear !== 'avg') {
+                if(dDate.getFullYear() !== forceYear) return false;
+            }
+            const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
+            if(poolFilter === 'indoor' && isOutdoor) return false;
+            if(poolFilter === 'outdoor' && !isOutdoor) return false;
+            if(dayTypeFilter === 'standard' && d.type !== 'standard') return false;
+            if(dayTypeFilter === 'special' && d.type === 'standard') return false;
+            return true;
+        });
+    };
 
-    const dataMap = {};
-    filteredSource.forEach(d => {
-        const k = d.date;
-        if(!dataMap[k]) dataMap[k] = [];
-        dataMap[k].push(d);
-    });
-
-    let fMain = [];
-    for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
-        const k = d.toISOString().split('T')[0];
-        if(dataMap[k]) fMain = fMain.concat(dataMap[k]);
-    }
-    
+    const fMain = filterBase(dataIngressi, 'main');
     document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
     if(!isChartReady()) return;
 
+    // COLOR LOGIC FOR STATS
     const isBar = chartType === 'bar';
     const bgMain = isBar ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
     const bgComp = isBar ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
 
+    // --- CHART YOY ---
     let labels = [];
     let mainData = [];
     let compData = [];
@@ -725,70 +782,57 @@ window.renderStats = () => {
         fMain.forEach(d => { mainData[new Date(d.date).getMonth()] += d.totale; });
         document.getElementById('yoy-title').innerText = `Andamento Stagionale (${yearMain})`;
 
-        if(yearCompVal !== 'none') {
-            compLabel = yearCompVal === 'avg' ? 'Media Storica' : `Anno ${yearCompVal}`;
+        if(yearCompVal === 'avg') {
+            compLabel = 'Media Storica';
+            const allYears = [...new Set(dataIngressi.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== yearMain);
             for(let m=0; m<12; m++) {
                 let sum=0, count=0;
-                if(yearCompVal === 'avg') {
-                    const allYears = [...new Set(filteredSource.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== yearMain);
-                    allYears.forEach(y => {
-                        const val = filteredSource.filter(d => new Date(d.date).getFullYear() === y && new Date(d.date).getMonth() === m).reduce((a,b)=>a+b.totale,0);
-                        if(val > 0) { sum += val; count++; }
-                    });
-                } else {
-                    const y = parseInt(yearCompVal);
-                    sum = filteredSource.filter(d => new Date(d.date).getFullYear() === y && new Date(d.date).getMonth() === m).reduce((a,b)=>a+b.totale,0);
-                    count = 1;
-                }
+                allYears.forEach(y => {
+                    const subset = filterBase(dataIngressi, y).filter(d => new Date(d.date).getMonth() === m);
+                    if(subset.length>0) { sum += subset.reduce((a,b)=>a+b.totale,0); count++; }
+                });
                 compData.push(count>0 ? sum/count : 0);
             }
+        } else if(yearCompVal !== 'none') {
+            compLabel = `Anno ${yearCompVal}`;
+            const fComp = filterBase(dataIngressi, parseInt(yearCompVal));
+            const cMonth = new Array(12).fill(0);
+            fComp.forEach(d => { cMonth[new Date(d.date).getMonth()] += d.totale; });
+            compData = cMonth;
         }
     } else {
-        const days = [];
-        for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
-            days.push(new Date(d));
-            labels.push(d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}));
+        for(let dt=new Date(startDate); dt<=endDate; dt.setDate(dt.getDate()+1)) {
+            labels.push(dt.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}));
         }
-        
-        days.forEach(d => {
-            const k = d.toISOString().split('T')[0];
-            const val = dataMap[k] ? dataMap[k].reduce((a,b)=>a+b.totale, 0) : 0;
+        labels.forEach((lbl, idx) => {
+            const targetDate = new Date(startDate); 
+            targetDate.setDate(startDate.getDate() + idx);
+            const targetStr = targetDate.toISOString().split('T')[0];
+            const val = fMain.filter(d => d.date === targetStr).reduce((a,b)=>a+b.totale, 0);
             mainData.push(val);
         });
         document.getElementById('yoy-title').innerText = `Andamento Periodo (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`;
 
         if(yearCompVal !== 'none') {
-            compLabel = yearCompVal === 'avg' ? 'Media Storica' : `Anno ${yearCompVal}`;
-            const histMap = {}; 
-            filteredSource.forEach(d => {
-                const dDate = new Date(d.date);
-                if(dDate.getFullYear() === yearMain) return; 
-                const k = `${dDate.getMonth()}-${dDate.getDate()}`;
-                if(!histMap[k]) histMap[k] = [];
-                histMap[k].push(d);
-            });
-
-            days.forEach(d => {
-                const month = d.getMonth();
-                const day = d.getDate();
-                const k = `${month}-${day}`;
-                
+            compLabel = yearCompVal === 'avg' ? 'Media Storica (stessi giorni)' : `Anno ${yearCompVal}`;
+            labels.forEach((lbl, idx) => {
+                const targetDate = new Date(startDate); 
+                targetDate.setDate(startDate.getDate() + idx);
+                const day = targetDate.getDate();
+                const month = targetDate.getMonth();
                 if(yearCompVal === 'avg') {
-                    let sum = 0, count = 0;
-                    if(histMap[k]) {
-                        const yearsInDay = [...new Set(histMap[k].map(x=>new Date(x.date).getFullYear()))];
-                        yearsInDay.forEach(y => {
-                            const val = histMap[k].filter(x => new Date(x.date).getFullYear() === y).reduce((a,b)=>a+b.totale,0);
-                            sum += val; count++;
-                        });
-                    }
+                    const allYears = [...new Set(dataIngressi.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== targetDate.getFullYear());
+                    let sum=0, count=0;
+                    allYears.forEach(y => {
+                        const yearlyData = filterBase(dataIngressi, y);
+                        const dayVal = yearlyData.filter(d => { const x = new Date(d.date); return x.getDate() === day && x.getMonth() === month; }).reduce((a,b)=>a+b.totale,0);
+                        sum += dayVal; count++;
+                    });
                     compData.push(count>0 ? sum/count : 0);
                 } else {
                     const y = parseInt(yearCompVal);
-                    const val = filteredSource.filter(x => {
-                        const xd = new Date(x.date);
-                        return xd.getFullYear() === y && xd.getMonth() === month && xd.getDate() === day;
-                    }).reduce((a,b)=>a+b.totale, 0);
+                    const yearlyData = filterBase(dataIngressi, y);
+                    const val = yearlyData.filter(d => { const x = new Date(d.date); return x.getDate() === day && x.getMonth() === month; }).reduce((a,b)=>a+b.totale,0);
                     compData.push(val);
                 }
             });
@@ -801,13 +845,16 @@ window.renderStats = () => {
     }
     renderDynamicChart('chartYoY', labels, mainDatasets, chartType);
 
+    // --- WEEKLY CHART ---
     const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
     const getJsDay = (i) => (i + 1) % 7;
     let weekDatasets = [];
     let isStacked = false;
 
     if(chartType === 'bar') {
-        isStacked = true; 
+        isStacked = true; // IMPORTANT for ChartJS
+        
+        // 1. MAIN DATA (Stacked by Fascia)
         const uniqueFasce = [...new Set(fMain.map(d => d.fascia))];
         weekDatasets = uniqueFasce.map(fascia => {
             const data = weekLabels.map((_, i) => {
@@ -818,31 +865,35 @@ window.renderStats = () => {
                 label: fascia,
                 data: data,
                 backgroundColor: getFasciaColor(fascia),
-                stack: 'main' 
+                stack: 'main' // KEY: Groups all fasce into one stack
             };
         });
 
+        // 2. COMPARISON DATA (Side-by-Side Bar)
         if(yearCompVal !== 'none') {
             let compSet = [];
             if(yearCompVal === 'avg') {
-                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() !== yearMain);
+                 // Avg of all valid history excluding main selection
+                 compSet = dataIngressi.filter(d => !fMain.includes(d) && !d.excludeStats);
             } else {
-                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() === parseInt(yearCompVal));
+                 compSet = filterBase(dataIngressi, parseInt(yearCompVal));
             }
             const compDataWeekly = weekLabels.map((_, i) => {
                 let subset = compSet.filter(d => new Date(d.date).getDay() === getJsDay(i));
                 return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
             });
+            
             weekDatasets.push({
                 label: compLabel + ' (Totale)',
                 data: compDataWeekly,
-                type: 'bar', 
-                backgroundColor: '#cbd5e1', 
-                stack: 'comp', 
+                type: 'bar', // Explicitly BAR
+                backgroundColor: '#cbd5e1', // Solid Grey
+                stack: 'comp', // KEY: Separate stack group
                 order: 1
             });
         }
     } else {
+        // STANDARD LINE LOGIC (Total Only)
         const calcWeekly = (dataset) => {
             return weekLabels.map((_, i) => {
                 let subset = dataset.filter(d => new Date(d.date).getDay() === getJsDay(i));
@@ -850,12 +901,13 @@ window.renderStats = () => {
             });
         };
         weekDatasets = [{ label: `Media Selezionata`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true }];
+        
         if(yearCompVal !== 'none') {
             let compSet = [];
             if(yearCompVal === 'avg') {
-                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() !== yearMain);
+                 compSet = dataIngressi.filter(d => !fMain.includes(d) && !d.excludeStats);
             } else {
-                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() === parseInt(yearCompVal));
+                 compSet = filterBase(dataIngressi, parseInt(yearCompVal));
             }
             weekDatasets.push({ label: compLabel, data: calcWeekly(compSet), borderColor: '#94a3b8', borderDash: [5,5], fill: false });
         }
@@ -863,6 +915,7 @@ window.renderStats = () => {
     
     renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType, isStacked);
 
+    // --- PIE & OTHERS ---
     let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
     fMain.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
     renderPie('chartPie', Object.keys(t), Object.values(t));
@@ -981,6 +1034,48 @@ window.renderUtenze = () => {
         };
         calcDelta('elec', g.elec); calcDelta('water', g.water); calcDelta('gas', g.gas);
     });
+
+    // --- KPI LOGIC ---
+    let latestDate = allDatesAsc[allDatesAsc.length - 1];
+    if(latestDate) {
+        const dObj = new Date(latestDate);
+        const thisMonth = dObj.getMonth();
+        const thisYear = dObj.getFullYear();
+        const prevYear = thisYear - 1;
+        const monthName = dObj.toLocaleString('it-IT', { month: 'long' });
+
+        let sumElec = { curr: 0, prev: 0 };
+        let sumWater = { curr: 0, prev: 0 };
+        let sumGas = { curr: 0, prev: 0 };
+
+        Object.keys(deltas).forEach(dateStr => {
+            const d = new Date(dateStr);
+            if(d.getMonth() === thisMonth) {
+                if(d.getFullYear() === thisYear) {
+                    sumElec.curr += deltas[dateStr].elec || 0;
+                    sumWater.curr += deltas[dateStr].water || 0;
+                    sumGas.curr += deltas[dateStr].gas || 0;
+                } else if(d.getFullYear() === prevYear) {
+                    sumElec.prev += deltas[dateStr].elec || 0;
+                    sumWater.prev += deltas[dateStr].water || 0;
+                    sumGas.prev += deltas[dateStr].gas || 0;
+                }
+            }
+        });
+
+        const updateKpi = (type, valCurr, valPrev, unit) => {
+            const diff = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : 0;
+            const color = diff > 0 ? '#ef4444' : '#10b981'; // Red for increase (bad), Green for decrease (good)
+            const sign = diff > 0 ? '+' : '';
+            document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
+            document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
+            document.getElementById(`u-kpi-${type}-sub`).innerHTML = `<span style="color:${color}; font-weight:800">${sign}${diff.toFixed(1)}%</span> vs ${monthName} ${prevYear}`;
+        };
+
+        updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh');
+        updateKpi('water', sumWater.curr, sumWater.prev, 'm³');
+        updateKpi('gas', sumGas.curr, sumGas.prev, 'm³');
+    }
 
     function prepareChartData(type) {
         const filteredDates = allDatesAsc.filter(d => d >= limitStr);
