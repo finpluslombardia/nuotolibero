@@ -52,7 +52,6 @@
     .cb-row { display: flex; gap: 15px; align-items: flex-end; width: 100%; }
     #cb-utenze .cb-row { flex-wrap: wrap; }
     #cb-ingressi .cb-row { flex-wrap: nowrap; gap: 15px; }
-    #cb-vasca .cb-row { flex-wrap: nowrap; gap: 15px; }
     
     /* INPUT FIELDS STANDARD */
     .inp-field { display: flex; flex-direction: column; flex: 1; min-width: 0; }
@@ -65,10 +64,10 @@
     .group-ctx { display: flex; gap: 10px; flex: 1.6; align-items: flex-end; min-width: 0; }
     .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.35); padding: 5px 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     .group-actions { display: flex; align-items: flex-end; gap: 10px; flex: 0 0 auto; }
-    .group-chem { display: flex; gap: 8px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
+    .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
     
     /* TICKET BOX */
-    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; flex: 1; }
+    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; }
     .t-box label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; text-align: center; width: 100%; opacity: 0.8; letter-spacing: -0.5px; }
     .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
 
@@ -462,21 +461,26 @@
             </div>
         </div>
 
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px">
+            <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📅 Confronto Mensile</h3>
+            <input type="month" id="u-kpi-month-selector" class="filter-select" style="font-weight:700; background:rgba(255,255,255,0.8)" onchange="renderUtenzeKPI()">
+        </div>
+
         <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 25px;">
             <div class="kpi-card glass-card" style="border-left: 4px solid #eab308">
-                <div class="kpi-head" id="u-kpi-elec-title">Mese Corrente</div>
-                <div class="kpi-val" id="u-kpi-elec-val">0 kWh</div>
-                <div class="kpi-sub" id="u-kpi-elec-sub">- vs Anno Prec.</div>
+                <div class="kpi-head" id="u-kpi-elec-title">-</div>
+                <div class="kpi-val" id="u-kpi-elec-val">-</div>
+                <div class="kpi-sub" id="u-kpi-elec-sub">-</div>
             </div>
             <div class="kpi-card glass-card" style="border-left: 4px solid #3b82f6">
-                <div class="kpi-head" id="u-kpi-water-title">Mese Corrente</div>
-                <div class="kpi-val" id="u-kpi-water-val">0 m³</div>
-                <div class="kpi-sub" id="u-kpi-water-sub">- vs Anno Prec.</div>
+                <div class="kpi-head" id="u-kpi-water-title">-</div>
+                <div class="kpi-val" id="u-kpi-water-val">-</div>
+                <div class="kpi-sub" id="u-kpi-water-sub">-</div>
             </div>
             <div class="kpi-card glass-card" style="border-left: 4px solid #ef4444">
-                <div class="kpi-head" id="u-kpi-gas-title">Mese Corrente</div>
-                <div class="kpi-val" id="u-kpi-gas-val">0 m³</div>
-                <div class="kpi-sub" id="u-kpi-gas-sub">- vs Anno Prec.</div>
+                <div class="kpi-head" id="u-kpi-gas-title">-</div>
+                <div class="kpi-val" id="u-kpi-gas-val">-</div>
+                <div class="kpi-sub" id="u-kpi-gas-sub">-</div>
             </div>
         </div>
 
@@ -1096,48 +1100,76 @@ window.renderUtenze = () => {
     });
 
     // --- KPI LOGIC ---
-    let latestDate = allDatesAsc[allDatesAsc.length - 1];
-    if(latestDate) {
-        const dObj = new Date(latestDate);
-        const thisMonth = dObj.getMonth();
-        const thisYear = dObj.getFullYear();
-        const maxDay = dObj.getDate();
-        const prevYear = thisYear - 1;
-        const monthName = dObj.toLocaleString('it-IT', { month: 'long' });
+    // 1. Determine KPI Month from Selector or Latest Data
+    let kpiDateObj = new Date(); // Default to today
+    const selectedMonthVal = document.getElementById('u-kpi-month-selector').value; // YYYY-MM
 
-        let sumElec = { curr: 0, prev: 0 };
-        let sumWater = { curr: 0, prev: 0 };
-        let sumGas = { curr: 0, prev: 0 };
+    if (selectedMonthVal) {
+        kpiDateObj = new Date(selectedMonthVal + "-01");
+    } else if (allDatesAsc.length > 0) {
+        // Fallback to latest data available
+        kpiDateObj = new Date(allDatesAsc[allDatesAsc.length - 1]);
+        // Set selector value
+        const mStr = String(kpiDateObj.getMonth() + 1).padStart(2, '0');
+        document.getElementById('u-kpi-month-selector').value = `${kpiDateObj.getFullYear()}-${mStr}`;
+    }
 
-        Object.keys(deltas).forEach(dateStr => {
-            const d = new Date(dateStr);
+    const thisMonth = kpiDateObj.getMonth();
+    const thisYear = kpiDateObj.getFullYear();
+    const prevYear = thisYear - 1;
+    const monthName = kpiDateObj.toLocaleString('it-IT', { month: 'long' });
+    
+    // Determine the "Max Day" for comparison
+    // If selected month is the *actual* current month, use today's date.
+    // If selected month is in the past, use 31 (full month).
+    const realToday = new Date();
+    const isCurrentRealMonth = (thisYear === realToday.getFullYear() && thisMonth === realToday.getMonth());
+    const maxDay = isCurrentRealMonth ? realToday.getDate() : 32; 
+
+    let sumElec = { curr: 0, prev: 0 };
+    let sumWater = { curr: 0, prev: 0 };
+    let sumGas = { curr: 0, prev: 0 };
+
+    Object.keys(deltas).forEach(dateStr => {
+        const d = new Date(dateStr);
+        // Only count if day <= maxDay (for apples-to-apples comparison)
+        if(d.getDate() <= maxDay) {
             if(d.getMonth() === thisMonth) {
                 if(d.getFullYear() === thisYear) {
                     sumElec.curr += deltas[dateStr].elec || 0;
                     sumWater.curr += deltas[dateStr].water || 0;
                     sumGas.curr += deltas[dateStr].gas || 0;
-                } else if(d.getFullYear() === prevYear && d.getDate() <= maxDay) {
+                } else if(d.getFullYear() === prevYear) {
                     sumElec.prev += deltas[dateStr].elec || 0;
                     sumWater.prev += deltas[dateStr].water || 0;
                     sumGas.prev += deltas[dateStr].gas || 0;
                 }
             }
-        });
+        }
+    });
 
-        const updateKpi = (type, valCurr, valPrev, unit) => {
-            const diff = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : 0;
-            const color = diff > 0 ? '#ef4444' : '#10b981'; 
+    const updateKpi = (type, valCurr, valPrev, unit) => {
+        let diff = 0;
+        let diffHtml = '<span style="color:#94a3b8; font-size:0.8rem">Dati insufficienti</span>';
+        
+        if (valPrev > 0) {
+            diff = ((valCurr - valPrev) / valPrev) * 100;
+            const color = diff > 0 ? '#ef4444' : '#10b981'; // Red = Bad (more consumption), Green = Good
             const sign = diff > 0 ? '+' : '';
-            document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
-            document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
-            document.getElementById(`u-kpi-${type}-sub`).innerHTML = `<span style="color:${color}; font-weight:800">${sign}${diff.toFixed(1)}%</span> vs ${monthName} ${prevYear} (al ${maxDay})`;
-        };
+            const dayLabel = isCurrentRealMonth ? `(al ${maxDay})` : '';
+            diffHtml = `<span style="color:${color}; font-weight:800">${sign}${diff.toFixed(1)}%</span> vs ${monthName} ${prevYear} ${dayLabel}`;
+        }
 
-        updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh');
-        updateKpi('water', sumWater.curr, sumWater.prev, 'm³');
-        updateKpi('gas', sumGas.curr, sumGas.prev, 'm³');
-    }
+        document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
+        document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
+        document.getElementById(`u-kpi-${type}-sub`).innerHTML = diffHtml;
+    };
 
+    updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh');
+    updateKpi('water', sumWater.curr, sumWater.prev, 'm³');
+    updateKpi('gas', sumGas.curr, sumGas.prev, 'm³');
+
+    // Chart Logic remains unchanged...
     function prepareChartData(type) {
         const filteredDates = allDatesAsc.filter(d => d >= limitStr);
         const labels = [], dataTotal = [], dataDelta = [], dataHistoryTotal = [], dataHistoryDelta = [];
@@ -1223,6 +1255,8 @@ window.renderUtenze = () => {
     });
     t.innerHTML = rowsBuffer.join('');
 };
+
+window.renderUtenzeKPI = () => { renderUtenze(); }; // Hook for the month selector
 
 window.resetUtenzeHistory = () => {
     document.getElementById('u-hist-start').value = "";
