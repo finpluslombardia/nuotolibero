@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Final Dashboard</title>
+<title>Facility Suite V94 - Final Dashboard Full Width</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -242,10 +242,8 @@
                 <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub" id="ov-forecast-sub">proiezione</div></div>
             </div>
             <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec. (Intelligente)</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
-            <div class="charts-row-split" style="margin-top:25px">
-                <div class="chart-card glass-card"><div class="chart-header">Ultimi 3 Mesi (90 gg)</div><div class="chart-wrapper"><canvas id="chartRecent90"></canvas></div></div>
-                <div class="chart-card glass-card"><div class="chart-header">Ultimi 12 Mesi</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
-            </div>
+            <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Ultimi 3 Mesi (90 gg)</div><div class="chart-wrapper"><canvas id="chartRecent90"></canvas></div></div>
+            <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Andamento Ultimi 12 Mesi vs Anno Prec.</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
         </div>
 
         <div id="sub-stats" class="hidden">
@@ -604,30 +602,19 @@ function startListening() {
 }
 
 window.populateStatFilters = () => {
-    if(!dataIngressi || dataIngressi.length === 0) return;
+    if(!dataIngressi.length) return;
     const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
     const yearSel = document.getElementById('stat-year');
-    // Multi-Select Logic
+    // Multi-Select Logic (Replacing <select>)
     const msList = document.getElementById('ms-compare-list');
     msList.innerHTML = `<div class="ms-option"><input type="checkbox" value="avg" checked onchange="renderStats()"><span>📊 Media Storica</span></div>`;
     years.forEach(y => {
         msList.innerHTML += `<div class="ms-option"><input type="checkbox" value="${y}" onchange="renderStats()"><span>${y}</span></div>`;
     });
-    
-    // Populate Main Year Selector
-    yearSel.innerHTML = "";
-    years.forEach(y => {
-        yearSel.innerHTML += `<option value="${y}">${y}</option>`;
-    });
 
-    // Auto-select current year if available, else first available
+    const currYear = yearSel.value;
     const todayYear = new Date().getFullYear();
-    if(years.includes(todayYear)) {
-        yearSel.value = todayYear;
-    } else if(years.length > 0) {
-        yearSel.value = years[0];
-    }
-    
+    if(!currYear) yearSel.value = years.includes(todayYear) ? todayYear : years[0];
     renderStats();
 };
 
@@ -801,7 +788,6 @@ window.renderOverviewCharts = () => {
         l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
     
-    // COLOR LOGIC FIX:
     const bgMain = chartType === 'bar' ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
     const bgComp = chartType === 'bar' ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
 
@@ -902,10 +888,7 @@ window.renderStats = () => {
         if(dataMap[k]) fMain = fMain.concat(dataMap[k]);
     }
     
-    // SAFE NaN check
-    const totalVal = fMain.reduce((a,b)=>a+b.totale,0);
-    document.getElementById('deep-total').innerText = isNaN(totalVal) ? "0" : totalVal.toLocaleString();
-    
+    document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
     if(!isChartReady()) return;
 
     // COLOR LOGIC
