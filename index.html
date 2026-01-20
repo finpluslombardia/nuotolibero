@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Monthly KPIs</title>
+<title>Facility Suite V94 - True Comparison</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -693,7 +693,6 @@ window.renderOverviewCharts = () => {
         l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
     
-    // COLOR LOGIC FIX:
     const bgMain = chartType === 'bar' ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
     const bgComp = chartType === 'bar' ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
 
@@ -710,7 +709,6 @@ window.renderOverviewCharts = () => {
     renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}], chartType);
 }
 
-// HELPERS COLORS
 const getFasciaColor = (f) => {
     const map = {
         "Mattina": "#60a5fa", "Mattina intera": "#3b82f6", "Pranzo": "#f59e0b",
@@ -743,25 +741,29 @@ window.renderStats = () => {
         yearMain = startDate.getFullYear(); 
     }
 
-    const filterBase = (data, forceYear = null) => {
-        return data.filter(d => {
-            if(d.excludeStats) return false;
-            const dDate = new Date(d.date);
-            if(forceYear === 'main') {
-                if(dDate < startDate || dDate > endDate) return false;
-            } else if (forceYear !== null && forceYear !== 'avg') {
-                if(dDate.getFullYear() !== forceYear) return false;
-            }
-            const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
-            if(poolFilter === 'indoor' && isOutdoor) return false;
-            if(poolFilter === 'outdoor' && !isOutdoor) return false;
-            if(dayTypeFilter === 'standard' && d.type !== 'standard') return false;
-            if(dayTypeFilter === 'special' && d.type === 'standard') return false;
-            return true;
-        });
-    };
+    const filteredSource = dataIngressi.filter(d => {
+        if(d.excludeStats) return false;
+        const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
+        if(poolFilter === 'indoor' && isOutdoor) return false;
+        if(poolFilter === 'outdoor' && !isOutdoor) return false;
+        if(dayTypeFilter === 'standard' && d.type !== 'standard') return false;
+        if(dayTypeFilter === 'special' && d.type === 'standard') return false;
+        return true;
+    });
 
-    const fMain = filterBase(dataIngressi, 'main');
+    const dataMap = {};
+    filteredSource.forEach(d => {
+        const k = d.date;
+        if(!dataMap[k]) dataMap[k] = [];
+        dataMap[k].push(d);
+    });
+
+    let fMain = [];
+    for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
+        const k = d.toISOString().split('T')[0];
+        if(dataMap[k]) fMain = fMain.concat(dataMap[k]);
+    }
+    
     document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
     if(!isChartReady()) return;
 
@@ -1041,6 +1043,7 @@ window.renderUtenze = () => {
         const dObj = new Date(latestDate);
         const thisMonth = dObj.getMonth();
         const thisYear = dObj.getFullYear();
+        const maxDay = dObj.getDate();
         const prevYear = thisYear - 1;
         const monthName = dObj.toLocaleString('it-IT', { month: 'long' });
 
@@ -1055,7 +1058,7 @@ window.renderUtenze = () => {
                     sumElec.curr += deltas[dateStr].elec || 0;
                     sumWater.curr += deltas[dateStr].water || 0;
                     sumGas.curr += deltas[dateStr].gas || 0;
-                } else if(d.getFullYear() === prevYear) {
+                } else if(d.getFullYear() === prevYear && d.getDate() <= maxDay) {
                     sumElec.prev += deltas[dateStr].elec || 0;
                     sumWater.prev += deltas[dateStr].water || 0;
                     sumGas.prev += deltas[dateStr].gas || 0;
@@ -1065,11 +1068,11 @@ window.renderUtenze = () => {
 
         const updateKpi = (type, valCurr, valPrev, unit) => {
             const diff = valPrev > 0 ? ((valCurr - valPrev) / valPrev) * 100 : 0;
-            const color = diff > 0 ? '#ef4444' : '#10b981'; // Red for increase (bad), Green for decrease (good)
+            const color = diff > 0 ? '#ef4444' : '#10b981'; 
             const sign = diff > 0 ? '+' : '';
             document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
             document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
-            document.getElementById(`u-kpi-${type}-sub`).innerHTML = `<span style="color:${color}; font-weight:800">${sign}${diff.toFixed(1)}%</span> vs ${monthName} ${prevYear}`;
+            document.getElementById(`u-kpi-${type}-sub`).innerHTML = `<span style="color:${color}; font-weight:800">${sign}${diff.toFixed(1)}%</span> vs ${monthName} ${prevYear} (al ${maxDay})`;
         };
 
         updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh');
