@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Final Stable</title>
+<title>Facility Suite V94 - Final Init Fix</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -575,27 +575,59 @@ onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen')
 
 function startListening() {
     try {
-        onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(2000)), (snap) => { dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); populateStatFilters(); refreshCurrentView(); });
-        onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); });
-        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), limit(200)), (snap) => { dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); });
-        onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc"), limit(4000)), (snap) => { dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); if(!document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze(); });
+        // IMPORTANT: Listeners must populate data arrays before calling init functions
+        onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(2000)), (snap) => { 
+            dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); 
+            populateStatFilters(); // Trigger filters ONLY after data arrives
+            refreshCurrentView();
+            if(dataUtenze.length > 0) renderUtenze(); // Re-render Utenze if ingressi arrive later
+        });
+        
+        onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { 
+            dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); 
+            if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); 
+        });
+
+        onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), limit(200)), (snap) => { 
+            dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); 
+            if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); 
+        });
+
+        onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc"), limit(4000)), (snap) => { 
+            dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); 
+            if(!document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze(); 
+        });
     } catch(e) { console.error(e); }
 }
 
 window.populateStatFilters = () => {
-    if(!dataIngressi.length) return;
-    const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
+    if(!dataIngressi || dataIngressi.length === 0) return;
+    
+    // Extract unique years from data
+    const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort((a,b) => b - a); // Sort Descending
+    
     const yearSel = document.getElementById('stat-year');
-    // Multi-Select Logic (Replacing <select>)
+    // Multi-Select Logic
     const msList = document.getElementById('ms-compare-list');
     msList.innerHTML = `<div class="ms-option"><input type="checkbox" value="avg" checked onchange="renderStats()"><span>📊 Media Storica</span></div>`;
     years.forEach(y => {
         msList.innerHTML += `<div class="ms-option"><input type="checkbox" value="${y}" onchange="renderStats()"><span>${y}</span></div>`;
     });
+    
+    // Populate Main Year Selector
+    yearSel.innerHTML = "";
+    years.forEach(y => {
+        yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+    });
 
-    const currYear = yearSel.value;
+    // Auto-select current year if available, else first available
     const todayYear = new Date().getFullYear();
-    if(!currYear) yearSel.value = years.includes(todayYear) ? todayYear : years[0];
+    if(years.includes(todayYear)) {
+        yearSel.value = todayYear;
+    } else if(years.length > 0) {
+        yearSel.value = years[0];
+    }
+    
     renderStats();
 };
 
@@ -815,7 +847,7 @@ window.renderStats = () => {
 
     let startDate, endDate, yearMain;
     if(mode === 'year') {
-        yearMain = parseInt(document.getElementById('stat-year').value) || new Date().getFullYear();
+        yearMain = parseInt(document.getElementById('stat-year').value) || new Date().getFullYear(); // Safe Default
         startDate = new Date(yearMain, 0, 1);
         endDate = new Date(yearMain, 11, 31);
     } else {
@@ -851,7 +883,10 @@ window.renderStats = () => {
         if(dataMap[k]) fMain = fMain.concat(dataMap[k]);
     }
     
-    document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
+    // SAFE NaN check
+    const totalVal = fMain.reduce((a,b)=>a+b.totale,0);
+    document.getElementById('deep-total').innerText = isNaN(totalVal) ? "0" : totalVal.toLocaleString();
+    
     if(!isChartReady()) return;
 
     // COLOR LOGIC
@@ -893,7 +928,6 @@ window.renderStats = () => {
         let compData = [];
         let compLabel = compVal === 'avg' ? 'Media Storica' : `Anno ${compVal}`;
         let col = getCompColor(idx);
-        // FORCE TRANSPARENT FILL IF LINE CHART
         let bgCol = isBar ? col : 'transparent'; 
 
         if(mode === 'year') {
@@ -967,7 +1001,7 @@ window.renderStats = () => {
             borderColor: col,
             backgroundColor: bgCol,
             borderDash: isBar ? [] : [5,5],
-            fill: false, // Ensure no fill for comparison lines
+            fill: false,
             tension: 0.4
         });
     });
