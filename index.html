@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Pool Update</title>
+<title>Facility Suite V94 - Utenze History Filters</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -52,8 +52,6 @@
     .cb-row { display: flex; gap: 15px; align-items: flex-end; width: 100%; }
     #cb-utenze .cb-row { flex-wrap: wrap; }
     #cb-ingressi .cb-row { flex-wrap: nowrap; gap: 15px; }
-    /* Vasca needs similar space to Ingressi */
-    #cb-vasca .cb-row { flex-wrap: nowrap; gap: 15px; }
     
     /* INPUT FIELDS STANDARD */
     .inp-field { display: flex; flex-direction: column; flex: 1; min-width: 0; }
@@ -62,17 +60,16 @@
     .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
     .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; border: 1px solid rgba(0,0,0,0.1) !important; }
     
-    /* GRUPPI DEL LAYOUT */
+    /* GRUPPI DEL LAYOUT INGRESSI */
     .group-ctx { display: flex; gap: 10px; flex: 1.6; align-items: flex-end; min-width: 0; }
     .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.35); padding: 5px 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     .group-actions { display: flex; align-items: flex-end; gap: 10px; flex: 0 0 auto; }
-    /* Vasca Chemical Group - Compact but clear */
-    .group-chem { display: flex; gap: 8px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px;}
+    .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
     
-    /* TICKET BOX & CHEM BOX */
-    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; flex: 1; }
+    /* TICKET BOX */
+    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; }
     .t-box label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; text-align: center; width: 100%; opacity: 0.8; letter-spacing: -0.5px; }
-    .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.15rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
+    .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
 
     .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
     .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
@@ -190,6 +187,7 @@
                     </label>
                 </div>
             </div>
+
             <div class="group-tickets">
                 <div class="t-box"><label>INTERO</label><input type="number" id="q-intero" value="0" onfocus="this.select()"></div>
                 <div class="t-box"><label>RIDOTTO</label><input type="number" id="q-ridotto" value="0" onfocus="this.select()"></div>
@@ -197,6 +195,7 @@
                 <div class="t-box"><label>ABB. 11</label><input type="number" id="q-abb-rid" value="0" onfocus="this.select()"></div>
                 <div class="t-box"><label>GRATUITO</label><input type="number" id="q-gratuito" value="0" onfocus="this.select()"></div>
             </div>
+
             <div class="group-actions">
                 <button id="btn-save-ingressi" class="btn btn-primary" style="height:44px; min-width:100px" onclick="saveIngressi()">SALVA</button>
             </div>
@@ -475,6 +474,17 @@
         </div>
 
         <h2 class="page-title">📝 Storico Dettagliato</h2>
+        
+        <div class="archive-toolbar" style="margin-bottom: 15px; background: rgba(255,255,255,0.5);">
+            <div class="arch-group"><span class="arch-label">Dal:</span><input type="date" id="u-hist-start" class="arch-input" onchange="renderUtenze()"></div>
+            <div class="arch-group"><span class="arch-label">Al:</span><input type="date" id="u-hist-end" class="arch-input" onchange="renderUtenze()"></div>
+            <select id="u-hist-sort" class="arch-select" onchange="renderUtenze()">
+                <option value="desc">⬇️ Più Recenti</option>
+                <option value="asc">⬆️ Più Vecchi</option>
+            </select>
+            <button class="btn btn-danger" style="height:36px; padding:0 15px" onclick="resetUtenzeHistory()">✕</button>
+        </div>
+
         <div class="table-wrap glass-card">
             <div style="overflow-x:auto;">
                 <table id="table-utenze">
