@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Stat Piscina</title>
+<title>Facility Suite V94 - Energy Intelligence</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -52,6 +52,7 @@
     .cb-row { display: flex; gap: 15px; align-items: flex-end; width: 100%; }
     #cb-utenze .cb-row { flex-wrap: wrap; }
     #cb-ingressi .cb-row { flex-wrap: nowrap; gap: 15px; }
+    #cb-vasca .cb-row { flex-wrap: nowrap; gap: 15px; }
     
     /* INPUT FIELDS STANDARD */
     .inp-field { display: flex; flex-direction: column; flex: 1; min-width: 0; }
@@ -64,10 +65,10 @@
     .group-ctx { display: flex; gap: 10px; flex: 1.6; align-items: flex-end; min-width: 0; }
     .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.35); padding: 5px 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     .group-actions { display: flex; align-items: flex-end; gap: 10px; flex: 0 0 auto; }
-    .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
+    .group-chem { display: flex; gap: 8px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     
     /* TICKET BOX */
-    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; }
+    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; flex: 1; }
     .t-box label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; text-align: center; width: 100%; opacity: 0.8; letter-spacing: -0.5px; }
     .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
 
@@ -96,6 +97,8 @@
     .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
     .kpi-val { font-size: 2.4rem; font-weight: 800; color: var(--text-main); line-height: 1; margin-bottom: 5px; }
     .kpi-sub { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .kpi-context { font-size: 0.75rem; color: #64748b; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.05); width: 100%; display: flex; justify-content: space-between; font-weight: 500; }
+    
     .chart-card { @extend .glass-card; height: 360px; }
     .chart-wrapper { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
     .charts-row-main { display: grid; grid-template-columns: 1fr; gap: 25px; margin-bottom: 25px; }
@@ -471,16 +474,19 @@
                 <div class="kpi-head" id="u-kpi-elec-title">-</div>
                 <div class="kpi-val" id="u-kpi-elec-val">-</div>
                 <div class="kpi-sub" id="u-kpi-elec-sub">-</div>
+                <div class="kpi-context" id="u-kpi-elec-context"></div>
             </div>
             <div class="kpi-card glass-card" style="border-left: 4px solid #3b82f6">
                 <div class="kpi-head" id="u-kpi-water-title">-</div>
                 <div class="kpi-val" id="u-kpi-water-val">-</div>
                 <div class="kpi-sub" id="u-kpi-water-sub">-</div>
+                <div class="kpi-context" id="u-kpi-water-context"></div>
             </div>
             <div class="kpi-card glass-card" style="border-left: 4px solid #ef4444">
                 <div class="kpi-head" id="u-kpi-gas-title">-</div>
                 <div class="kpi-val" id="u-kpi-gas-val">-</div>
                 <div class="kpi-sub" id="u-kpi-gas-sub">-</div>
+                <div class="kpi-context" id="u-kpi-gas-context"></div>
             </div>
         </div>
 
@@ -1100,16 +1106,13 @@ window.renderUtenze = () => {
     });
 
     // --- KPI LOGIC ---
-    // 1. Determine KPI Month from Selector or Latest Data
-    let kpiDateObj = new Date(); // Default to today
-    const selectedMonthVal = document.getElementById('u-kpi-month-selector').value; // YYYY-MM
+    let kpiDateObj = new Date(); 
+    const selectedMonthVal = document.getElementById('u-kpi-month-selector').value; 
 
     if (selectedMonthVal) {
         kpiDateObj = new Date(selectedMonthVal + "-01");
     } else if (allDatesAsc.length > 0) {
-        // Fallback to latest data available
         kpiDateObj = new Date(allDatesAsc[allDatesAsc.length - 1]);
-        // Set selector value
         const mStr = String(kpiDateObj.getMonth() + 1).padStart(2, '0');
         document.getElementById('u-kpi-month-selector').value = `${kpiDateObj.getFullYear()}-${mStr}`;
     }
@@ -1120,41 +1123,66 @@ window.renderUtenze = () => {
     const monthName = kpiDateObj.toLocaleString('it-IT', { month: 'long' });
     
     // Determine the "Max Day" for comparison
-    // If selected month is the *actual* current month, use today's date.
-    // If selected month is in the past, use 31 (full month).
     const realToday = new Date();
     const isCurrentRealMonth = (thisYear === realToday.getFullYear() && thisMonth === realToday.getMonth());
     const maxDay = isCurrentRealMonth ? realToday.getDate() : 32; 
 
-    let sumElec = { curr: 0, prev: 0 };
-    let sumWater = { curr: 0, prev: 0 };
-    let sumGas = { curr: 0, prev: 0 };
+    let sumElec = { curr: 0, prev: 0, currMeteo: {sun:0, tot:0}, prevMeteo: {sun:0, tot:0} };
+    let sumWater = { curr: 0, prev: 0 }; // We will need bagnanti data here? No, let's keep it simple
+    let sumGas = { curr: 0, prev: 0, currTemp: [], prevTemp: [] };
 
     Object.keys(deltas).forEach(dateStr => {
         const d = new Date(dateStr);
-        // Only count if day <= maxDay (for apples-to-apples comparison)
         if(d.getDate() <= maxDay) {
             if(d.getMonth() === thisMonth) {
+                const gData = grouped[dateStr];
+                
                 if(d.getFullYear() === thisYear) {
                     sumElec.curr += deltas[dateStr].elec || 0;
                     sumWater.curr += deltas[dateStr].water || 0;
                     sumGas.curr += deltas[dateStr].gas || 0;
+                    
+                    // Context Data Current
+                    if(gData.elec && gData.elec.meteo) {
+                        sumElec.currMeteo.tot++;
+                        if(gData.elec.meteo.includes('Sole')) sumElec.currMeteo.sun++;
+                    }
+                    if(gData.gas && gData.gas.temp) sumGas.currTemp.push(gData.gas.temp);
+
                 } else if(d.getFullYear() === prevYear) {
                     sumElec.prev += deltas[dateStr].elec || 0;
                     sumWater.prev += deltas[dateStr].water || 0;
                     sumGas.prev += deltas[dateStr].gas || 0;
+
+                    // Context Data Prev
+                    if(gData.elec && gData.elec.meteo) {
+                        sumElec.prevMeteo.tot++;
+                        if(gData.elec.meteo.includes('Sole')) sumElec.prevMeteo.sun++;
+                    }
+                    if(gData.gas && gData.gas.temp) sumGas.prevTemp.push(gData.gas.temp);
                 }
             }
         }
     });
 
-    const updateKpi = (type, valCurr, valPrev, unit) => {
+    // Helper for context strings
+    const getMeteoStr = () => {
+        const c = sumElec.currMeteo.sun;
+        const p = sumElec.prevMeteo.sun;
+        return `Giorni Sole: <b>${c}</b> (vs ${p})`;
+    };
+    const getTempStr = () => {
+        const avg = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : '-';
+        return `Temp Media: <b>${avg(sumGas.currTemp)}°C</b> (vs ${avg(sumGas.prevTemp)}°C)`;
+    };
+
+    const updateKpi = (type, valCurr, valPrev, unit, contextHtml) => {
         let diff = 0;
         let diffHtml = '<span style="color:#94a3b8; font-size:0.8rem">Dati insufficienti</span>';
         
         if (valPrev > 0) {
             diff = ((valCurr - valPrev) / valPrev) * 100;
-            const color = diff > 0 ? '#ef4444' : '#10b981'; // Red = Bad (more consumption), Green = Good
+            const color = diff > 0 ? '#ef4444' : '#10b981'; 
             const sign = diff > 0 ? '+' : '';
             const dayLabel = isCurrentRealMonth ? `(al ${maxDay})` : '';
             diffHtml = `<span style="color:${color}; font-weight:800">${sign}${diff.toFixed(1)}%</span> vs ${monthName} ${prevYear} ${dayLabel}`;
@@ -1163,11 +1191,12 @@ window.renderUtenze = () => {
         document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
         document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
         document.getElementById(`u-kpi-${type}-sub`).innerHTML = diffHtml;
+        if(contextHtml) document.getElementById(`u-kpi-${type}-context`).innerHTML = contextHtml;
     };
 
-    updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh');
-    updateKpi('water', sumWater.curr, sumWater.prev, 'm³');
-    updateKpi('gas', sumGas.curr, sumGas.prev, 'm³');
+    updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh', getMeteoStr());
+    updateKpi('water', sumWater.curr, sumWater.prev, 'm³', '');
+    updateKpi('gas', sumGas.curr, sumGas.prev, 'm³', getTempStr());
 
     // Chart Logic remains unchanged...
     function prepareChartData(type) {
