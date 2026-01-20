@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Utenze History Filters</title>
+<title>Facility Suite V94 - Maltempo Update</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -52,6 +52,7 @@
     .cb-row { display: flex; gap: 15px; align-items: flex-end; width: 100%; }
     #cb-utenze .cb-row { flex-wrap: wrap; }
     #cb-ingressi .cb-row { flex-wrap: nowrap; gap: 15px; }
+    #cb-vasca .cb-row { flex-wrap: nowrap; gap: 15px; }
     
     /* INPUT FIELDS STANDARD */
     .inp-field { display: flex; flex-direction: column; flex: 1; min-width: 0; }
@@ -64,10 +65,10 @@
     .group-ctx { display: flex; gap: 10px; flex: 1.6; align-items: flex-end; min-width: 0; }
     .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.35); padding: 5px 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     .group-actions { display: flex; align-items: flex-end; gap: 10px; flex: 0 0 auto; }
-    .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
+    .group-chem { display: flex; gap: 8px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     
     /* TICKET BOX */
-    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; }
+    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; flex: 1; }
     .t-box label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; text-align: center; width: 100%; opacity: 0.8; letter-spacing: -0.5px; }
     .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
 
@@ -172,7 +173,13 @@
             <div class="group-ctx">
                 <div class="inp-field" style="flex:1.2"><label>Data</label><input type="date" id="i-date"></div>
                 <div class="inp-field" style="flex:1.3"><label>Tipo Giorno</label>
-                    <select id="i-type"><option value="standard">🏢 Standard</option><option value="festivo">🔴 Festivo</option><option value="evento">🏆 Gara/Evento</option><option value="extra">⚠️ Straordinario</option></select>
+                    <select id="i-type">
+                        <option value="standard">🏢 Standard</option>
+                        <option value="festivo">🔴 Festivo</option>
+                        <option value="evento">🏆 Gara/Evento</option>
+                        <option value="maltempo">⛈️ Maltempo</option>
+                        <option value="extra">⚠️ Straordinario</option>
+                    </select>
                 </div>
                 <div class="inp-field" style="flex:1.5"><label>Fascia</label>
                     <select id="i-fascia"><optgroup label="🏊 Vasca Interna"><option value="Mattina">Mattina</option><option value="Mattina intera">Mattina intera</option><option value="Pranzo">Pranzo</option><option value="Sera">Sera</option><option value="Sabato pom">Sabato pom</option><option value="Domenica">Domenica</option><option value="Festivo">Festivo</option><option value="Unico">Unico</option></optgroup><optgroup label="☀️ Vasca Esterna"><option value="Estiva - Mattina">Estiva - Mattina</option><option value="Estiva - Pomeriggio">Estiva - Pomeriggio</option><option value="Estiva - Unico">Estiva - Unico</option></optgroup></select>
@@ -754,10 +761,6 @@ window.renderStats = () => {
         yearMain = startDate.getFullYear(); 
     }
 
-    // STRICT STRING FILTERING TO AVOID TIMEZONE ISSUES
-    const startStr = getStrDate(startDate);
-    const endStr = getStrDate(endDate);
-
     const filteredSource = dataIngressi.filter(d => {
         if(d.excludeStats) return false;
         
@@ -1180,8 +1183,20 @@ window.renderUtenze = () => {
     renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd'), chartType);
     renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5'), chartType);
 
-    const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse(); const rowsBuffer = [];
-    datesDesc.forEach(date => {
+    const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse();
+    
+    // HISTORY FILTER LOGIC
+    const histStart = document.getElementById('u-hist-start').value;
+    const histEnd = document.getElementById('u-hist-end').value;
+    const histSort = document.getElementById('u-hist-sort').value;
+
+    let filteredDates = [...datesDesc];
+    if(histStart) filteredDates = filteredDates.filter(d => d >= histStart);
+    if(histEnd) filteredDates = filteredDates.filter(d => d <= histEnd);
+    if(histSort === 'asc') filteredDates.reverse();
+
+    const rowsBuffer = [];
+    filteredDates.forEach(date => {
         const g = grouped[date]; const d = deltas[date];
         const makeCell = (obj, deltaVal, color, suffix='') => {
             if(!obj) return '<span style="color:#ccc">-</span>';
@@ -1207,6 +1222,13 @@ window.renderUtenze = () => {
         rowsBuffer.push(`<tr><td style="font-weight:800; color:var(--text-main); vertical-align:top; padding-top:15px">${dateFmt}</td><td style="background:rgba(234, 179, 8, 0.05); vertical-align:top">${makeCell(g.elec, d.elec, '#d97706', 'kWh')}</td><td style="background:rgba(234, 179, 8, 0.05); vertical-align:top">${elecDet}</td><td style="background:rgba(59, 130, 246, 0.05); vertical-align:top">${makeCell(g.water, d.water, '#2563eb', 'm³')}</td><td style="background:rgba(239, 68, 68, 0.05); vertical-align:top">${gasCell}</td><td style="font-size:0.8rem; color:#64748b; font-style:italic; vertical-align:top; padding-top:15px">${noteStr}</td></tr>`);
     });
     t.innerHTML = rowsBuffer.join('');
+};
+
+window.resetUtenzeHistory = () => {
+    document.getElementById('u-hist-start').value = "";
+    document.getElementById('u-hist-end').value = "";
+    document.getElementById('u-hist-sort').value = "desc";
+    renderUtenze();
 };
 
 window.saveIngressi = async () => {
