@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Fixed Stats</title>
+<title>Facility Suite V94 - Final Production</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -593,7 +593,29 @@ function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { display: true } },
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 13, weight: 'bold' },
+                    callbacks: {
+                        afterBody: function(context) {
+                            const punto = context.find(c => c.raw);
+                            if(!punto) return [];
+                            if (punto.raw.refDate) {
+                                const dRef = new Date(punto.raw.refDate);
+                                const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                                return ['', '------------------', `Confrontato con:\n${dStr}`];
+                            }
+                            if (punto.raw.extraInfo) return ['', `📝 ${punto.raw.extraInfo}`];
+                            return [];
+                        }
+                    }
+                }
+            },
             layout: { padding: 25 },
             scales: scalesConfig
         }
@@ -617,8 +639,16 @@ function renderOverviewKPI() {
 
     document.getElementById('ov-avg').innerText = daysCurrent > 0 ? (totalCurrent/daysCurrent).toFixed(0) : 0;
     
-    const dPrev = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0);
+    // FIX: Compare up to the same day number
+    const maxDay = today.getDate();
+    const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
+    const ym_year = ym.getFullYear();
+
+    const dPrev = dataIngressi.filter(x => {
+        return x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
+    });
     const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
+    
     let momHtml = "";
     if (dPrev.length > 0) {
         let diff = 0;
@@ -629,10 +659,13 @@ function renderOverviewKPI() {
         momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
     } else { momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
     document.getElementById('ov-mom').innerHTML = momHtml;
-    document.getElementById('ov-mom-label').innerText = `vs ${pm.toLocaleString('it-IT',{month:'long'})}`;
+    document.getElementById('ov-mom-label').innerText = `vs ${pm_month_name} (al ${maxDay})`;
 
-    const dYoy = dataIngressi.filter(x => x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0);
+    const dYoy = dataIngressi.filter(x => {
+        return x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
+    });
     const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
+    
     let yoyHtml = "";
     if (dYoy.length > 0) {
         let diff = 0;
@@ -643,7 +676,7 @@ function renderOverviewKPI() {
         yoyHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
     } else { yoyHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
     document.getElementById('ov-yoy').innerHTML = yoyHtml;
-    document.getElementById('ov-yoy-label').innerText = `vs ${ym.getFullYear()}`;
+    document.getElementById('ov-yoy-label').innerText = `vs ${ym_year} (al ${maxDay})`;
 
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     if(daysCurrent > 0) { 
@@ -715,32 +748,29 @@ window.renderStats = () => {
         yearMain = startDate.getFullYear(); 
     }
 
-    const filteredSource = dataIngressi.filter(d => {
-        if(d.excludeStats) return false;
-        const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
-        if(poolFilter === 'indoor' && isOutdoor) return false;
-        if(poolFilter === 'outdoor' && !isOutdoor) return false;
-        if(dayTypeFilter === 'standard' && d.type !== 'standard') return false;
-        if(dayTypeFilter === 'special' && d.type === 'standard') return false;
-        return true;
-    });
+    const filterBase = (data, forceYear = null) => {
+        return data.filter(d => {
+            if(d.excludeStats) return false;
+            const dDate = new Date(d.date);
+            if(forceYear === 'main') {
+                if(dDate < startDate || dDate > endDate) return false;
+            } else if (forceYear !== null && forceYear !== 'avg') {
+                if(dDate.getFullYear() !== forceYear) return false;
+            }
+            const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
+            if(poolFilter === 'indoor' && isOutdoor) return false;
+            if(poolFilter === 'outdoor' && !isOutdoor) return false;
+            if(dayTypeFilter === 'standard' && d.type !== 'standard') return false;
+            if(dayTypeFilter === 'special' && d.type === 'standard') return false;
+            return true;
+        });
+    };
 
-    const dataMap = {};
-    filteredSource.forEach(d => {
-        const k = d.date;
-        if(!dataMap[k]) dataMap[k] = [];
-        dataMap[k].push(d);
-    });
-
-    let fMain = [];
-    for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
-        const k = getStrDate(d);
-        if(dataMap[k]) fMain = fMain.concat(dataMap[k]);
-    }
-    
+    const fMain = filterBase(dataIngressi, 'main');
     document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
     if(!isChartReady()) return;
 
+    // COLOR LOGIC FOR STATS
     const isBar = chartType === 'bar';
     const bgMain = isBar ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
     const bgComp = isBar ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
