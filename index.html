@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Multi Compare</title>
+<title>Facility Suite V94 - Final Stable</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -662,7 +662,29 @@ function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { display: true } },
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 13, weight: 'bold' },
+                    callbacks: {
+                        afterBody: function(context) {
+                            const punto = context.find(c => c.raw);
+                            if(!punto) return [];
+                            if (punto.raw.refDate) {
+                                const dRef = new Date(punto.raw.refDate);
+                                const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                                return ['', '------------------', `Confrontato con:\n${dStr}`];
+                            }
+                            if (punto.raw.extraInfo) return ['', `📝 ${punto.raw.extraInfo}`];
+                            return [];
+                        }
+                    }
+                }
+            },
             layout: { padding: 25 },
             scales: scalesConfig
         }
@@ -763,6 +785,12 @@ window.renderOverviewCharts = () => {
     renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}], chartType);
 }
 
+// HELPERS FOR MULTI COMPARE COLORS
+const getCompColor = (idx) => {
+    const colors = ['#94a3b8', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+    return colors[idx % colors.length];
+};
+
 const getFasciaColor = (f) => {
     const map = {
         "Mattina": "#60a5fa", "Mattina intera": "#3b82f6", "Pranzo": "#f59e0b",
@@ -771,12 +799,6 @@ const getFasciaColor = (f) => {
         "Estiva - Mattina": "#fcd34d", "Estiva - Pomeriggio": "#f97316", "Estiva - Unico": "#facc15"
     };
     return map[f] || "#94a3b8";
-};
-
-// HELPERS FOR MULTI COMPARE COLORS
-const getCompColor = (idx) => {
-    const colors = ['#94a3b8', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
-    return colors[idx % colors.length];
 };
 
 window.renderStats = () => {
@@ -793,7 +815,7 @@ window.renderStats = () => {
 
     let startDate, endDate, yearMain;
     if(mode === 'year') {
-        yearMain = parseInt(document.getElementById('stat-year').value);
+        yearMain = parseInt(document.getElementById('stat-year').value) || new Date().getFullYear();
         startDate = new Date(yearMain, 0, 1);
         endDate = new Date(yearMain, 11, 31);
     } else {
@@ -871,7 +893,8 @@ window.renderStats = () => {
         let compData = [];
         let compLabel = compVal === 'avg' ? 'Media Storica' : `Anno ${compVal}`;
         let col = getCompColor(idx);
-        let bgCol = isBar ? col : (col + '20'); // Light opacity for line fill
+        // FORCE TRANSPARENT FILL IF LINE CHART
+        let bgCol = isBar ? col : 'transparent'; 
 
         if(mode === 'year') {
             for(let m=0; m<12; m++) {
@@ -899,10 +922,6 @@ window.renderStats = () => {
             }
         } else {
             // CUSTOM RANGE LOGIC
-            // ... (Same logic as before but inside loop) ...
-            // Simplified: Custom Range Compare only works well with 'avg' or 1 year due to X-Axis matching issues if years differ.
-            // For multi-year custom range, we just align by Month-Day.
-            
             const days = [];
             for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) days.push(new Date(d));
 
@@ -946,9 +965,9 @@ window.renderStats = () => {
             label: compLabel,
             data: compData,
             borderColor: col,
-            backgroundColor: isBar ? col : 'transparent', // Bars = Solid color, Lines = No Fill
+            backgroundColor: bgCol,
             borderDash: isBar ? [] : [5,5],
-            fill: false,
+            fill: false, // Ensure no fill for comparison lines
             tension: 0.4
         });
     });
@@ -978,7 +997,7 @@ window.renderStats = () => {
             };
         });
 
-        // Add Comparisons as side-by-side bars (each in its own stack group)
+        // Add Comparisons as side-by-side bars
         selectedComps.forEach((compVal, idx) => {
             let compSet = [];
             if(compVal === 'avg') {
@@ -1027,7 +1046,7 @@ window.renderStats = () => {
     
     renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType, isStacked);
 
-    // ... Pie & MultiBar logic remains same ...
+    // ... Pie & MultiBar ...
     let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
     fMain.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
     renderPie('chartPie', Object.keys(t), Object.values(t));
@@ -1307,8 +1326,20 @@ window.renderUtenze = () => {
     renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd'), chartType);
     renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5'), chartType);
 
-    const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse(); const rowsBuffer = [];
-    datesDesc.forEach(date => {
+    const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse();
+    
+    // HISTORY FILTER LOGIC
+    const histStart = document.getElementById('u-hist-start').value;
+    const histEnd = document.getElementById('u-hist-end').value;
+    const histSort = document.getElementById('u-hist-sort').value;
+
+    let filteredDates = [...datesDesc];
+    if(histStart) filteredDates = filteredDates.filter(d => d >= histStart);
+    if(histEnd) filteredDates = filteredDates.filter(d => d <= histEnd);
+    if(histSort === 'asc') filteredDates.reverse();
+
+    const rowsBuffer = [];
+    filteredDates.forEach(date => {
         const g = grouped[date]; const d = deltas[date];
         const makeCell = (obj, deltaVal, color, suffix='') => {
             if(!obj) return '<span style="color:#ccc">-</span>';
