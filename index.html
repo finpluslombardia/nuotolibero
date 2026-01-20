@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Final Stable</title>
+<title>Facility Suite V94 - Pool Update</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -52,6 +52,8 @@
     .cb-row { display: flex; gap: 15px; align-items: flex-end; width: 100%; }
     #cb-utenze .cb-row { flex-wrap: wrap; }
     #cb-ingressi .cb-row { flex-wrap: nowrap; gap: 15px; }
+    /* Vasca needs similar space to Ingressi */
+    #cb-vasca .cb-row { flex-wrap: nowrap; gap: 15px; }
     
     /* INPUT FIELDS STANDARD */
     .inp-field { display: flex; flex-direction: column; flex: 1; min-width: 0; }
@@ -60,16 +62,17 @@
     .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
     .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; border: 1px solid rgba(0,0,0,0.1) !important; }
     
-    /* GRUPPI DEL LAYOUT INGRESSI */
+    /* GRUPPI DEL LAYOUT */
     .group-ctx { display: flex; gap: 10px; flex: 1.6; align-items: flex-end; min-width: 0; }
     .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.35); padding: 5px 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     .group-actions { display: flex; align-items: flex-end; gap: 10px; flex: 0 0 auto; }
-    .group-chem { display: flex; gap: 10px; flex: 3; background: rgba(255, 255, 255, 0.3); padding: 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); }
+    /* Vasca Chemical Group - Compact but clear */
+    .group-chem { display: flex; gap: 8px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px;}
     
-    /* TICKET BOX */
-    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; }
+    /* TICKET BOX & CHEM BOX */
+    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; flex: 1; }
     .t-box label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; text-align: center; width: 100%; opacity: 0.8; letter-spacing: -0.5px; }
-    .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
+    .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.15rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
 
     .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
     .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
@@ -187,7 +190,6 @@
                     </label>
                 </div>
             </div>
-
             <div class="group-tickets">
                 <div class="t-box"><label>INTERO</label><input type="number" id="q-intero" value="0" onfocus="this.select()"></div>
                 <div class="t-box"><label>RIDOTTO</label><input type="number" id="q-ridotto" value="0" onfocus="this.select()"></div>
@@ -195,7 +197,6 @@
                 <div class="t-box"><label>ABB. 11</label><input type="number" id="q-abb-rid" value="0" onfocus="this.select()"></div>
                 <div class="t-box"><label>GRATUITO</label><input type="number" id="q-gratuito" value="0" onfocus="this.select()"></div>
             </div>
-
             <div class="group-actions">
                 <button id="btn-save-ingressi" class="btn btn-primary" style="height:44px; min-width:100px" onclick="saveIngressi()">SALVA</button>
             </div>
@@ -310,14 +311,31 @@
     <div class="control-bar" id="cb-vasca">
         <div class="cb-header"><span class="cb-title" id="title-vasca">Registrazione Valori Vasca</span><button class="btn btn-danger hidden" id="cancel-vasca" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditVasca()">Annulla Modifica</button></div>
         <div class="cb-row">
-            <div class="group-ctx" style="flex:0.6"><div class="inp-field"><label>Data</label><input type="date" id="v-date"></div><div class="inp-field"><label>Orario</label><input type="time" id="v-time"></div></div>
-            <div class="group-chem"><div class="t-box"><label>BAGNANTI</label><input type="number" id="v-bag" value="0"></div><div class="t-box"><label>T. ARIA</label><input type="number" step="0.1" id="v-ta" value="0"></div><div class="t-box"><label>T. H2O</label><input type="number" step="0.1" id="v-th" value="0"></div><div class="t-box"><label>pH</label><input type="number" step="0.1" id="v-ph" value="0"></div><div class="t-box"><label>CL LIB.</label><input type="number" step="0.1" id="v-cll" value="0" oninput="calcClTot()"></div><div class="t-box"><label>CL COMB.</label><input type="number" step="0.1" id="v-clc" value="0" oninput="calcClTot()"></div><div class="t-box"><label>CL TOT.</label><input type="number" step="0.1" id="v-clt" value="0"></div></div>
+            <div class="group-ctx" style="flex:1.2; align-items:flex-end; gap:10px">
+                <div class="inp-field" style="flex:1"><label>Data</label><input type="date" id="v-date"></div>
+                <div class="inp-field" style="flex:0.8"><label>Orario</label><input type="time" id="v-time"></div>
+                <div class="inp-field" style="flex:1.2"><label>Vasca</label>
+                    <select id="v-type">
+                        <option value="interna">🏠 Interna</option>
+                        <option value="esterna">☀️ Esterna</option>
+                    </select>
+                </div>
+            </div>
+            <div class="group-chem" style="flex:2">
+                <div class="t-box"><label>BAGNANTI</label><input type="number" id="v-bag" value="0"></div>
+                <div class="t-box"><label>T. ARIA</label><input type="number" step="0.1" id="v-ta" value="0"></div>
+                <div class="t-box"><label>T. H2O</label><input type="number" step="0.1" id="v-th" value="0"></div>
+                <div class="t-box"><label>pH</label><input type="number" step="0.1" id="v-ph" value="0"></div>
+                <div class="t-box"><label>CL LIB.</label><input type="number" step="0.1" id="v-cll" value="0" oninput="calcClTot()"></div>
+                <div class="t-box"><label>CL COMB.</label><input type="number" step="0.1" id="v-clc" value="0" oninput="calcClTot()"></div>
+                <div class="t-box"><label>CL TOT.</label><input type="number" step="0.1" id="v-clt" value="0"></div>
+            </div>
             <div class="group-actions"><button id="btn-save-vasca" class="btn btn-primary" style="height:44px; min-width:120px" onclick="saveVasca()">SALVA</button></div>
         </div>
     </div>
     <div class="scroll-area">
         <h2 class="page-title">💧 Diario Vasca</h2>
-        <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-vasca"><thead><tr><th>Data</th><th>Ora</th><th>Bagnanti</th><th>T. Aria</th><th>T. Acqua</th><th>pH</th><th>Cl Lib</th><th>Cl Comb</th><th>Cl Tot</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-vasca"></tbody></table></div></div>
+        <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-vasca"><thead><tr><th>Data</th><th>Ora / Vasca</th><th>Bagnanti</th><th>T. Aria</th><th>T. Acqua</th><th>pH</th><th>Cl Lib</th><th>Cl Comb</th><th>Cl Tot</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-vasca"></tbody></table></div></div>
     </div>
 </div>
 
@@ -617,6 +635,7 @@ function renderOverviewKPI() {
 
     document.getElementById('ov-avg').innerText = daysCurrent > 0 ? (totalCurrent/daysCurrent).toFixed(0) : 0;
     
+    // FIX: Compare up to the same day number
     const maxDay = today.getDate();
     const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
     const ym_year = ym.getFullYear();
@@ -725,16 +744,20 @@ window.renderStats = () => {
         yearMain = startDate.getFullYear(); 
     }
 
+    // STRICT STRING FILTERING TO AVOID TIMEZONE ISSUES
+    const startStr = getStrDate(startDate);
+    const endStr = getStrDate(endDate);
+
     const filteredSource = dataIngressi.filter(d => {
         if(d.excludeStats) return false;
-        const dDate = new Date(d.date);
-        const dYear = dDate.getFullYear(); // STRING/NUMBER MATCH
         
-        // FIX: Timezone-safe filtering
-        if(mode === 'year') {
-            if (yearCompVal !== 'avg' && dYear !== yearMain && dYear !== parseInt(yearCompVal)) return false;
+        // Manual date check string vs string
+        if(mode === 'custom') {
+           // We'll filter later for main vs comp, but general filters apply
         } else {
-            // In custom mode we need broad range then specific checks
+            // mode year: filter strictly by year string
+            // Main Year OR Comp Year logic handled inside loops, 
+            // but we can pre-filter Pool/DayType here
         }
 
         const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
@@ -751,8 +774,8 @@ window.renderStats = () => {
         dataMap[d.date].push(d);
     });
 
+    // BUILD MAIN DATASET
     let fMain = [];
-    // Populate fMain using string keys
     for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
         const k = getStrDate(d);
         if(dataMap[k]) fMain = fMain.concat(dataMap[k]);
@@ -761,7 +784,6 @@ window.renderStats = () => {
     document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
     if(!isChartReady()) return;
 
-    // COLOR LOGIC
     const isBar = chartType === 'bar';
     const bgMain = isBar ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
     const bgComp = isBar ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
@@ -788,7 +810,7 @@ window.renderStats = () => {
             for(let m=0; m<12; m++) {
                 let sum=0, count=0;
                 
-                // DATA LIMITER LOGIC FOR CURRENT MONTH
+                // PARTIAL MONTH LOGIC APPLIED TO STATS
                 const limitDay = (isCurrentYear && m === currentMonth) ? currentDay : 32;
 
                 if(yearCompVal === 'avg') {
@@ -813,6 +835,7 @@ window.renderStats = () => {
         }
     } else {
         const days = [];
+        // Re-loop for labels to ensure reset
         for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
             days.push(new Date(d));
             labels.push(d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}));
@@ -827,8 +850,6 @@ window.renderStats = () => {
 
         if(yearCompVal !== 'none') {
             compLabel = yearCompVal === 'avg' ? 'Media Storica' : `Anno ${yearCompVal}`;
-            
-            // Build Historical Map for Comparison
             const histMap = {}; 
             filteredSource.forEach(d => {
                 const dDate = new Date(d.date);
@@ -965,9 +986,17 @@ function renderVasca() {
             const phStyle = phAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : 'font-weight:600';
             const clVal = parseFloat(d.cll); const clAlert = (clVal < 0.8 || clVal > 1.7);
             const clStyle = clAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : '';
+            
+            // POOL TYPE LOGIC
+            const typeLabel = d.type === 'esterna' ? '<span class="badge badge-summer">☀️ Esterna</span>' : '<span class="badge badge-std">🏠 Interna</span>';
+            
             t.innerHTML+=`<tr style="${b}">
                 ${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} 
-                <td style="font-weight:700;color:#2563eb">${d.time}</td><td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td>
+                <td>
+                    <div style="font-weight:700;color:#2563eb">${d.time}</div>
+                    <div style="margin-top:2px">${typeLabel}</div>
+                </td>
+                <td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td>
                 <td style="${phStyle}">${d.ph}</td><td style="${clStyle}">${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> 
                 <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; 
         }); 
