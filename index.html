@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Energy Intelligence</title>
+<title>Facility Suite V94 - Water KPI Fix</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -1128,7 +1128,7 @@ window.renderUtenze = () => {
     const maxDay = isCurrentRealMonth ? realToday.getDate() : 32; 
 
     let sumElec = { curr: 0, prev: 0, currMeteo: {sun:0, tot:0}, prevMeteo: {sun:0, tot:0} };
-    let sumWater = { curr: 0, prev: 0 }; // We will need bagnanti data here? No, let's keep it simple
+    let sumWater = { curr: 0, prev: 0, currBag: {sum:0, count:0}, prevBag: {sum:0, count:0} };
     let sumGas = { curr: 0, prev: 0, currTemp: [], prevTemp: [] };
 
     Object.keys(deltas).forEach(dateStr => {
@@ -1148,6 +1148,10 @@ window.renderUtenze = () => {
                         if(gData.elec.meteo.includes('Sole')) sumElec.currMeteo.sun++;
                     }
                     if(gData.gas && gData.gas.temp) sumGas.currTemp.push(gData.gas.temp);
+                    
+                    // Bagnanti Data Integration
+                    const dayBag = dataIngressi.find(x => x.date === dateStr);
+                    if(dayBag) { sumWater.currBag.sum += dayBag.totale || 0; sumWater.currBag.count++; }
 
                 } else if(d.getFullYear() === prevYear) {
                     sumElec.prev += deltas[dateStr].elec || 0;
@@ -1160,6 +1164,10 @@ window.renderUtenze = () => {
                         if(gData.elec.meteo.includes('Sole')) sumElec.prevMeteo.sun++;
                     }
                     if(gData.gas && gData.gas.temp) sumGas.prevTemp.push(gData.gas.temp);
+                    
+                    // Bagnanti Data Integration Prev
+                    const dayBag = dataIngressi.find(x => x.date === dateStr);
+                    if(dayBag) { sumWater.prevBag.sum += dayBag.totale || 0; sumWater.prevBag.count++; }
                 }
             }
         }
@@ -1174,6 +1182,11 @@ window.renderUtenze = () => {
     const getTempStr = () => {
         const avg = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : '-';
         return `Temp Media: <b>${avg(sumGas.currTemp)}°C</b> (vs ${avg(sumGas.prevTemp)}°C)`;
+    };
+    const getBagStr = () => {
+        const avgC = sumWater.currBag.count ? (sumWater.currBag.sum / sumWater.currBag.count).toFixed(0) : 0;
+        const avgP = sumWater.prevBag.count ? (sumWater.prevBag.sum / sumWater.prevBag.count).toFixed(0) : 0;
+        return `Media Bagnanti: <b>${avgC}</b> (vs ${avgP})`;
     };
 
     const updateKpi = (type, valCurr, valPrev, unit, contextHtml) => {
@@ -1195,7 +1208,7 @@ window.renderUtenze = () => {
     };
 
     updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh', getMeteoStr());
-    updateKpi('water', sumWater.curr, sumWater.prev, 'm³', '');
+    updateKpi('water', sumWater.curr, sumWater.prev, 'm³', getBagStr());
     updateKpi('gas', sumGas.curr, sumGas.prev, 'm³', getTempStr());
 
     // Chart Logic remains unchanged...
@@ -1284,8 +1297,6 @@ window.renderUtenze = () => {
     });
     t.innerHTML = rowsBuffer.join('');
 };
-
-window.renderUtenzeKPI = () => { renderUtenze(); }; // Hook for the month selector
 
 window.resetUtenzeHistory = () => {
     document.getElementById('u-hist-start').value = "";
