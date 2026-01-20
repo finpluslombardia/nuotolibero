@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Water KPI Fix</title>
+<title>Facility Suite V94 - Multi Compare</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -61,6 +61,16 @@
     .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
     .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; border: 1px solid rgba(0,0,0,0.1) !important; }
     
+    /* MULTI SELECT CUSTOM */
+    .ms-container { position: relative; }
+    .ms-btn { width: 100%; height: 44px; background: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.8); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #64748b; }
+    .ms-dropdown { position: absolute; top: 105%; left: 0; width: 220px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.6); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); padding: 8px; z-index: 100; display: none; max-height: 250px; overflow-y: auto; }
+    .ms-dropdown.show { display: block; }
+    .ms-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background 0.1s; }
+    .ms-option:hover { background: #f1f5f9; }
+    .ms-option input { width: 16px; height: 16px; accent-color: var(--primary); }
+    .ms-option span { font-size: 0.85rem; color: var(--text-main); font-weight: 500; }
+
     /* GRUPPI DEL LAYOUT INGRESSI */
     .group-ctx { display: flex; gap: 10px; flex: 1.6; align-items: flex-end; min-width: 0; }
     .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.35); padding: 5px 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
@@ -254,10 +264,15 @@
                         <div class="inp-field" style="width:130px"><label>Al</label><input type="date" id="stat-date-end"></div>
                         <button class="btn btn-primary" onclick="renderStats()" style="height:44px; padding:0 15px; font-size:1.1rem" title="Applica Filtro">🔎</button>
                     </div>
-                    <div class="inp-field" style="width:150px">
+                    
+                    <div class="inp-field" style="width:180px; position:relative">
                         <label>Confronta con</label>
-                        <select id="stat-compare-year" onchange="renderStats()" style="font-weight:700; color:#64748b"></select>
+                        <div class="ms-container" id="ms-compare">
+                            <div class="ms-btn" onclick="toggleMsDropdown()">Seleziona... ▼</div>
+                            <div class="ms-dropdown" id="ms-compare-list"></div>
+                        </div>
                     </div>
+
                     <div class="inp-field" style="width:140px">
                         <label>Vasca</label>
                         <select id="stat-pool-filter" onchange="renderStats()" style="font-weight:700">
@@ -571,20 +586,29 @@ window.populateStatFilters = () => {
     if(!dataIngressi.length) return;
     const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
     const yearSel = document.getElementById('stat-year');
-    const compSel = document.getElementById('stat-compare-year');
-    const currYear = yearSel.value;
-    const currComp = compSel.value;
-    yearSel.innerHTML = "";
-    compSel.innerHTML = '<option value="avg" selected>📊 Media Storica</option><option value="none">Nessuno</option>';
+    // Multi-Select Logic (Replacing <select>)
+    const msList = document.getElementById('ms-compare-list');
+    msList.innerHTML = `<div class="ms-option"><input type="checkbox" value="avg" checked onchange="renderStats()"><span>📊 Media Storica</span></div>`;
     years.forEach(y => {
-        yearSel.innerHTML += `<option value="${y}">${y}</option>`;
-        compSel.innerHTML += `<option value="${y}">${y}</option>`;
+        msList.innerHTML += `<div class="ms-option"><input type="checkbox" value="${y}" onchange="renderStats()"><span>${y}</span></div>`;
     });
+
+    const currYear = yearSel.value;
     const todayYear = new Date().getFullYear();
-    yearSel.value = currYear && years.includes(parseInt(currYear)) ? currYear : (years.includes(todayYear) ? todayYear : years[0]);
-    if(currComp && (currComp === 'avg' || currComp === 'none' || years.includes(parseInt(currComp)))) { compSel.value = currComp; } else { compSel.value = 'avg'; }
+    if(!currYear) yearSel.value = years.includes(todayYear) ? todayYear : years[0];
     renderStats();
 };
+
+window.toggleMsDropdown = () => {
+    document.getElementById('ms-compare-list').classList.toggle('show');
+};
+
+// Close dropdown when clicking outside
+window.addEventListener('click', (e) => {
+    if (!e.target.closest('.ms-container')) {
+        document.getElementById('ms-compare-list').classList.remove('show');
+    }
+});
 
 window.toggleStatMode = () => {
     const mode = document.getElementById('stat-mode').value;
@@ -749,10 +773,20 @@ const getFasciaColor = (f) => {
     return map[f] || "#94a3b8";
 };
 
+// HELPERS FOR MULTI COMPARE COLORS
+const getCompColor = (idx) => {
+    const colors = ['#94a3b8', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+    return colors[idx % colors.length];
+};
+
 window.renderStats = () => {
     if(!dataIngressi.length) return;
     const mode = document.getElementById('stat-mode').value;
-    const yearCompVal = document.getElementById('stat-compare-year').value;
+    
+    // GET SELECTED COMPARISONS
+    const compInputs = document.querySelectorAll('#ms-compare-list input:checked');
+    const selectedComps = Array.from(compInputs).map(i => i.value);
+
     const poolFilter = document.getElementById('stat-pool-filter').value;
     const dayTypeFilter = document.getElementById('day-type-filter').value;
     const chartType = document.getElementById('stat-chart-type').value;
@@ -774,15 +808,6 @@ window.renderStats = () => {
     const filteredSource = dataIngressi.filter(d => {
         if(d.excludeStats) return false;
         
-        // Manual date check string vs string
-        if(mode === 'custom') {
-           // We'll filter later for main vs comp, but general filters apply
-        } else {
-            // mode year: filter strictly by year string
-            // Main Year OR Comp Year logic handled inside loops, 
-            // but we can pre-filter Pool/DayType here
-        }
-
         const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
         if(poolFilter === 'indoor' && isOutdoor) return false;
         if(poolFilter === 'outdoor' && !isOutdoor) return false;
@@ -807,16 +832,14 @@ window.renderStats = () => {
     document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
     if(!isChartReady()) return;
 
+    // COLOR LOGIC
     const isBar = chartType === 'bar';
     const bgMain = isBar ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
-    const bgComp = isBar ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
 
     // --- CHART YOY ---
     let labels = [];
     let mainData = [];
-    let compData = [];
-    let compLabel = '';
-
+    
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentDay = today.getDate();
@@ -827,16 +850,35 @@ window.renderStats = () => {
         mainData = new Array(12).fill(0);
         fMain.forEach(d => { mainData[new Date(d.date).getMonth()] += d.totale; });
         document.getElementById('yoy-title').innerText = `Andamento Stagionale (${yearMain})`;
+    } else {
+        const days = [];
+        for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
+            days.push(new Date(d));
+            labels.push(d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}));
+        }
+        days.forEach(d => {
+            const k = getStrDate(d);
+            const val = dataMap[k] ? dataMap[k].reduce((a,b)=>a+b.totale, 0) : 0;
+            mainData.push(val);
+        });
+        document.getElementById('yoy-title').innerText = `Andamento Periodo (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`;
+    }
 
-        if(yearCompVal !== 'none') {
-            compLabel = yearCompVal === 'avg' ? 'Media Storica' : `Anno ${yearCompVal}`;
+    const datasets = [{ label: mode==='year' ? `Anno ${yearMain}` : 'Periodo Selezionato', data: mainData, borderColor: '#2563eb', backgroundColor: bgMain, tension: 0.4, fill: true }];
+
+    // LOOP THROUGH COMPARISONS
+    selectedComps.forEach((compVal, idx) => {
+        let compData = [];
+        let compLabel = compVal === 'avg' ? 'Media Storica' : `Anno ${compVal}`;
+        let col = getCompColor(idx);
+        let bgCol = isBar ? col : (col + '20'); // Light opacity for line fill
+
+        if(mode === 'year') {
             for(let m=0; m<12; m++) {
                 let sum=0, count=0;
-                
-                // PARTIAL MONTH LOGIC APPLIED TO STATS
                 const limitDay = (isCurrentYear && m === currentMonth) ? currentDay : 32;
 
-                if(yearCompVal === 'avg') {
+                if(compVal === 'avg') {
                     const allYears = [...new Set(filteredSource.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== yearMain);
                     allYears.forEach(y => {
                         const val = filteredSource.filter(d => {
@@ -846,7 +888,7 @@ window.renderStats = () => {
                         if(val > 0) { sum += val; count++; }
                     });
                 } else {
-                    const y = parseInt(yearCompVal);
+                    const y = parseInt(compVal);
                     sum = filteredSource.filter(d => {
                         const dd = new Date(d.date);
                         return dd.getFullYear() === y && dd.getMonth() === m && dd.getDate() <= limitDay;
@@ -855,24 +897,16 @@ window.renderStats = () => {
                 }
                 compData.push(count>0 ? sum/count : 0);
             }
-        }
-    } else {
-        const days = [];
-        // Re-loop for labels to ensure reset
-        for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
-            days.push(new Date(d));
-            labels.push(d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}));
-        }
-        
-        days.forEach(d => {
-            const k = getStrDate(d);
-            const val = dataMap[k] ? dataMap[k].reduce((a,b)=>a+b.totale, 0) : 0;
-            mainData.push(val);
-        });
-        document.getElementById('yoy-title').innerText = `Andamento Periodo (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`;
+        } else {
+            // CUSTOM RANGE LOGIC
+            // ... (Same logic as before but inside loop) ...
+            // Simplified: Custom Range Compare only works well with 'avg' or 1 year due to X-Axis matching issues if years differ.
+            // For multi-year custom range, we just align by Month-Day.
+            
+            const days = [];
+            for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) days.push(new Date(d));
 
-        if(yearCompVal !== 'none') {
-            compLabel = yearCompVal === 'avg' ? 'Media Storica' : `Anno ${yearCompVal}`;
+            // Build Hist Map
             const histMap = {}; 
             filteredSource.forEach(d => {
                 const dDate = new Date(d.date);
@@ -887,7 +921,7 @@ window.renderStats = () => {
                 const day = d.getDate();
                 const k = `${month}-${day}`;
                 
-                if(yearCompVal === 'avg') {
+                if(compVal === 'avg') {
                     let sum = 0, count = 0;
                     if(histMap[k]) {
                         const yearsInDay = [...new Set(histMap[k].map(x=>new Date(x.date).getFullYear()))];
@@ -898,7 +932,7 @@ window.renderStats = () => {
                     }
                     compData.push(count>0 ? sum/count : 0);
                 } else {
-                    const y = parseInt(yearCompVal);
+                    const y = parseInt(compVal);
                     const val = filteredSource.filter(x => {
                         const xd = new Date(x.date);
                         return xd.getFullYear() === y && xd.getMonth() === month && xd.getDate() === day;
@@ -907,13 +941,20 @@ window.renderStats = () => {
                 }
             });
         }
-    }
 
-    const mainDatasets = [{ label: mode==='year' ? `Anno ${yearMain}` : 'Periodo Selezionato', data: mainData, borderColor: '#2563eb', backgroundColor: bgMain, tension: 0.4, fill: true }];
-    if(yearCompVal !== 'none') {
-        mainDatasets.push({ label: compLabel, data: compData, borderColor: '#94a3b8', backgroundColor: bgComp, borderDash: [5,5], fill: false, tension:0.4 });
-    }
-    renderDynamicChart('chartYoY', labels, mainDatasets, chartType);
+        datasets.push({
+            label: compLabel,
+            data: compData,
+            borderColor: col,
+            backgroundColor: isBar ? col : 'transparent', // Bars = Solid color, Lines = No Fill
+            borderDash: isBar ? [] : [5,5],
+            fill: false,
+            tension: 0.4
+        });
+    });
+
+    renderDynamicChart('chartYoY', labels, datasets, chartType);
+
 
     // --- WEEKLY CHART ---
     const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
@@ -937,26 +978,27 @@ window.renderStats = () => {
             };
         });
 
-        if(yearCompVal !== 'none') {
+        // Add Comparisons as side-by-side bars (each in its own stack group)
+        selectedComps.forEach((compVal, idx) => {
             let compSet = [];
-            if(yearCompVal === 'avg') {
+            if(compVal === 'avg') {
                  compSet = filteredSource.filter(d => new Date(d.date).getFullYear() !== yearMain);
             } else {
-                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() === parseInt(yearCompVal));
+                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() === parseInt(compVal));
             }
             const compDataWeekly = weekLabels.map((_, i) => {
                 let subset = compSet.filter(d => new Date(d.date).getDay() === getJsDay(i));
                 return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
             });
+            
             weekDatasets.push({
-                label: compLabel + ' (Totale)',
+                label: (compVal === 'avg' ? 'Media' : compVal) + ' (Tot)',
                 data: compDataWeekly,
-                type: 'bar', 
-                backgroundColor: '#cbd5e1', 
-                stack: 'comp', 
-                order: 1
+                backgroundColor: getCompColor(idx),
+                stack: 'comp'+idx
             });
-        }
+        });
+
     } else {
         const calcWeekly = (dataset) => {
             return weekLabels.map((_, i) => {
@@ -965,19 +1007,27 @@ window.renderStats = () => {
             });
         };
         weekDatasets = [{ label: `Media Selezionata`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true }];
-        if(yearCompVal !== 'none') {
+        
+        selectedComps.forEach((compVal, idx) => {
             let compSet = [];
-            if(yearCompVal === 'avg') {
+            if(compVal === 'avg') {
                  compSet = filteredSource.filter(d => new Date(d.date).getFullYear() !== yearMain);
             } else {
-                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() === parseInt(yearCompVal));
+                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() === parseInt(compVal));
             }
-            weekDatasets.push({ label: compLabel, data: calcWeekly(compSet), borderColor: '#94a3b8', borderDash: [5,5], fill: false });
-        }
+            weekDatasets.push({
+                label: compVal === 'avg' ? 'Media' : compVal,
+                data: calcWeekly(compSet),
+                borderColor: getCompColor(idx),
+                borderDash: [5,5],
+                fill: false
+            });
+        });
     }
     
     renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType, isStacked);
 
+    // ... Pie & MultiBar logic remains same ...
     let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
     fMain.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
     renderPie('chartPie', Object.keys(t), Object.values(t));
@@ -1257,20 +1307,8 @@ window.renderUtenze = () => {
     renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd'), chartType);
     renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5'), chartType);
 
-    const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse();
-    
-    // HISTORY FILTER LOGIC
-    const histStart = document.getElementById('u-hist-start').value;
-    const histEnd = document.getElementById('u-hist-end').value;
-    const histSort = document.getElementById('u-hist-sort').value;
-
-    let filteredDates = [...datesDesc];
-    if(histStart) filteredDates = filteredDates.filter(d => d >= histStart);
-    if(histEnd) filteredDates = filteredDates.filter(d => d <= histEnd);
-    if(histSort === 'asc') filteredDates.reverse();
-
-    const rowsBuffer = [];
-    filteredDates.forEach(date => {
+    const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse(); const rowsBuffer = [];
+    datesDesc.forEach(date => {
         const g = grouped[date]; const d = deltas[date];
         const makeCell = (obj, deltaVal, color, suffix='') => {
             if(!obj) return '<span style="color:#ccc">-</span>';
