@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>Facility Suite V94 - Final Init Fix</title>
+<title>Facility Suite V94 - Final Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
@@ -242,7 +242,10 @@
                 <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub" id="ov-forecast-sub">proiezione</div></div>
             </div>
             <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec. (Intelligente)</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
-            <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Andamento Ultimi 12 Mesi vs Anno Prec.</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
+            <div class="charts-row-split" style="margin-top:25px">
+                <div class="chart-card glass-card"><div class="chart-header">Ultimi 3 Mesi (90 gg)</div><div class="chart-wrapper"><canvas id="chartRecent90"></canvas></div></div>
+                <div class="chart-card glass-card"><div class="chart-header">Ultimi 12 Mesi</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
+            </div>
         </div>
 
         <div id="sub-stats" class="hidden">
@@ -578,7 +581,7 @@ function startListening() {
         // IMPORTANT: Listeners must populate data arrays before calling init functions
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(2000)), (snap) => { 
             dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); 
-            populateStatFilters(); // Trigger filters ONLY after data arrives
+            populateStatFilters(); 
             refreshCurrentView();
             if(dataUtenze.length > 0) renderUtenze(); // Re-render Utenze if ingressi arrive later
         });
@@ -602,10 +605,7 @@ function startListening() {
 
 window.populateStatFilters = () => {
     if(!dataIngressi || dataIngressi.length === 0) return;
-    
-    // Extract unique years from data
-    const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort((a,b) => b - a); // Sort Descending
-    
+    const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
     const yearSel = document.getElementById('stat-year');
     // Multi-Select Logic
     const msList = document.getElementById('ms-compare-list');
@@ -801,6 +801,7 @@ window.renderOverviewCharts = () => {
         l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
     
+    // COLOR LOGIC FIX:
     const bgMain = chartType === 'bar' ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
     const bgComp = chartType === 'bar' ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
 
@@ -808,6 +809,24 @@ window.renderOverviewCharts = () => {
         {label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},
         {label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}
     ], chartType);
+    
+    // 90 DAYS CHART
+    const dates90=[], l90=[], l90_prev=[];
+    for(let i=89; i>=0; i--) {
+        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
+        dates90.push(`${dt.getDate()}/${dt.getMonth()+1}`);
+        const dtPrev = getDataConfronto(dt);
+        const dtPrevStr = getStrDate(dtPrev);
+        const valOggi = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0);
+        l90.push({ x: dates90[dates90.length-1], y: valOggi, refDate: dtPrevStr });
+        l90_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
+    }
+    renderDynamicChart('chartRecent90', dates90, [
+        {label:'Ultimi 90gg', data:l90, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},
+        {label:'Anno Prec.', data:l90_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}
+    ], chartType);
+
+
     const m12=[], m12_prev=[], m_labels=[];
     for(let i=11; i>=0; i--) {
         const d=new Date(today.getFullYear(), today.getMonth()-i, 1); m_labels.push(d.toLocaleString('it-IT',{month:'short'}));
@@ -1001,7 +1020,7 @@ window.renderStats = () => {
             borderColor: col,
             backgroundColor: bgCol,
             borderDash: isBar ? [] : [5,5],
-            fill: false,
+            fill: false, // Ensure no fill for comparison lines
             tension: 0.4
         });
     });
