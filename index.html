@@ -1373,7 +1373,7 @@ window.renderUtenze = () => {
 
     const elecData = prepareChartData('⚡ Elettricità'); const waterData = prepareChartData('💧 Acqua'); const gasData = prepareChartData('🔥 Gas Metano');
     function makeDatasets(mainData, historyData, colorMain, colorHist) {
-        const ds = [{ label: isDelta ? 'Consumo' : 'Lettura', data: isDelta ? mainData.dataDelta : mainData.dataTotal, borderColor: colorMain, backgroundColor: colorMain, fill: true, tension: 0.3, order: 1, type: isDelta ? 'bar' : 'line' }];
+        const ds = [{ label: isDelta ? 'Consumo' : 'Lettura', data: isDelta ? mainData.dataDelta : mainData.dataTotal, borderColor: colorMain, backgroundColor: colorMain, fill: false, tension: 0.3, order: 1, type: isDelta ? 'bar' : 'line' }];
         if(showHistory) {
             ds.push({ label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, borderColor: colorHist, backgroundColor: isDelta ? colorHist : 'transparent', borderDash: isDelta ? [] : [4,4], borderWidth: isDelta ? 0 : 2, pointRadius: isDelta ? 0 : 2, type: isDelta ? 'bar' : 'line', order: 2, fill: false, tension: 0.3 });
         }
