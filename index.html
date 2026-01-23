@@ -666,20 +666,10 @@ window.toggleStatMode = () => {
 };
 
 let ch={};
-function renderDynamicChart(id, labels, datasets, type, optionsOrStacked = false) {
+function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
     if(!isChartReady()) return;
     if(ch[id]) ch[id].destroy();
     
-    let isStacked = false;
-    let extraOptions = {};
-
-    if (typeof optionsOrStacked === 'boolean') {
-        isStacked = optionsOrStacked;
-    } else if (typeof optionsOrStacked === 'object' && optionsOrStacked !== null) {
-        extraOptions = optionsOrStacked;
-        // Se extraOptions contiene info su stacked, potremmo gestirlo, ma per ora assumiamo false se non specificato
-    }
-
     const scalesConfig = { 
         y: { beginAtZero: type==='bar', stacked: isStacked },
         x: { stacked: isStacked }
@@ -697,50 +687,41 @@ function renderDynamicChart(id, labels, datasets, type, optionsOrStacked = false
         parsing: { yAxisKey: 'y' }
     }));
 
-    const options = {
-        animation: false,
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-            legend: { display: true },
-            tooltip: {
-                backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                padding: 12,
-                cornerRadius: 8,
-                titleFont: { size: 13 },
-                bodyFont: { size: 13, weight: 'bold' },
-                callbacks: {
-                    afterBody: function(context) {
-                        const punto = context.find(c => c.raw);
-                        if(!punto) return [];
-                        if (punto.raw.refDate) {
-                            const dRef = new Date(punto.raw.refDate);
-                            const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-                            return ['', '------------------', `Confrontato con:\n${dStr}`];
+    ch[id] = new Chart(document.getElementById(id), {
+        type: type,
+        data: { labels: labels, datasets: optimizedDatasets },
+        options: {
+            animation: false,
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 13, weight: 'bold' },
+                    callbacks: {
+                        afterBody: function(context) {
+                            const punto = context.find(c => c.raw);
+                            if(!punto) return [];
+                            if (punto.raw.refDate) {
+                                const dRef = new Date(punto.raw.refDate);
+                                const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                                return ['', '------------------', `Confrontato con:\n${dStr}`];
+                            }
+                            if (punto.raw.extraInfo) return ['', `📝 ${punto.raw.extraInfo}`];
+                            return [];
                         }
-                        if (punto.raw.extraInfo) return ['', `📝 ${punto.raw.extraInfo}`];
-                        if (punto.raw.count) return ['', `Giorni rilevati: ${punto.raw.count}`, `Media: ${punto.y}`];
-                        return [];
                     }
                 }
-            }
-        },
-        layout: { padding: 25 },
-        scales: scalesConfig
-    };
-
-    // Merge manuale profondo per scales se presente in extraOptions
-    if(extraOptions) {
-        if(extraOptions.scales) {
-            options.scales = { ...options.scales, ...extraOptions.scales };
-            delete extraOptions.scales; // Rimuovi per non sovrascrivere brutalmente col resto
+            },
+            layout: { padding: 25 },
+            scales: scalesConfig
         }
-        // Merge del resto delle opzioni
-        Object.assign(options, extraOptions);
-    }
-
-    ch[id] = new Chart(document.getElementById(id), { type, data: { labels, datasets: optimizedDatasets }, options });
+    });
 }
 function renderPie(id,l,d) { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#f59e0b','#ef4444'],borderWidth:0}]},options:{animation:false, responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
 function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:ds},options:{animation:false, responsive:true,maintainAspectRatio:false,indexAxis:ax,plugins:{legend:{display:true}}}}); }
@@ -821,11 +802,11 @@ window.renderOverviewCharts = () => {
         l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
     
-    const bgMain = chartType === 'bar' ? '#2563eb' : 'transparent';
-    const bgComp = chartType === 'bar' ? '#cbd5e1' : 'transparent';
+    const bgMain = chartType === 'bar' ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
+    const bgComp = chartType === 'bar' ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
 
     renderDynamicChart('chartRecent30', dates, [
-        {label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', backgroundColor:bgMain, fill: chartType === 'bar'},
+        {label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},
         {label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}
     ], chartType);
     
@@ -841,7 +822,7 @@ window.renderOverviewCharts = () => {
         l90_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
     renderDynamicChart('chartRecent90', dates90, [
-        {label:'Ultimi 90gg', data:l90, borderColor:'#2563eb', backgroundColor:bgMain, fill: chartType === 'bar'},
+        {label:'Ultimi 90gg', data:l90, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},
         {label:'Anno Prec.', data:l90_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}
     ], chartType);
 
@@ -852,7 +833,7 @@ window.renderOverviewCharts = () => {
         m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear() && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
         m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1) && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
     }
-    renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', backgroundColor:bgMain, fill: chartType === 'bar'},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}], chartType);
+    renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}], chartType);
 }
 
 // HELPERS FOR MULTI COMPARE COLORS
@@ -926,7 +907,7 @@ window.renderStats = () => {
 
     // COLOR LOGIC
     const isBar = chartType === 'bar';
-    const bgMain = isBar ? '#2563eb' : 'transparent';
+    const bgMain = isBar ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
 
     // --- CHART YOY ---
     let labels = [];
@@ -956,7 +937,7 @@ window.renderStats = () => {
         document.getElementById('yoy-title').innerText = `Andamento Periodo (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`;
     }
 
-    const datasets = [{ label: mode==='year' ? `Anno ${yearMain}` : 'Periodo Selezionato', data: mainData, borderColor: '#2563eb', backgroundColor: bgMain, tension: 0.4, fill: isBar }];
+    const datasets = [{ label: mode==='year' ? `Anno ${yearMain}` : 'Periodo Selezionato', data: mainData, borderColor: '#2563eb', backgroundColor: bgMain, tension: 0.4, fill: true }];
 
     // LOOP THROUGH COMPARISONS
     selectedComps.forEach((compVal, idx) => {
@@ -1094,7 +1075,7 @@ window.renderStats = () => {
                 return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
             });
         };
-        weekDatasets = [{ label: `Media Selezionata`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: 'transparent', fill: false }];
+        weekDatasets = [{ label: `Media Selezionata`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true }];
         
         selectedComps.forEach((compVal, idx) => {
             let compSet = [];
@@ -1120,37 +1101,17 @@ window.renderStats = () => {
     fMain.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
     renderPie('chartPie', Object.keys(t), Object.values(t));
 
-    // IMPATTO METEO EVOLUTO (Media invece di Totale)
-    const meteoStats = {};
-    mainSet.forEach(d => { 
-        const k = d.meteo || 'N/D';
-        if(!meteoStats[k]) meteoStats[k] = { tot:0, count:0 };
-        meteoStats[k].tot += d.totale;
-        meteoStats[k].count++;
-    });
-    
-    const meteoLabels = Object.keys(meteoStats).sort();
-    // Mappa colori meteo
-    const meteoColors = meteoLabels.map(m => {
-        if(m.includes('Sole') || m.includes('Caldo')) return '#f59e0b'; // Arancio/Giallo
-        if(m.includes('Pioggia') || m.includes('Temporale') || m.includes('Neve')) return '#3b82f6'; // Blu
-        if(m.includes('Nuv') || m.includes('Coperto')) return '#64748b'; // Grigio
-        return '#8b5cf6'; // Default Viola
-    });
-
-    const meteoAvgData = meteoLabels.map(l => ({
-        x: l,
-        y: (meteoStats[l].tot / meteoStats[l].count).toFixed(0),
-        count: meteoStats[l].count // Per tooltip
-    }));
-
-    renderDynamicChart('chartMeteo', 'bar', meteoLabels, [{
-        label: 'Media Ingressi', 
-        data: meteoAvgData, 
-        backgroundColor: meteoColors,
-        barPercentage: 0.6
-    }]);
-
+    const buildMultiSeries = (extractor) => {
+        let allLabels = new Set(); fMain.forEach(d => allLabels.add(extractor(d).key));
+        let sortedL = Array.from(allLabels).sort();
+        let dp = sortedL.map(l => {
+            let subset = fMain.filter(d => extractor(d).key === l);
+            return subset.reduce((a,b)=>a+extractor(b).val,0);
+        });
+        return { labels: sortedL, datasets: [{ label: `Totale`, data: dp, backgroundColor: '#2563eb' }] };
+    };
+    const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}));
+    renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
     const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}));
     renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
 };
@@ -1380,9 +1341,6 @@ window.renderUtenze = () => {
     function prepareChartData(type) {
         const filteredDates = allDatesAsc.filter(d => d >= limitStr);
         const labels = [], dataTotal = [], dataDelta = [], dataHistoryTotal = [], dataHistoryDelta = [];
-        // Array per temperatura (solo per Gas)
-        const dataTemp = []; 
-
         const typeKey = type === '⚡ Elettricità' ? 'elec' : (type === '💧 Acqua' ? 'water' : 'gas');
         filteredDates.forEach((dateStr) => {
             const curr = grouped[dateStr];
@@ -1390,25 +1348,12 @@ window.renderUtenze = () => {
             const label = dateObj.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
             labels.push(label);
             let val = 0; let extra = "";
-            let tempVal = null; // Temp esterna
-
             if(typeKey === 'elec' && curr.elec) { val = curr.elec.val; extra = `Meteo: ${curr.elec.meteo||'N/D'}`; }
             if(typeKey === 'water' && curr.water) { val = curr.water.val; }
-            if(typeKey === 'gas' && curr.gas) { 
-                val = curr.gas.val; 
-                if(curr.gas.temp) {
-                    tempVal = curr.gas.temp;
-                    extra = `Temp: ${tempVal}°C`; 
-                }
-            }
-            
+            if(typeKey === 'gas' && curr.gas) { val = curr.gas.val; extra = curr.gas.temp ? `Temp: ${curr.gas.temp}°C` : ''; }
             dataTotal.push({ x: label, y: val, extraInfo: extra, rawDate: dateStr });
             const dVal = deltas[dateStr] ? deltas[dateStr][typeKey] : 0;
             dataDelta.push({ x: label, y: dVal, extraInfo: extra, rawDate: dateStr });
-            
-            // Push temp data (null se non esiste)
-            dataTemp.push(tempVal);
-
             if(showHistory) {
                 const dObj = new Date(dateStr); dObj.setFullYear(dObj.getFullYear() - 1); const prevYearStr = dObj.toISOString().split('T')[0];
                 let hVal = null;
@@ -1423,59 +1368,22 @@ window.renderUtenze = () => {
                 dataHistoryDelta.push(hDelta !== null ? { x: label, y: hDelta, refDate: prevYearStr } : null);
             }
         });
-        return { labels, dataTotal, dataDelta, dataHistoryTotal, dataHistoryDelta, dataTemp };
+        return { labels, dataTotal, dataDelta, dataHistoryTotal, dataHistoryDelta };
     }
 
     const elecData = prepareChartData('⚡ Elettricità'); const waterData = prepareChartData('💧 Acqua'); const gasData = prepareChartData('🔥 Gas Metano');
-    
-    function makeDatasets(mainData, historyData, colorMain, colorHist, addTempLine=false) {
-        const ds = [{ label: isDelta ? 'Consumo' : 'Lettura', data: isDelta ? mainData.dataDelta : mainData.dataTotal, borderColor: colorMain, backgroundColor: colorMain, fill: isDelta, tension: 0.3, order: 2, type: isDelta ? 'bar' : 'line', yAxisID: 'y' }];
-        
+    function makeDatasets(mainData, historyData, colorMain, colorHist) {
+        const ds = [{ label: isDelta ? 'Consumo' : 'Lettura', data: isDelta ? mainData.dataDelta : mainData.dataTotal, borderColor: colorMain, backgroundColor: colorMain, fill: true, tension: 0.3, order: 1, type: isDelta ? 'bar' : 'line' }];
         if(showHistory) {
-            ds.push({ label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, borderColor: colorHist, backgroundColor: isDelta ? colorHist : 'transparent', borderDash: isDelta ? [] : [4,4], borderWidth: isDelta ? 0 : 2, pointRadius: isDelta ? 0 : 2, type: isDelta ? 'bar' : 'line', order: 3, fill: false, tension: 0.3, yAxisID: 'y' });
-        }
-
-        // Add Temperature Line specifically for Gas chart
-        if(addTempLine && mainData.dataTemp.some(x => x !== null)) {
-            ds.push({
-                label: 'Temp. Esterna (°C)',
-                data: mainData.dataTemp,
-                borderColor: '#ef4444', // Rosso acceso
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                pointRadius: 2,
-                borderDash: [2, 2],
-                type: 'line',
-                order: 1,
-                yAxisID: 'y1', // Asse Secondario
-                tension: 0.4
-            });
+            ds.push({ label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, borderColor: colorHist, backgroundColor: isDelta ? colorHist : 'transparent', borderDash: isDelta ? [] : [4,4], borderWidth: isDelta ? 0 : 2, pointRadius: isDelta ? 0 : 2, type: isDelta ? 'bar' : 'line', order: 2, fill: false, tension: 0.3 });
         }
         return ds;
     }
-
     // Only render charts if their container is visible
     if (!document.getElementById('sub-u-charts').classList.contains('hidden')) {
         renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#fde047'), chartType);
         renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd'), chartType);
-        
-        // Configurazione speciale per il grafico GAS (doppio asse)
-        const gasOptions = {
-            scales: {
-                y: { beginAtZero: isDelta, position: 'left', title: {display:true, text: isDelta?'Consumo (m³)':'Lettura'} },
-                y1: { beginAtZero: false, position: 'right', grid: {drawOnChartArea: false}, title: {display:true, text: 'Temp (°C)'} } // Asse Temp
-            }
-        };
-        // Use custom logic to pass options since renderDynamicChart signature changed slightly in intent
-        const gasDS = makeDatasets(gasData, gasData, '#10b981', '#6ee7b7', true); // Uso verde per il Gas per staccare dal rosso della temp
-        
-        // Override render call specifically for Gas to pass extraOptions
-        const gasContainer = document.getElementById('chartGas');
-        if(ch['chartGas']) ch['chartGas'].destroy();
-        
-        // Manual instantiation for Gas to ensure options merge correctly if needed, or update renderDynamicChart signature
-        // Updating renderDynamicChart signature in the code block above to accept extraOptions
-        renderDynamicChart('chartGas', gasData.labels, gasDS, chartType, gasOptions); 
+        renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5'), chartType);
     }
 
     const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse();
@@ -1519,6 +1427,60 @@ window.renderUtenze = () => {
     t.innerHTML = rowsBuffer.join('');
 };
 
+window.resetUtenzeHistory = () => {
+    document.getElementById('u-hist-start').value = "";
+    document.getElementById('u-hist-end').value = "";
+    document.getElementById('u-hist-sort').value = "desc";
+    renderUtenze();
+};
+
+window.saveIngressi = async () => {
+    const d = document.getElementById('i-date').value; if(!d) return showToast("Data mancante","error");
+    // Removed all zero checks here
+    const p = { date:d, type:document.getElementById('i-type').value, fascia:document.getElementById('i-fascia').value, meteo:document.getElementById('i-meteo').value, excludeStats: document.getElementById('i-exclude').checked, int:parseInt(document.getElementById('q-intero').value)||0, rid:parseInt(document.getElementById('q-ridotto').value)||0, grat:parseInt(document.getElementById('q-gratuito').value)||0, abb_int:parseInt(document.getElementById('q-abb-int').value)||0, abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0 };
+    p.totale = p.int + p.rid + p.grat + p.abb_int + p.abb_rid;
+    
+    try {
+        if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), p); showToast("Aggiornato"); cancelEditIngressi(); } else { await addDoc(collection(db,"sessioni"), p); showToast("Salvato"); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; }
+    } catch(e){ showToast(e.message,"error"); }
+};
+window.editIngressi = (id) => { const d = dataIngressi.find(x=>x.id===id); if(!d) return; editIdIngressi = id; document.getElementById('i-date').value=d.date; document.getElementById('i-type').value=d.type||'standard'; document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo; document.getElementById('i-exclude').checked = d.excludeStats || false; document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid; document.getElementById('q-gratuito').value=d.grat; document.getElementById('q-abb-int').value=d.abb_int; document.getElementById('q-abb-rid').value=d.abb_rid; document.getElementById('title-ingressi').innerText="Modifica Ingressi"; document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; document.getElementById('btn-save-ingressi').style.background="#f59e0b"; document.getElementById('cancel-ingressi').classList.remove('hidden'); document.getElementById('cb-ingressi').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; };
+window.saveVasca = async () => { const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value; if(!date || !time) return showToast("Data/Ora mancanti","error"); const payload = { date, time, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value }; try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); } };
+window.editVasca = (id) => { const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id; document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time; document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta; document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph; document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc; document.getElementById('v-clt').value=d.clt; document.getElementById('title-vasca').innerText="Modifica Valori"; document.getElementById('btn-save-vasca').innerText="AGGIORNA"; document.getElementById('btn-save-vasca').style.background="#f59e0b"; document.getElementById('cancel-vasca').classList.remove('hidden'); document.getElementById('cb-vasca').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('title-vasca').innerText="Registrazione Valori"; document.getElementById('btn-save-vasca').innerText="SALVA"; document.getElementById('btn-save-vasca').style.background=""; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
+window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
+window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
+window.toggleExcludeStats = async (id, currentVal) => { try { await updateDoc(doc(db, "sessioni", id), { excludeStats: !currentVal }); showToast(!currentVal ? "Giorno escluso dalla media" : "Giorno reincluso nella media"); } catch(e) { showToast(e.message, "error"); } };
+window.renderIngressiArchive = () => {
+    const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const sort = document.getElementById('arch-sort').value;
+    const f = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; });
+    f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return sort==='desc'?db-da:da-db});
+    const t=document.getElementById('tbody-ingressi'); t.innerHTML="";
+    if(f.length === 0) { t.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px;">Nessun dato trovato.</td></tr>'; return; }
+    const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)});
+    const rowsBuffer = [];
+    [...g.keys()].forEach(k=>{
+        const e=g.get(k);
+        const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`;
+        e.forEach((d,i)=>{
+            const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)";
+            let badge = d.type === 'festivo' ? '<span class="badge badge-ko" style="margin-left:5px">🔴 Festivo</span>' : d.type === 'evento' ? '<span class="badge badge-evt" style="margin-left:5px">🏆 Evento</span>' : d.type === 'extra' ? '<span class="badge badge-summer" style="margin-left:5px">⚠️ Extra</span>' : '';
+            if (d.type === 'maltempo') badge = '<span class="badge" style="background:#475569; color:white; margin-left:5px">⛈️ Maltempo</span>';
+            const isExcluded = d.excludeStats === true;
+            const rowStyle = isExcluded ? "opacity:0.5; background: repeating-linear-gradient(45deg,rgba(0,0,0,0.02),rgba(0,0,0,0.02) 10px,rgba(0,0,0,0.06) 10px,rgba(0,0,0,0.06) 20px);" : "";
+            const excludeIcon = isExcluded ? "✅" : "🚫";
+            rowsBuffer.push(`<tr style="${b}; ${rowStyle}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b>${badge}<br><small style="color:#64748b">${d.meteo}</small>${isExcluded?'<br><b style="color:#ef4444;font-size:0.65rem">ESCLUSO MEDIA</b>':''}</td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right; min-width:110px"><button class="btn btn-icon" style="color:#64748b;background:transparent;border:1px solid #e2e8f0;margin-right:5px;width:30px;height:30px" onclick="toggleExcludeStats('${d.id}', ${isExcluded})">${excludeIcon}</button><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`);
+        });
+    });
+    t.innerHTML = rowsBuffer.join('');
+}
+window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')refreshCurrentView(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
+window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
+function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
+setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
+const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('v-date').value=today; document.getElementById('d-date').value=today; document.getElementById('u-date').value=today;
+window.downloadCSV = () => { const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const filtered = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; }); if(!filtered.length) return showToast("Nessun dato da scaricare", "error"); let csvContent = "data:text/csv;charset=utf-8,Data;Tipo;Fascia;Meteo;EsclusoMedia;Intero;Ridotto;Abbonamenti;Gratuiti;Totale\n"; filtered.forEach(row => { csvContent += `${row.date};${row.type||'standard'};${row.fascia};${row.meteo};${row.excludeStats?'SI':'NO'};${row.int};${row.rid};${row.abb_int + row.abb_rid};${row.grat};${row.totale}\n`; }); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "archivio_ingressi.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
 window.resetArchiveFilters = () => { document.getElementById('arch-date-start').value=""; document.getElementById('arch-date-end').value=""; document.getElementById('arch-filter-fascia').value="all"; document.getElementById('arch-filter-meteo').value="all"; renderIngressiArchive(); };
 </script>
 
