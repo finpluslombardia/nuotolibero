@@ -1,177 +1,154 @@
 <!DOCTYPE html>
-<html lang="it" data-theme="light">
+<html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Importante per mobile -->
-<title>Stat CF Lampugnano - Advanced</title>
+<title>Stat CF Lampugnano</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
     :root {
-        /* LIGHT THEME DEFAULT */
         --primary: #2563eb;
-        --primary-dark: #1e40af;
         --bg-body: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #e9d5ff 100%);
-        --text-main: #1e293b; 
-        --text-muted: #475569;
-        --glass-bg: rgba(255, 255, 255, 0.65);
+        --text-main: #1e293b; --text-muted: #475569;
+        --glass-bg: rgba(255, 255, 255, 0.45);
         --glass-border: 1px solid rgba(255, 255, 255, 0.6);
         --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
         --glass-blur: blur(12px);
-        --sidebar-bg: rgba(15, 23, 42, 0.95);
-        --input-bg: rgba(255,255,255,0.75);
-        --input-border: rgba(255,255,255,0.8);
-        --table-head-bg: rgba(255,255,255,0.9);
-        --card-bg-solid: rgba(255,255,255,0.55);
+        --sidebar-glass: rgba(15, 23, 42, 0.85);
     }
 
-    /* DARK THEME VARS */
-    [data-theme="dark"] {
-        --bg-body: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #171717 100%);
-        --text-main: #f1f5f9;
-        --text-muted: #94a3b8;
-        --glass-bg: rgba(30, 41, 59, 0.7);
-        --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-        --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        --sidebar-bg: #020617;
-        --input-bg: rgba(15, 23, 42, 0.6);
-        --input-border: rgba(255,255,255,0.15);
-        --table-head-bg: #1e293b;
-        --card-bg-solid: rgba(30, 41, 59, 0.6);
-    }
-
-    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-    
+    * { box-sizing: border-box; outline: none; }
     body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        background: var(--bg-body); 
-        color: var(--text-main); 
-        margin: 0; 
-        display: flex; 
-        height: 100vh; 
-        overflow: hidden;
-        transition: background 0.3s ease;
+        background: var(--bg-body); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden;
     }
-
-    /* UTILITIES */
-    .hidden { display: none !important; }
-    .fade-in { animation: fadeIn 0.3s ease-in-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
     /* TOAST */
     #toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-    .toast { background: var(--glass-bg); backdrop-filter: blur(15px); border: var(--glass-border); box-shadow: 0 10px 40px rgba(0,0,0,0.2); padding: 15px 25px; border-radius: 16px; color: var(--text-main); font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; transform: translateY(20px); opacity: 0; transition: all 0.3s; pointer-events: auto; }
+    .toast { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 10px 40px rgba(37, 99, 235, 0.15); padding: 15px 25px; border-radius: 16px; color: var(--text-main); font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; transform: translateY(20px); opacity: 0; transition: all 0.3s; }
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast-success { border-left: 5px solid #10b981; } .toast-error { border-left: 5px solid #ef4444; }
 
     /* SIDEBAR */
-    .sidebar { width: 260px; background: var(--sidebar-bg); backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.05); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; transition: transform 0.3s ease; z-index: 100; }
-    .sidebar-header { padding: 30px 20px; font-size: 1.2rem; font-weight: 800; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
-    .nav-section-title { padding: 25px 20px 10px; font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: 800; letter-spacing: 1.5px; }
+    .sidebar { width: 250px; background: var(--sidebar-glass); backdrop-filter: blur(10px); border-right: 1px solid rgba(255,255,255,0.1); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar-header { padding: 30px 20px; font-size: 1.1rem; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    .nav-section-title { padding: 20px 20px 10px; font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 800; letter-spacing: 1px; }
     .nav-links { list-style: none; padding: 0 10px; margin: 0; }
-    .nav-item { padding: 14px 15px; margin-bottom: 5px; border-radius: 12px; cursor: pointer; color: #94a3b8; font-weight: 600; display: flex; align-items: center; gap: 12px; transition: all 0.2s; font-size: 0.95rem; }
-    .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; transform: translateX(3px); }
-    .nav-item.active { background: linear-gradient(90deg, var(--primary), var(--primary-dark)); color: #fff; box-shadow: 0 4px 15px rgba(37,99,235,0.3); border: 1px solid rgba(255,255,255,0.1); }
+    .nav-item { padding: 12px 15px; margin-bottom: 5px; border-radius: 12px; cursor: pointer; color: #cbd5e1; font-weight: 500; display: flex; align-items: center; gap: 12px; transition: all 0.2s; font-size: 0.9rem; }
+    .nav-item:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .nav-item.active { background: linear-gradient(90deg, var(--primary), #4f46e5); color: #fff; box-shadow: 0 0 15px rgba(37,99,235,0.4); border: 1px solid rgba(255,255,255,0.2); }
     .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); margin-top: auto; }
-    
-    /* MOBILE SIDEBAR OVERLAY */
-    .mobile-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 90; display: none; backdrop-filter: blur(2px); }
-    .mobile-toggle { display: none; position: absolute; top: 20px; left: 20px; z-index: 50; background: var(--primary); color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer; }
 
     /* MAIN CONTENT */
-    .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; overflow: hidden; background: transparent; }
+    .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; position: relative; }
 
     /* CONTROL BAR */
-    .control-bar { background: var(--glass-bg); backdrop-filter: blur(15px); border-bottom: var(--glass-border); box-shadow: var(--glass-shadow); padding: 20px; z-index: 10; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; transition: background 0.3s; position: relative; }
-    .control-bar.editing { background: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b; }
+    .control-bar { background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(15px); border-bottom: var(--glass-border); box-shadow: 0 4px 20px rgba(0,0,0,0.03); padding: 20px; z-index: 10; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; transition: background 0.3s; }
+    .control-bar.editing { background: rgba(254, 243, 199, 0.9); border-bottom: 2px solid #f59e0b; }
     .cb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-    .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
+    .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
     
-    /* THEME TOGGLE */
-    .theme-toggle { cursor: pointer; background: transparent; border: 1px solid var(--text-muted); color: var(--text-main); padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; transition: all 0.2s; }
-    .theme-toggle:hover { background: rgba(255,255,255,0.1); }
-
-    /* FORM ELEMENTS */
-    .cb-row { display: flex; gap: 15px; align-items: flex-end; width: 100%; flex-wrap: wrap; }
-    .inp-field { display: flex; flex-direction: column; flex: 1; min-width: 120px; }
+    /* CB-ROW BASE */
+    .cb-row { display: flex; gap: 15px; align-items: flex-end; width: 100%; }
+    #cb-utenze .cb-row { flex-wrap: wrap; }
+    #cb-ingressi .cb-row { flex-wrap: nowrap; gap: 15px; }
+    #cb-vasca .cb-row { flex-wrap: nowrap; gap: 15px; }
+    
+    /* INPUT FIELDS STANDARD */
+    .inp-field { display: flex; flex-direction: column; flex: 1; min-width: 0; }
     .inp-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .inp-field input, .inp-field select { padding: 0 12px; border-radius: 12px; border: 1px solid var(--input-border); background: var(--input-bg); font-size: 0.9rem; height: 44px; color: var(--text-main); font-family: inherit; font-weight: 500; transition: all 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); width: 100%; }
-    .inp-field input:focus, .inp-field select:focus { background: var(--glass-bg); border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+    .inp-field input, .inp-field select { padding: 0 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); font-size: 0.9rem; height: 44px; color: var(--text-main); font-family: inherit; font-weight: 500; transition: all 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); width: 100%; }
+    .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+    .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; border: 1px solid rgba(0,0,0,0.1) !important; }
     
-    /* TICKET BOXES */
-    .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.1); padding: 5px 8px; border-radius: 16px; border: 1px solid var(--glass-border); align-items: center; justify-content: space-between; height: 64px; min-width: 300px; }
-    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; flex: 1; }
-    .t-box label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
-    .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: none; background: transparent; padding: 0; height: auto; }
+    /* MULTI SELECT CUSTOM */
+    .ms-container { position: relative; }
+    .ms-btn { width: 100%; height: 44px; background: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.8); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #64748b; }
+    .ms-dropdown { position: absolute; top: 105%; left: 0; width: 220px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.6); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); padding: 8px; z-index: 100; display: none; max-height: 250px; overflow-y: auto; }
+    .ms-dropdown.show { display: block; }
+    .ms-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background 0.1s; }
+    .ms-option:hover { background: #f1f5f9; }
+    .ms-option input { width: 16px; height: 16px; accent-color: var(--primary); }
+    .ms-option span { font-size: 0.85rem; color: var(--text-main); font-weight: 500; }
 
-    /* CONTENT AREA */
-    .scroll-area { flex: 1; overflow-y: auto; padding: 25px; scroll-behavior: smooth; }
-    .scroll-area::-webkit-scrollbar { width: 8px; }
-    .scroll-area::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+    /* GRUPPI DEL LAYOUT INGRESSI */
+    .group-ctx { display: flex; gap: 10px; flex: 1.6; align-items: flex-end; min-width: 0; }
+    .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.35); padding: 5px 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
+    .group-actions { display: flex; align-items: flex-end; gap: 10px; flex: 0 0 auto; }
+    .group-chem { display: flex; gap: 8px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     
-    .glass-card { background: var(--card-bg-solid); backdrop-filter: var(--glass-blur); border-radius: 20px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; transition: transform 0.2s; }
-    .glass-card:hover { transform: translateY(-2px); }
+    /* TICKET BOX */
+    .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; flex: 1; }
+    .t-box label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; text-align: center; width: 100%; opacity: 0.8; letter-spacing: -0.5px; }
+    .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
+
+    .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
+    .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
+    .page-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
 
     /* BUTTONS */
-    .btn { padding: 0 20px; border-radius: 12px; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; height: 44px; font-family: inherit; white-space: nowrap; color: var(--text-main); background: rgba(255,255,255,0.3); }
+    .btn { padding: 0 24px; border-radius: 12px; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; height: 44px; font-family: inherit; white-space: nowrap; }
     .btn:active { transform: scale(0.97); }
-    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); border: none; }
-    .btn-primary:hover { filter: brightness(1.1); }
-    .btn-danger { background: rgba(220, 38, 38, 0.1); color: #ef4444; border: 1px solid rgba(220, 38, 38, 0.3); }
-    .btn-danger:hover { background: #ef4444; color: white; }
-    .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), #1d4ed8); color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+    .btn-danger { background: rgba(254, 202, 202, 0.4); color: #dc2626; border: 1px solid rgba(252, 165, 165, 0.5); }
+    .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
 
-    /* CHARTS & KPI */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
-    .kpi-card { @extend .glass-card; background: var(--card-bg-solid); height: 130px; justify-content: center; }
-    .kpi-val { font-size: 2.2rem; font-weight: 800; color: var(--text-main); line-height: 1; margin: 8px 0; }
-    .chart-card { @extend .glass-card; height: 380px; }
-    .chart-wrapper { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; }
+    /* FILTERS & MULTI-SELECT */
+    .filter-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+    .filter-select { padding: 0 15px; border-radius: 12px; height: 40px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); }
+    .benchmark-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; background: rgba(255,255,255,0.5); padding: 0 15px; height: 40px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.6); user-select: none; transition: all 0.2s; }
+    .benchmark-toggle:hover { background: #fff; }
+    .benchmark-toggle input { width: 18px; height: 18px; accent-color: #64748b; cursor: pointer; }
+    .benchmark-toggle span { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); }
+
+    /* KPI & CHARTS LAYOUT */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+    .kpi-card { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); display: flex; flex-direction: column; }
+    .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
+    .kpi-val { font-size: 2.4rem; font-weight: 800; color: var(--text-main); line-height: 1; margin-bottom: 5px; }
+    .kpi-sub { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .kpi-context { font-size: 0.75rem; color: #64748b; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.05); width: 100%; display: flex; justify-content: space-between; font-weight: 500; }
+    
+    .chart-card { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; height: 360px; }
+    .chart-wrapper { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
+    .charts-row-main { display: grid; grid-template-columns: 1fr; gap: 25px; margin-bottom: 25px; }
+    .charts-row-split { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
 
     /* TABLE */
-    .table-wrap { @extend .glass-card; padding: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--glass-bg); max-height: 600px; }
-    .table-container { overflow-x: auto; flex: 1; }
+    .table-wrap { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 0; overflow: hidden; display: flex; flex-direction: column; }
     table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-    thead { position: sticky; top: 0; z-index: 5; } /* STICKY HEADER */
-    th { text-align: left; padding: 18px 12px; background: var(--table-head-bg); font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 2px solid rgba(0,0,0,0.1); backdrop-filter: blur(5px); }
-    td { padding: 12px; border-bottom: 1px solid rgba(128, 128, 128, 0.1); font-size: 0.9rem; vertical-align: middle; font-weight: 500; color: var(--text-main); }
-    tr:hover td { background: rgba(128, 128, 128, 0.05); }
+    th { text-align: left; padding: 18px 12px; background: rgba(255,255,255,0.5); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.9rem; vertical-align: middle; font-weight: 500; }
+    tr:hover td { background: rgba(255,255,255,0.3); }
+    tr.day-end td { border-bottom: 2px solid rgba(0,0,0,0.1) !important; }
 
-    /* LOADING SPINNER */
-    #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
-    .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s ease-in-out infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .badge { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: inline-block; backdrop-filter: blur(4px); }
+    .badge-summer { background: rgba(255, 237, 213, 0.7); color: #ea580c; border: 1px solid rgba(253, 186, 116, 0.4); }
+    .badge-std { background: rgba(219, 234, 254, 0.7); color: #2563eb; border: 1px solid rgba(147, 197, 253, 0.4); }
+    .badge-ok { background: rgba(167, 243, 208, 0.7); color: #065f46; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-ko { background: rgba(254, 202, 202, 0.7); color: #991b1b; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-evt { background: rgba(253, 224, 71, 0.7); color: #854d0e; border: 1px solid rgba(250, 204, 21, 0.4); }
 
-    /* LOGIN */
+    .col-detail { color: var(--text-muted); font-size: 0.85rem; text-align: center; }
+    .col-subtot { font-weight: 700; text-align: center; background: rgba(255,255,255,0.2); }
+    .col-total { font-weight: 900; color: var(--text-main); text-align: center; font-size: 1.1rem; }
+    .bg-sub-blue { background-color: rgba(59, 130, 246, 0.05); }
+    .bg-sub-purp { background-color: rgba(168, 85, 247, 0.05); }
+
+    .hidden { display: none !important; }
     #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-
-    /* MEDIA QUERIES */
-    @media (max-width: 1024px) {
-        .mobile-toggle { display: block; }
-        .sidebar { position: fixed; height: 100%; transform: translateX(-100%); box-shadow: 2px 0 20px rgba(0,0,0,0.2); }
-        .sidebar.open { transform: translateX(0); }
-        .mobile-overlay.open { display: block; }
-        .main-content { margin-left: 0; padding-top: 50px; }
-        .control-bar { padding: 15px; }
-        .charts-row-split { grid-template-columns: 1fr; }
-    }
+    #login-box { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 40px; text-align: center; width: 400px; display: flex; flex-direction: column; }
+    .archive-toolbar { display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.4); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: var(--glass-border); flex-wrap: wrap; }
+    .arch-input, .arch-select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-size: 0.85rem; color: var(--text-main); font-weight: 600; }
+    .trend-up { color: #16a34a; } .trend-down { color: #dc2626; }
 </style>
 </head>
 <body>
 
-<!-- LOADER -->
-<div id="loader">
-    <div class="spinner"></div>
-    <div style="margin-top:20px; font-weight:700; color:var(--text-main)">Caricamento...</div>
-</div>
-
 <div id="toast-container"></div>
 
-<div class="mobile-overlay" onclick="toggleSidebar()"></div>
-<button class="mobile-toggle" onclick="toggleSidebar()">☰ Menu</button>
-
 <div id="login-screen">
-    <div class="glass-card" style="width: 400px; text-align: center; padding: 40px;">
+    <div id="login-box" class="glass-card">
         <h2 style="color:var(--text-main); margin-bottom: 25px; font-weight: 900; font-size: 1.5rem;">🔐 Accesso</h2>
         <div class="inp-field" style="margin-bottom:15px"><input type="email" id="email" placeholder="Email"></div>
         <div class="inp-field" style="margin-bottom:25px"><input type="password" id="password" placeholder="Password"></div>
@@ -180,46 +157,34 @@
     </div>
 </div>
 
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <span>🏊‍♂️ Facility Mgr</span>
-        <button style="background:transparent; border:none; color:white; font-size:1.2rem; cursor:pointer" class="hidden" onclick="toggleSidebar()">×</button>
-    </div>
-    
+<div class="sidebar">
+    <div class="sidebar-header">🏊‍♂️ Facility Manager</div>
     <div class="nav-section-title">Ingressi</div>
     <ul class="nav-links"><li class="nav-item active" id="nav-module-ingressi" onclick="switchModule('ingressi')">🎫 Nuoto Libero</li></ul>
-    
-    <div class="nav-section-title">Impianto</div>
+    <div class="nav-section-title" style="margin-top:20px">Impianto</div>
     <ul class="nav-links">
         <li class="nav-item" id="nav-module-vasca" onclick="switchModule('vasca')">💧 Valori Vasca</li>
         <li class="nav-item" id="nav-module-dae" onclick="switchModule('dae')">⚡ Controllo DAE</li>
         <li class="nav-item" id="nav-module-utenze" onclick="switchModule('utenze')">📊 Utenze</li>
     </ul>
-
     <div class="sidebar-footer">
-        <div style="font-size:0.85rem; margin-bottom:15px; color:#cbd5e1; font-weight:600; display:flex; align-items:center; gap:8px">
-            <span style="width:8px; height:8px; background:#10b981; border-radius:50%"></span>
-            <span id="user-display">User</span>
-        </div>
+        <div style="font-size:0.85rem; margin-bottom:15px; color:#cbd5e1; font-weight:600" id="user-display">User</div>
         <button class="btn" style="width:100%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:0.8rem; height:38px" onclick="doLogout()">Disconnetti</button>
     </div>
 </div>
 
 <div class="main-content">
 
-    <!-- MODULE INGRESSI -->
-    <div id="module-ingressi" class="module-container fade-in" style="display:flex; flex-direction:column; height:100%">
-        <div class="control-bar" id="cb-ingressi">
-            <div class="cb-header">
-                <span class="cb-title" id="title-ingressi">Registrazione Ingressi</span>
-                <div style="display:flex; gap:10px">
-                    <button class="theme-toggle" onclick="toggleTheme()">🌗 Tema</button>
-                    <button class="btn btn-danger hidden" id="cancel-ingressi" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditIngressi()">Annulla Modifica</button>
-                </div>
-            </div>
-            <div class="cb-row">
-                 <div class="inp-field" style="flex:1.2; min-width:140px"><label>Data</label><input type="date" id="i-date"></div>
-                 <div class="inp-field" style="flex:1.3"><label>Tipo Giorno</label>
+<div id="module-ingressi" class="module-container" style="display:flex; flex-direction:column; height:100%">
+    <div class="control-bar" id="cb-ingressi">
+        <div class="cb-header">
+            <span class="cb-title" id="title-ingressi">Registrazione Ingressi</span>
+            <button class="btn btn-danger hidden" id="cancel-ingressi" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditIngressi()">Annulla Modifica</button>
+        </div>
+        <div class="cb-row">
+            <div class="group-ctx">
+                <div class="inp-field" style="flex:1.2"><label>Data</label><input type="date" id="i-date"></div>
+                <div class="inp-field" style="flex:1.3"><label>Tipo Giorno</label>
                     <select id="i-type">
                         <option value="standard">🏢 Standard</option>
                         <option value="festivo">🔴 Festivo</option>
@@ -234,161 +199,358 @@
                 <div class="inp-field" style="flex:1.2"><label>Meteo</label>
                     <select id="i-meteo"><option value="☀️ Sole">☀️ Sole</option><option value="🔥 Sole + Caldo">🔥 Sole + Caldo</option><option value="❄️ Sole + Freddo">❄️ Sole + Freddo</option><option value="🌦️ Variabile">🌦️ Variabile</option><option value="🌤️ Parz Nuvoloso">🌤️ Parz Nuvoloso</option><option value="☁️ Nuvoloso">☁️ Nuvoloso</option><option value="🌥️ Nuv + Freddo">🌥️ Nuv + Freddo</option><option value="🌧️ Pioggia">🌧️ Pioggia</option><option value="🌨️ Piog + Freddo">🌨️ Piog + Freddo</option><option value="⛈️ Temporale">⛈️ Temporale</option><option value="❓ N/D">❓ N/D</option></select>
                 </div>
-                <div class="group-tickets">
-                    <div class="t-box"><label>INTERO</label><input type="number" id="q-intero" value="0" onfocus="this.select()"></div>
-                    <div class="t-box"><label>RIDOTTO</label><input type="number" id="q-ridotto" value="0" onfocus="this.select()"></div>
-                    <div class="t-box"><label>ABB. P.</label><input type="number" id="q-abb-int" value="0" onfocus="this.select()"></div>
-                    <div class="t-box"><label>ABB. 11</label><input type="number" id="q-abb-rid" value="0" onfocus="this.select()"></div>
-                    <div class="t-box"><label>GRATIS</label><input type="number" id="q-gratuito" value="0" onfocus="this.select()"></div>
+                <div class="inp-field" style="flex:0.3; align-items:center; justify-content:center; padding-bottom:8px">
+                    <label style="cursor:pointer; display:flex; flex-direction:column; align-items:center; color:#ef4444" title="Escludi">
+                        <input type="checkbox" id="i-exclude" style="width:16px; height:16px; accent-color:#ef4444">
+                        <span style="font-size:0.55rem; margin-top:2px; font-weight:800">NO MEDIA</span>
+                    </label>
                 </div>
-                <div class="inp-field" style="flex:0.3; align-items:center; justify-content:center; min-width:60px">
-                    <label style="cursor:pointer; color:#ef4444; font-size:0.7rem; text-align:center">No Stat<br><input type="checkbox" id="i-exclude" style="width:18px; height:18px; accent-color:#ef4444; margin-top:2px"></label>
-                </div>
-                <button id="btn-save-ingressi" class="btn btn-primary" style="height:44px; min-width:100px; flex:0.5" onclick="saveIngressi()">SALVA</button>
+            </div>
+
+            <div class="group-tickets">
+                <div class="t-box"><label>INTERO</label><input type="number" id="q-intero" value="0" onfocus="this.select()"></div>
+                <div class="t-box"><label>RIDOTTO</label><input type="number" id="q-ridotto" value="0" onfocus="this.select()"></div>
+                <div class="t-box"><label>ABB. PER.</label><input type="number" id="q-abb-int" value="0" onfocus="this.select()"></div>
+                <div class="t-box"><label>ABB. 11</label><input type="number" id="q-abb-rid" value="0" onfocus="this.select()"></div>
+                <div class="t-box"><label>GRATUITO</label><input type="number" id="q-gratuito" value="0" onfocus="this.select()"></div>
+            </div>
+
+            <div class="group-actions">
+                <button id="btn-save-ingressi" class="btn btn-primary" style="height:44px; min-width:100px" onclick="saveIngressi()">SALVA</button>
             </div>
         </div>
+    </div>
 
-        <div class="scroll-area">
-            <div style="display:flex; gap:10px; margin-bottom:20px; justify-content:center; flex-wrap:wrap">
-                <button class="btn btn-primary" id="btn-sub-overview" onclick="switchSubView('overview')">Panoramica</button>
-                <button class="btn" id="btn-sub-stats" onclick="switchSubView('stats')">Statistiche</button>
-                <button class="btn" id="btn-sub-archive" onclick="switchSubView('archive')">Archivio</button>
+    <div class="scroll-area">
+        <div class="filter-row" style="margin-bottom:20px; justify-content:center">
+            <button class="btn btn-primary" id="btn-sub-overview" onclick="switchSubView('overview')">Panoramica</button>
+            <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-stats" onclick="switchSubView('stats')">Statistiche</button>
+            <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-archive" onclick="switchSubView('archive')">Archivio</button>
+        </div>
+
+        <div id="sub-overview">
+            <div class="filter-row" style="margin-bottom:10px; justify-content:flex-end">
+                <select id="ov-chart-type" class="filter-select" onchange="renderOverviewCharts()" style="font-weight:700; border:1px solid var(--primary); color:var(--primary)">
+                    <option value="line">📈 Grafico a Linea</option>
+                    <option value="bar">📊 Grafico a Colonne</option>
+                </select>
             </div>
-
-            <!-- VIEW: OVERVIEW -->
-            <div id="sub-overview">
-                <div class="kpi-grid">
-                    <div class="kpi-card glass-card"><div class="kpi-head">Media (Mese)</div><div class="kpi-val" id="ov-avg">0</div><div class="kpi-sub" style="color:var(--text-muted)">persone / giorno</div></div>
-                    <div class="kpi-card glass-card"><div class="kpi-head">Vs Mese Prec.</div><div class="kpi-val" id="ov-mom">0%</div><div class="kpi-sub" id="ov-mom-label">-</div></div>
-                    <div class="kpi-card glass-card"><div class="kpi-head">Vs Anno Prec.</div><div class="kpi-val" id="ov-yoy">0%</div><div class="kpi-sub" id="ov-yoy-label">-</div></div>
-                    <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub">proiezione</div></div>
-                </div>
-                <div class="chart-card glass-card"><div class="cb-header">Andamento 30 Giorni</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
+            <div class="kpi-grid">
+                <div class="kpi-card glass-card"><div class="kpi-head">Media (Mese)</div><div class="kpi-val" id="ov-avg">0</div><div class="kpi-sub">persone / giorno</div></div>
+                <div class="kpi-card glass-card"><div class="kpi-head">Vs Mese Prec.</div><div class="kpi-val" id="ov-mom">0%</div><div class="kpi-sub" id="ov-mom-label">-</div></div>
+                <div class="kpi-card glass-card"><div class="kpi-head">Vs Anno Prec.</div><div class="kpi-val" id="ov-yoy">0%</div><div class="kpi-sub" id="ov-yoy-label">-</div></div>
+                <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub" id="ov-forecast-sub">proiezione</div></div>
             </div>
+            <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec. (Intelligente)</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
+            <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Ultimi 3 Mesi (90 gg)</div><div class="chart-wrapper"><canvas id="chartRecent90"></canvas></div></div>
+            <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Andamento Ultimi 12 Mesi vs Anno Prec.</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
+        </div>
 
-            <!-- VIEW: STATS -->
-            <div id="sub-stats" class="hidden">
-                 <div class="filter-row" style="display:flex; gap:10px; margin-bottom:20px; background:var(--card-bg-solid); padding:15px; border-radius:16px; align-items:flex-end; flex-wrap:wrap">
-                     <div class="inp-field" style="width:160px"><label>Modalità</label><select id="stat-mode" onchange="toggleStatMode()"><option value="year">📅 Anno Intero</option><option value="custom">📆 Periodo Personalizz.</option></select></div>
-                     <div class="inp-field" id="stat-year-cont" style="width:100px"><label>Anno</label><select id="stat-year" onchange="renderStats()"></select></div>
-                     <div id="stat-custom-cont" class="hidden" style="display:flex; gap:10px">
-                         <div class="inp-field" style="width:130px"><label>Dal</label><input type="date" id="stat-date-start"></div>
-                         <div class="inp-field" style="width:130px"><label>Al</label><input type="date" id="stat-date-end"></div>
-                         <button class="btn btn-primary" onclick="renderStats()">🔍</button>
-                     </div>
-                     <div class="inp-field" style="width:160px"><label>Confronta</label><select id="stat-compare" onchange="renderStats()"><option value="none">Nessuno</option><option value="avg">Media Storica</option></select></div>
-                 </div>
-                 <div class="chart-card glass-card" style="margin-bottom:20px"><div class="cb-header">Andamento Stagionale</div><div class="chart-wrapper"><canvas id="chartYoY"></canvas></div></div>
-                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap:20px">
-                     <div class="chart-card glass-card"><div class="cb-header">Giorno Settimana</div><div class="chart-wrapper"><canvas id="chartWeek"></canvas></div></div>
-                     <div class="chart-card glass-card"><div class="cb-header">Distribuzione</div><div class="chart-wrapper"><canvas id="chartPie"></canvas></div></div>
-                 </div>
-            </div>
+        <div id="sub-stats" class="hidden">
+            <div class="filter-row" style="justify-content:space-between; align-items:flex-end; background:rgba(255,255,255,0.4); padding:15px; border-radius:16px; border:var(--glass-border)">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end">
+                    <div class="inp-field" style="width:160px">
+                        <label>Modalità Analisi</label>
+                        <select id="stat-mode" onchange="toggleStatMode()" style="font-weight:700; border-color:var(--primary); color:var(--primary)">
+                            <option value="year">📅 Anno Intero</option>
+                            <option value="custom">📆 Periodo Personalizz.</option>
+                        </select>
+                    </div>
+                    <div class="inp-field" id="stat-year-cont" style="width:100px">
+                        <label>Anno</label>
+                        <select id="stat-year" onchange="renderStats()" style="font-weight:700"></select>
+                    </div>
+                    <div id="stat-custom-cont" class="hidden" style="display:flex; gap:10px; align-items:flex-end">
+                        <div class="inp-field" style="width:130px"><label>Dal</label><input type="date" id="stat-date-start"></div>
+                        <div class="inp-field" style="width:130px"><label>Al</label><input type="date" id="stat-date-end"></div>
+                        <button class="btn btn-primary" onclick="renderStats()" style="height:44px; padding:0 15px; font-size:1.1rem" title="Applica Filtro">🔎</button>
+                    </div>
+                    
+                    <div class="inp-field" style="width:180px; position:relative">
+                        <label>Confronta con</label>
+                        <div class="ms-container" id="ms-compare">
+                            <div class="ms-btn" onclick="toggleMsDropdown()">Seleziona... ▼</div>
+                            <div class="ms-dropdown" id="ms-compare-list"></div>
+                        </div>
+                    </div>
 
-            <!-- VIEW: ARCHIVE -->
-            <div id="sub-archive" class="hidden">
-                <div style="display:flex; gap:10px; align-items:flex-end; margin-bottom:15px; flex-wrap:wrap; background:var(--card-bg-solid); padding:15px; border-radius:15px">
-                    <div class="inp-field" style="width:140px"><label>Dal</label><input type="date" id="arch-date-start" onchange="renderIngressiArchive()"></div>
-                    <div class="inp-field" style="width:140px"><label>Al</label><input type="date" id="arch-date-end" onchange="renderIngressiArchive()"></div>
-                    <button class="btn btn-primary" onclick="downloadCSV()">Scarica Excel</button>
-                    <button class="btn btn-danger" onclick="resetArchiveFilters()">Reset</button>
-                </div>
-                <div class="table-wrap">
-                    <div class="table-container">
-                        <table id="table-ingressi"><thead><tr><th>Data</th><th>Dettaglio</th><th>Int.</th><th>Rid.</th><th>Abb.</th><th>Grat</th><th>Totale</th><th style="text-align:right">Azioni</th></tr></thead><tbody id="tbody-ingressi"></tbody></table>
+                    <div class="inp-field" style="width:140px">
+                        <label>Vasca</label>
+                        <select id="stat-pool-filter" onchange="renderStats()" style="font-weight:700">
+                            <option value="all">🏊 Tutte</option>
+                            <option value="indoor">🏢 Interna</option>
+                            <option value="outdoor">☀️ Esterna</option>
+                        </select>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODULE VASCA -->
-    <div id="module-vasca" class="module-container hidden fade-in" style="display:flex; flex-direction:column; height:100%">
-        <div class="control-bar" id="cb-vasca">
-            <div class="cb-header"><span class="cb-title" id="title-vasca">Valori Vasca</span><button class="theme-toggle" onclick="toggleTheme()">🌗 Tema</button></div>
-            <div class="cb-row">
-                 <div class="inp-field" style="flex:1"><label>Data</label><input type="date" id="v-date"></div>
-                 <div class="inp-field" style="flex:0.8"><label>Ora</label><input type="time" id="v-time"></div>
-                 <div class="inp-field" style="flex:1"><label>Tipo</label><select id="v-type"><option value="interna">🏠 Interna</option><option value="esterna">☀️ Esterna</option></select></div>
-                 <div class="group-tickets" style="flex:2">
-                     <div class="t-box"><label>BAGN.</label><input type="number" id="v-bag" value="0"></div>
-                     <div class="t-box"><label>T. ARIA</label><input type="number" step="0.1" id="v-ta" value="0"></div>
-                     <div class="t-box"><label>T. H2O</label><input type="number" step="0.1" id="v-th" value="0"></div>
-                     <div class="t-box"><label>pH</label><input type="number" step="0.1" id="v-ph" value="0"></div>
-                     <div class="t-box"><label>CL L.</label><input type="number" step="0.1" id="v-cll" value="0" oninput="calcClTot()"></div>
-                     <div class="t-box"><label>CL C.</label><input type="number" step="0.1" id="v-clc" value="0" oninput="calcClTot()"></div>
-                     <div class="t-box"><label>CL TOT</label><input type="number" step="0.1" id="v-clt" value="0" readonly></div>
-                 </div>
-                 <button id="btn-save-vasca" class="btn btn-primary" onclick="saveVasca()">SALVA</button>
-                 <button class="btn btn-danger hidden" id="cancel-vasca" onclick="cancelEditVasca()">X</button>
-            </div>
-        </div>
-        <div class="scroll-area">
-            <div class="table-wrap"><div class="table-container"><table id="table-vasca"><thead><tr><th>Data/Ora</th><th>Parametri Fisici</th><th>Chimica (pH/Cl)</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-vasca"></tbody></table></div></div>
-        </div>
-    </div>
-    
-    <!-- MODULE DAE/UTENZE (Structure Simplified for brevity, similar upgrade applied) -->
-    <div id="module-dae" class="module-container hidden fade-in" style="display:flex; flex-direction:column; height:100%">
-        <div class="control-bar">
-             <div class="cb-header"><span class="cb-title">Controllo DAE</span><button class="theme-toggle" onclick="toggleTheme()">🌗 Tema</button></div>
-             <div class="cb-row">
-                 <div class="inp-field"><label>Data</label><input type="date" id="d-date" readonly></div>
-                 <div class="inp-field"><label>Ora</label><input type="text" id="d-time" readonly></div>
-                 <div class="inp-field"><label>Stato</label><select id="d-status"><option value="OK">✅ Funzionante</option><option value="GUASTO">❌ Guasto / Anomalie</option></select></div>
-                 <div class="inp-field" style="flex:2"><label>Operatori (Ass. Bagnanti / Segreteria)</label><div style="display:flex; gap:5px"><input type="text" id="d-ass" placeholder="Assistente"><input type="text" id="d-op" placeholder="Segreteria"></div></div>
-                 <button class="btn btn-primary" onclick="saveDae()">REGISTRA</button>
-             </div>
-        </div>
-        <div class="scroll-area">
-             <div class="table-wrap"><div class="table-container"><table id="table-dae"><thead><tr><th>Timestamp</th><th>Stato</th><th>Operatori</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-dae"></tbody></table></div></div>
-        </div>
-    </div>
-
-    <div id="module-utenze" class="module-container hidden fade-in" style="display:flex; flex-direction:column; height:100%">
-        <div class="control-bar" id="cb-utenze">
-             <div class="cb-header"><span class="cb-title" id="title-utenze">Letture Utenze</span><button class="theme-toggle" onclick="toggleTheme()">🌗 Tema</button></div>
-             <div class="cb-row">
-                 <div class="inp-field" style="max-width:140px"><label>Data</label><input type="date" id="u-date"></div>
-                 <div class="inp-field"><label>Tipo</label><select id="u-type" onchange="toggleUtenzeMode()"><option value="⚡ Elettricità">⚡ Elettricità</option><option value="💧 Acqua">💧 Acqua (m³)</option><option value="🔥 Gas Metano">🔥 Gas Metano (m³)</option></select></div>
-                 
-                 <!-- Dynamic Fields -->
-                 <div id="u-elec-input" style="display:contents">
-                     <div class="inp-field"><label>F1</label><input type="number" id="u-a1" step="any"></div>
-                     <div class="inp-field"><label>F2</label><input type="number" id="u-a2" step="any"></div>
-                     <div class="inp-field"><label>F3</label><input type="number" id="u-a3" step="any"></div>
-                     <div class="inp-field"><label>Meteo</label><select id="u-meteo"><option value="☀️ Sole">☀️ Sole</option><option value="☁️ Nuvoloso">☁️ Nuvoloso</option><option value="🌧️ Pioggia">🌧️ Pioggia</option></select></div>
-                 </div>
-                 <div id="u-single-input" class="inp-field hidden"><label>Lettura</label><input type="number" id="u-val" step="any"></div>
-                 <div id="u-extra-gas" class="inp-field hidden" style="max-width:100px"><label>Temp Ext</label><input type="number" id="u-temp" placeholder="°C"></div>
-                 
-                 <button id="btn-save-utenze" class="btn btn-primary" onclick="saveUtenze()">SALVA</button>
-                 <button class="btn btn-danger hidden" id="cancel-utenze" onclick="cancelEditUtenze()">X</button>
-             </div>
-        </div>
-        <div class="scroll-area">
-            <div style="margin-bottom:20px; text-align:center">
-                 <button class="btn btn-primary" id="btn-sub-u-overview" onclick="switchSubViewUtenze('overview')">Panoramica</button>
-                 <button class="btn" id="btn-sub-u-charts" onclick="switchSubViewUtenze('charts')">Grafici</button>
-                 <button class="btn" id="btn-sub-u-archive" onclick="switchSubViewUtenze('archive')">Archivio</button>
-            </div>
-            
-            <div id="sub-u-overview">
-                <div class="kpi-grid">
-                    <div class="kpi-card glass-card" style="border-left:4px solid #eab308"><div class="kpi-head">Elettricità (Mese)</div><div class="kpi-val" id="u-kpi-elec-val">-</div><div class="kpi-sub" id="u-kpi-elec-sub"></div></div>
-                    <div class="kpi-card glass-card" style="border-left:4px solid #3b82f6"><div class="kpi-head">Acqua (Mese)</div><div class="kpi-val" id="u-kpi-water-val">-</div><div class="kpi-sub" id="u-kpi-water-sub"></div></div>
-                    <div class="kpi-card glass-card" style="border-left:4px solid #ef4444"><div class="kpi-head">Gas (Mese)</div><div class="kpi-val" id="u-kpi-gas-val">-</div><div class="kpi-sub" id="u-kpi-gas-sub"></div></div>
+                <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap">
+                    <select id="stat-chart-type" class="filter-select" onchange="renderStats()" style="font-weight:700; border:1px solid var(--primary); color:var(--primary)">
+                        <option value="line">📈 Linea</option>
+                        <option value="bar">📊 Colonne</option>
+                    </select>
+                    <select id="day-type-filter" class="filter-select" onchange="renderStats()" style="font-weight:700; border:2px solid #a855f7; color:#6b21a8">
+                        <option value="all">📅 Tutti i Giorni</option>
+                        <option value="standard">🏢 Solo Standard</option>
+                        <option value="special">🏆 Solo Eventi/Festivi</option>
+                    </select>
                 </div>
             </div>
-            <div id="sub-u-charts" class="hidden">
-                <div class="chart-card glass-card" style="margin-bottom:20px"><div class="cb-header">Elettricità</div><div class="chart-wrapper"><canvas id="chartElec"></canvas></div></div>
-                <div class="chart-card glass-card"><div class="cb-header">Gas & Acqua</div><div class="chart-wrapper"><canvas id="chartGas"></canvas></div></div>
+
+            <div class="charts-row-main"><div class="chart-card glass-card"><div class="chart-header" id="yoy-title">Andamento Stagionale</div><div class="chart-wrapper"><canvas id="chartYoY"></canvas></div></div></div>
+            <div class="charts-row-main"><div class="chart-card glass-card"><div class="chart-header">Performance Settimanale (Per Fascia)</div><div class="chart-wrapper" style="padding:0 15px"><canvas id="chartWeek"></canvas></div></div></div>
+            <div class="charts-row-split">
+                <div class="chart-card glass-card" style="justify-content:center; text-align:center">
+                    <div class="chart-header" style="width:100%; text-align:left">Composizione (Periodo Selezionato)</div>
+                    <div class="chart-wrapper" style="max-height:220px; display:flex; justify-content:center"><canvas id="chartPie"></canvas></div>
+                    <div style="margin-top:auto; width:100%; padding-top:15px; border-top:1px solid rgba(0,0,0,0.05)">
+                        <div style="font-size:0.8rem; color:#64748b; margin-bottom:5px; font-weight:700" id="pie-label-text">TOTALE PERIODO</div>
+                        <div id="deep-total" style="color:var(--primary); font-size:1.8rem; font-weight:900">0</div>
+                    </div>
+                </div>
+                <div class="chart-card glass-card"><div class="chart-header">Performance Meteo</div><div class="chart-wrapper"><canvas id="chartMeteo"></canvas></div></div>
             </div>
-            <div id="sub-u-archive" class="hidden">
-                 <div class="table-wrap"><div class="table-container"><table id="table-utenze"><thead><tr><th>Data</th><th>Elettricità</th><th>Acqua</th><th>Gas</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-utenze"></tbody></table></div></div>
+            <div class="charts-row-main"><div class="chart-card glass-card"><div class="chart-header">Popolarità Fasce Orarie</div><div class="chart-wrapper"><canvas id="chartFasce"></canvas></div></div></div>
+        </div>
+
+        <div id="sub-archive" class="hidden">
+            <div class="archive-toolbar">
+                <div class="arch-group"><span class="arch-label">DA:</span><input type="date" id="arch-date-start" class="arch-input" onchange="renderIngressiArchive()"></div>
+                <div class="arch-group"><span class="arch-label">A:</span><input type="date" id="arch-date-end" class="arch-input" onchange="renderIngressiArchive()"></div>
+                <select id="arch-filter-fascia" class="arch-select" onchange="renderIngressiArchive()"><option value="all">Tutte le Fasce</option><optgroup label="Interna"><option value="Mattina">Mattina</option><option value="Mattina intera">Mattina intera</option><option value="Pranzo">Pranzo</option><option value="Sera">Sera</option><option value="Sabato pom">Sabato pom</option><option value="Domenica">Domenica</option><option value="Festivo">Festivo</option><option value="Unico">Unico</option></optgroup><optgroup label="Esterna"><option value="Estiva - Mattina">Estiva - Mattina</option><option value="Estiva - Pomeriggio">Estiva - Pomeriggio</option><option value="Estiva - Unico">Estiva - Unico</option></optgroup></select>
+                <select id="arch-filter-meteo" class="arch-select" onchange="renderIngressiArchive()"><option value="all">Tutto il Meteo</option><option value="☀️ Sole">☀️ Sole</option><option value="🔥 Sole + Caldo">🔥 Sole + Caldo</option><option value="❄️ Sole + Freddo">❄️ Sole + Freddo</option><option value="🌦️ Variabile">🌦️ Variabile</option><option value="🌤️ Parz Nuvoloso">🌤️ Parz Nuvoloso</option><option value="☁️ Nuvoloso">☁️ Nuvoloso</option><option value="🌥️ Nuv + Freddo">🌥️ Nuv + Freddo</option><option value="🌧️ Pioggia">🌧️ Pioggia</option><option value="🌨️ Piog + Freddo">🌨️ Piog + Freddo</option><option value="⛈️ Temporale">⛈️ Temporale</option><option value="❓ N/D">❓ N/D</option></select>
+                <select id="arch-sort" class="arch-select" style="min-width:100px" onchange="renderIngressiArchive()"><option value="desc">⬇️ Recenti</option><option value="asc">⬆️ Vecchi</option></select>
+                <button class="btn btn-danger" style="height:36px; width:36px; padding:0" onclick="resetArchiveFilters()">✕</button>
+                <button class="btn btn-primary" style="height:36px; font-size:0.8rem; padding:0 20px" onclick="downloadCSV()">Scarica Excel</button>
+            </div>
+            <div class="table-wrap glass-card">
+                <div style="overflow-x:auto;">
+                    <table id="table-ingressi"><thead><tr><th>Data</th><th>Fascia / Meteo</th><th>Int.</th><th>Rid.</th><th>Singoli</th><th>Per.</th><th>11 Ingr.</th><th>Abb.</th><th>Grat</th><th>Tot</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-ingressi"></tbody></table>
+                </div>
             </div>
         </div>
     </div>
+</div>
+
+<div id="module-vasca" class="module-container hidden" style="display:flex; flex-direction:column; height:100%">
+    <div class="control-bar" id="cb-vasca">
+        <div class="cb-header"><span class="cb-title" id="title-vasca">Registrazione Valori Vasca</span><button class="btn btn-danger hidden" id="cancel-vasca" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditVasca()">Annulla Modifica</button></div>
+        <div class="cb-row">
+            <div class="group-ctx" style="flex:1.2; align-items:flex-end; gap:10px">
+                <div class="inp-field" style="flex:1"><label>Data</label><input type="date" id="v-date"></div>
+                <div class="inp-field" style="flex:0.8"><label>Orario</label><input type="time" id="v-time"></div>
+                <div class="inp-field" style="flex:1.2"><label>Vasca</label>
+                    <select id="v-type">
+                        <option value="interna">🏠 Interna</option>
+                        <option value="esterna">☀️ Esterna</option>
+                    </select>
+                </div>
+            </div>
+            <div class="group-chem" style="flex:2">
+                <div class="t-box"><label>BAGNANTI</label><input type="number" id="v-bag" value="0"></div>
+                <div class="t-box"><label>T. ARIA</label><input type="number" step="0.1" id="v-ta" value="0"></div>
+                <div class="t-box"><label>T. H2O</label><input type="number" step="0.1" id="v-th" value="0"></div>
+                <div class="t-box"><label>pH</label><input type="number" step="0.1" id="v-ph" value="0"></div>
+                <div class="t-box"><label>CL LIB.</label><input type="number" step="0.1" id="v-cll" value="0" oninput="calcClTot()"></div>
+                <div class="t-box"><label>CL COMB.</label><input type="number" step="0.1" id="v-clc" value="0" oninput="calcClTot()"></div>
+                <div class="t-box"><label>CL TOT.</label><input type="number" step="0.1" id="v-clt" value="0"></div>
+            </div>
+            <div class="group-actions"><button id="btn-save-vasca" class="btn btn-primary" style="height:44px; min-width:120px" onclick="saveVasca()">SALVA</button></div>
+        </div>
+    </div>
+    <div class="scroll-area">
+        <h2 class="page-title">💧 Diario Vasca</h2>
+        <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-vasca"><thead><tr><th>Data</th><th>Ora / Vasca</th><th>Bagnanti</th><th>T. Aria</th><th>T. Acqua</th><th>pH</th><th>Cl Lib</th><th>Cl Comb</th><th>Cl Tot</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-vasca"></tbody></table></div></div>
+    </div>
+</div>
+
+<div id="module-dae" class="module-container hidden" style="display:flex; flex-direction:column; height:100%">
+    <div class="control-bar">
+        <div class="cb-header"><span class="cb-title">Controllo Defibrillatore (DAE)</span></div>
+        <div class="cb-row">
+            <div class="group-ctx">
+                <div class="inp-field" style="flex:0.5"><label>Data</label><input type="date" id="d-date" class="inp-locked" readonly></div><div class="inp-field" style="flex:0.5"><label>Ora Controllo</label><input type="text" id="d-time" class="inp-locked" readonly></div>
+                <div class="inp-field" style="flex:0.8"><label>Stato</label><select id="d-status"><option value="OK">✅ Funzionante</option><option value="GUASTO">❌ Guasto / Anomalie</option></select></div>
+                <div class="inp-field" style="flex:1"><label>Assistente Bagnanti</label><input type="text" id="d-ass" placeholder="Nome Cognome"></div><div class="inp-field" style="flex:1"><label>Operatore Segreteria</label><input type="text" id="d-op" placeholder="Nome Cognome"></div>
+            </div>
+            <div class="group-actions"><button class="btn btn-primary" style="height:44px; min-width:120px" onclick="saveDae()">REGISTRA</button></div>
+        </div>
+    </div>
+    <div class="scroll-area">
+        <h2 class="page-title">⚡ Registro Controlli DAE</h2>
+        <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-dae"><thead><tr><th>Data</th><th>Ora</th><th>Stato</th><th>Assistente Bagnanti</th><th>Operatore Segreteria</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-dae"></tbody></table></div></div>
+    </div>
+</div>
+
+<div id="module-utenze" class="module-container hidden" style="display:flex; flex-direction:column; height:100%">
+    <div class="control-bar" id="cb-utenze">
+        <div class="cb-header">
+            <span class="cb-title" id="title-utenze">Registrazione Letture Utenze</span>
+            <button class="btn btn-danger hidden" id="cancel-utenze" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditUtenze()">Annulla Modifica</button>
+        </div>
+        
+        <div class="cb-row">
+            <div class="inp-field" style="width:140px; flex:none;">
+                <label>Data</label>
+                <input type="date" id="u-date">
+            </div>
+            <div class="inp-field" style="flex:1;">
+                <label>Tipo Utenza</label>
+                <select id="u-type" onchange="toggleUtenzeMode()">
+                    <option value="⚡ Elettricità">⚡ Elettricità</option>
+                    <option value="💧 Acqua">💧 Acqua (m³)</option>
+                    <option value="🔥 Gas Metano">🔥 Gas Metano (m³)</option>
+                </select>
+            </div>
+            <div id="u-extra-elec-meteo" class="inp-field hidden" style="flex:1;">
+                <label>Meteo Giornata</label>
+                <select id="u-meteo">
+                    <option value="☀️ Sole">☀️ Sole</option>
+                    <option value="⛅ Variabile">⛅ Variabile</option>
+                    <option value="☁️ Nuvoloso">☁️ Nuvoloso</option>
+                    <option value="🌧️ Pioggia">🌧️ Pioggia</option>
+                </select>
+            </div>
+            <div id="u-elec-input" style="display:contents;">
+                <div class="inp-field" style="flex:1">
+                    <label>A1 (F1)</label>
+                    <input type="number" id="u-a1" step="any">
+                </div>
+                <div class="inp-field" style="flex:1">
+                    <label>A2 (F2)</label>
+                    <input type="number" id="u-a2" step="any">
+                </div>
+                <div class="inp-field" style="flex:1">
+                    <label>A3 (F3)</label>
+                    <input type="number" id="u-a3" step="any">
+                </div>
+            </div>
+            <div id="u-single-input" class="inp-field hidden" style="flex:1;">
+                <label>Lettura Contatore</label>
+                <input type="number" id="u-val" placeholder="Es. 12500" step="any">
+            </div>
+            <div id="u-extra-gas" class="inp-field hidden" style="width:100px; flex:none;">
+                <label>Temp. (°C)</label>
+                <input type="number" id="u-temp" placeholder="°C" step="0.1">
+            </div>
+            <div class="inp-field" style="flex:1.5;">
+                <label>Note</label>
+                <input type="text" id="u-note" placeholder="Opzionale...">
+            </div>
+            <div style="width:120px; flex:none;">
+                <button id="btn-save-utenze" class="btn btn-primary" style="height:44px; width:100%" onclick="saveUtenze()">SALVA</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="scroll-area">
+        <div class="filter-row" style="margin-bottom:20px; justify-content:center">
+            <button class="btn btn-primary" id="btn-sub-u-overview" onclick="switchSubViewUtenze('overview')">Panoramica</button>
+            <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-u-charts" onclick="switchSubViewUtenze('charts')">Grafici</button>
+            <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-u-archive" onclick="switchSubViewUtenze('archive')">Archivio</button>
+        </div>
+
+        <!-- Utenze Sub-View: Overview (KPI) -->
+        <div id="sub-u-overview">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px">
+                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📅 Confronto Mensile</h3>
+                <input type="month" id="u-kpi-month-selector" class="filter-select" style="font-weight:700; background:rgba(255,255,255,0.8)" onchange="renderUtenze()">
+            </div>
+
+            <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 25px;">
+                <div class="kpi-card glass-card" style="border-left: 4px solid #eab308">
+                    <div class="kpi-head" id="u-kpi-elec-title">-</div>
+                    <div class="kpi-val" id="u-kpi-elec-val">-</div>
+                    <div class="kpi-sub" id="u-kpi-elec-sub">-</div>
+                    <div class="kpi-context" id="u-kpi-elec-context"></div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #3b82f6">
+                    <div class="kpi-head" id="u-kpi-water-title">-</div>
+                    <div class="kpi-val" id="u-kpi-water-val">-</div>
+                    <div class="kpi-sub" id="u-kpi-water-sub">-</div>
+                    <div class="kpi-context" id="u-kpi-water-context"></div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #ef4444">
+                    <div class="kpi-head" id="u-kpi-gas-title">-</div>
+                    <div class="kpi-val" id="u-kpi-gas-val">-</div>
+                    <div class="kpi-sub" id="u-kpi-gas-sub">-</div>
+                    <div class="kpi-context" id="u-kpi-gas-context"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Utenze Sub-View: Charts -->
+        <div id="sub-u-charts" class="hidden">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px">
+                <h2 class="page-title" style="margin:0; font-size:1.3rem">📊 Analisi Utenze</h2>
+                <div style="display:flex; gap:10px; align-items:center">
+                    <select id="u-range" class="filter-select" onchange="renderUtenze()" style="font-weight:700">
+                        <option value="7">Ultimi 7 Giorni</option>
+                        <option value="15">Ultimi 15 Giorni</option>
+                        <option value="30">Ultimi 30 Giorni</option>
+                        <option value="90">Ultimi 3 Mesi</option>
+                        <option value="180">Ultimi 6 Mesi</option>
+                        <option value="365">Ultimi 12 Mesi</option>
+                    </select>
+                    <select id="u-view-mode" class="filter-select" onchange="renderUtenze()" style="border:2px solid var(--primary); color:var(--primary); font-weight:700">
+                        <option value="delta">📊 Consumo (Delta)</option>
+                        <option value="total">📈 Lettura (Totale)</option>
+                    </select>
+                    <label class="benchmark-toggle" style="height:40px">
+                        <input type="checkbox" id="u-compare-year" onchange="renderUtenze()">
+                        <span style="font-size:0.8rem">Confronta Anno Prec.</span>
+                    </label>
+                </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:25px; margin-bottom:25px;">
+                <div class="chart-card glass-card" style="height:300px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem; color:#eab308">⚡ Elettricità (kWh)</div>
+                    <div class="chart-wrapper"><canvas id="chartElec"></canvas></div>
+                </div>
+                <div class="chart-card glass-card" style="height:300px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem; color:#3b82f6">💧 Acqua (m³)</div>
+                    <div class="chart-wrapper"><canvas id="chartWater"></canvas></div>
+                </div>
+                <div class="chart-card glass-card" style="height:300px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem; color:#ef4444">🔥 Gas (m³)</div>
+                    <div class="chart-wrapper"><canvas id="chartGas"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Utenze Sub-View: Archive -->
+        <div id="sub-u-archive" class="hidden">
+            <h2 class="page-title">📝 Storico Dettagliato</h2>
+            <div class="archive-toolbar" style="margin-bottom: 15px; background: rgba(255,255,255,0.5);">
+                <div class="arch-group"><span class="arch-label">Dal:</span><input type="date" id="u-hist-start" class="arch-input" onchange="renderUtenze()"></div>
+                <div class="arch-group"><span class="arch-label">Al:</span><input type="date" id="u-hist-end" class="arch-input" onchange="renderUtenze()"></div>
+                <select id="u-hist-sort" class="arch-select" onchange="renderUtenze()">
+                    <option value="desc">⬇️ Più Recenti</option>
+                    <option value="asc">⬆️ Più Vecchi</option>
+                </select>
+                <button class="btn btn-danger" style="height:36px; padding:0 15px" onclick="resetUtenzeHistory()">✕</button>
+            </div>
+
+            <div class="table-wrap glass-card">
+                <div style="overflow-x:auto;">
+                    <table id="table-utenze">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th style="color:#eab308; background:rgba(234, 179, 8, 0.1)">⚡ Lettura Totale</th>
+                                <th style="color:#eab308; background:rgba(234, 179, 8, 0.1)">F1 / F2 / F3</th>
+                                <th style="color:#3b82f6; background:rgba(59, 130, 246, 0.1)">💧 Lettura Acqua</th>
+                                <th style="color:#ef4444; background:rgba(239, 68, 68, 0.1)">🔥 Lettura Gas</th>
+                                <th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-utenze"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 </div>
 
@@ -397,81 +559,55 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// FIREBASE CONFIG (Mantenuto originale)
 const firebaseConfig = { apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0", authDomain: "piscinastats-64519.firebaseapp.com", projectId: "piscinastats-64519", storageBucket: "piscinastats-64519.firebasestorage.app", messagingSenderId: "297663099794", appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
+let dataIngressi=[], dataVasca=[], dataDae=[], dataUtenze=[]; let editIdIngressi=null, editIdVasca=null, editIdUtenze=null;
+const isChartReady = () => typeof Chart !== 'undefined';
 
-let dataIngressi=[], dataVasca=[], dataDae=[], dataUtenze=[]; 
-let editIdIngressi=null, editIdVasca=null, editIdUtenze=null;
-let charts = {};
+const FESTIVITA_FISSE = ["01-01", "06-01", "25-04", "01-05", "02-06", "15-08", "01-11", "08-12", "25-12", "26-12"];
+function getDataConfronto(dataCorrente) {
+    const m = String(dataCorrente.getMonth() + 1).padStart(2, '0');
+    const d = String(dataCorrente.getDate()).padStart(2, '0');
+    const chiaveData = `${d}-${m}`;
+    const dataAnnoPrec = new Date(dataCorrente);
+    if (FESTIVITA_FISSE.includes(chiaveData)) { dataAnnoPrec.setFullYear(dataCorrente.getFullYear() - 1); }
+    else { dataAnnoPrec.setDate(dataCorrente.getDate() - 364); }
+    return dataAnnoPrec;
+}
 
-// THEME LOGIC
-window.toggleTheme = () => {
-    const html = document.documentElement;
-    const current = html.getAttribute('data-theme');
-    const next = current === 'dark' ? 'light' : 'dark';
-    html.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-    // Refresh charts colors
-    Object.values(charts).forEach(c => c.destroy());
-    charts={};
-    refreshCurrentView();
-};
-// Set initial theme
-if(localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+// HELPERS DATE FIX - BULLETPROOF
+function getStrDate(d) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
 
-// SIDEBAR LOGIC
-window.toggleSidebar = () => {
-    document.getElementById('sidebar').classList.toggle('open');
-    document.querySelector('.mobile-overlay').classList.toggle('open');
-};
-
-// DATE HELPERS
-function getStrDate(d) { return d.toISOString().split('T')[0]; }
-
-// UI HELPERS
-window.showToast = (msg, type='success') => { 
-    const c = document.getElementById('toast-container'); 
-    const e = document.createElement('div'); 
-    e.className = `toast toast-${type}`; 
-    e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; 
-    c.appendChild(e); 
-    requestAnimationFrame(()=>e.classList.add('show')); 
-    setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); 
-};
-
-// AUTH
+window.showToast = (msg, type='success') => { const c = document.getElementById('toast-container'); const e = document.createElement('div'); e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); };
 window.doLogin = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch(e) { document.getElementById('login-error').innerText = e.message; } };
 window.doLogout = () => signOut(auth);
-onAuthStateChanged(auth, (u) => { 
-    document.getElementById('loader').style.opacity = '0';
-    setTimeout(()=>document.getElementById('loader').classList.add('hidden'),500);
-    
-    if(u){ 
-        document.getElementById('login-screen').classList.add('hidden'); 
-        document.getElementById('user-display').innerText=u.email.split('@')[0]; 
-        startListening(); 
-    } else { 
-        document.getElementById('login-screen').classList.remove('hidden'); 
-    } 
-});
+onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen').classList.add('hidden'); document.getElementById('user-display').innerText=u.email.split('@')[0]; startListening(); } else { document.getElementById('login-screen').classList.remove('hidden'); } });
 
-// DATA LISTENING
 function startListening() {
     try {
+        // IMPORTANT: Listeners must populate data arrays before calling init functions
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(2000)), (snap) => { 
             dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); 
             populateStatFilters(); 
-            if(!document.getElementById('module-ingressi').classList.contains('hidden')) refreshCurrentView(); 
+            refreshCurrentView();
+            if(dataUtenze.length > 0) renderUtenze(); // Re-render Utenze if ingressi arrive later
         });
+        
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { 
             dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); 
             if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); 
         });
+
         onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), limit(200)), (snap) => { 
             dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); 
             if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); 
         });
+
         onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc"), limit(4000)), (snap) => { 
             dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); 
             if(!document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze(); 
@@ -479,331 +615,874 @@ function startListening() {
     } catch(e) { console.error(e); }
 }
 
-// NAVIGATION
-window.switchModule=(m)=>{ 
-    document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); 
-    document.getElementById('module-'+m).classList.remove('hidden'); 
-    document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); 
-    document.getElementById('nav-module-'+m).classList.add('active'); 
-    // Mobile close
-    document.getElementById('sidebar').classList.remove('open');
-    document.querySelector('.mobile-overlay').classList.remove('open');
-
-    if(m==='ingressi')refreshCurrentView(); 
-    if(m==='vasca')renderVasca(); 
-    if(m==='dae')renderDae(); 
-    if(m==='utenze')renderUtenze(); 
-};
-window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
-window.refreshCurrentView = () => { if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); };
-
-// --- INGRESSI LOGIC ---
 window.populateStatFilters = () => {
-    const yS = document.getElementById('stat-year');
-    if(yS.options.length > 0) return; // already populated
+    if(!dataIngressi.length) return;
     const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
-    const curr = new Date().getFullYear();
-    if(!years.includes(curr)) years.unshift(curr);
-    years.forEach(y => yS.innerHTML += `<option value="${y}">${y}</option>`);
-};
+    const yearSel = document.getElementById('stat-year');
+    // Multi-Select Logic (Replacing <select>)
+    const msList = document.getElementById('ms-compare-list');
+    msList.innerHTML = `<div class="ms-option"><input type="checkbox" value="avg" checked onchange="renderStats()"><span>📊 Media Storica</span></div>`;
+    years.forEach(y => {
+        msList.innerHTML += `<div class="ms-option"><input type="checkbox" value="${y}" onchange="renderStats()"><span>${y}</span></div>`;
+    });
 
-window.toggleStatMode = () => {
-    const m = document.getElementById('stat-mode').value;
-    document.getElementById('stat-year-cont').classList.toggle('hidden', m!=='year');
-    document.getElementById('stat-custom-cont').classList.toggle('hidden', m!=='custom');
+    const currYear = yearSel.value;
+    const todayYear = new Date().getFullYear();
+    if(!currYear) yearSel.value = years.includes(todayYear) ? todayYear : years[0];
     renderStats();
 };
 
-// CHART HELPERS
-const getChartColors = () => {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    return {
-        text: isDark ? '#94a3b8' : '#475569',
-        grid: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-        primary: '#2563eb'
-    };
+window.toggleMsDropdown = () => {
+    document.getElementById('ms-compare-list').classList.toggle('show');
 };
 
-function renderChart(id, type, labels, datasets) {
-    if(charts[id]) charts[id].destroy();
-    const ctx = document.getElementById(id);
-    if(!ctx) return;
-    const colors = getChartColors();
+// Close dropdown when clicking outside
+window.addEventListener('click', (e) => {
+    if (!e.target.closest('.ms-container')) {
+        document.getElementById('ms-compare-list').classList.remove('show');
+    }
+});
+
+window.toggleStatMode = () => {
+    const mode = document.getElementById('stat-mode').value;
+    const yCont = document.getElementById('stat-year-cont');
+    const cCont = document.getElementById('stat-custom-cont');
+    if(mode === 'year') {
+        yCont.classList.remove('hidden');
+        cCont.classList.add('hidden');
+    } else {
+        yCont.classList.add('hidden');
+        cCont.classList.remove('hidden');
+        cCont.style.display = 'flex';
+        if(!document.getElementById('stat-date-start').value) {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            document.getElementById('stat-date-start').value = firstDay;
+            document.getElementById('stat-date-end').value = lastDay;
+        }
+    }
+    renderStats();
+};
+
+let ch={};
+function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
+    if(!isChartReady()) return;
+    if(ch[id]) ch[id].destroy();
     
-    charts[id] = new Chart(ctx, {
+    const scalesConfig = { 
+        y: { beginAtZero: type==='bar', stacked: isStacked },
+        x: { stacked: isStacked }
+    };
+
+    const isBar = type === 'bar';
+    const optimizedDatasets = datasets.map(d => ({
+        ...d,
+        backgroundColor: d.backgroundColor ? d.backgroundColor : (isBar ? '#2563eb' : (d.fill ? d.borderColor + '20' : undefined)),
+        borderWidth: isBar ? 0 : 2,
+        pointRadius: isBar ? 0 : 3,
+        type: d.type || type, 
+        borderDash: isBar ? [] : (d.borderDash || []),
+        tension: 0.4,
+        parsing: { yAxisKey: 'y' }
+    }));
+
+    ch[id] = new Chart(document.getElementById(id), {
         type: type,
-        data: { labels, datasets },
+        data: { labels: labels, datasets: optimizedDatasets },
         options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-                x: { ticks: { color: colors.text }, grid: { color: colors.grid } },
-                y: { ticks: { color: colors.text }, grid: { color: colors.grid } }
+            animation: false,
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 13, weight: 'bold' },
+                    callbacks: {
+                        afterBody: function(context) {
+                            const punto = context.find(c => c.raw);
+                            if(!punto) return [];
+                            if (punto.raw.refDate) {
+                                const dRef = new Date(punto.raw.refDate);
+                                const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                                return ['', '------------------', `Confrontato con:\n${dStr}`];
+                            }
+                            if (punto.raw.extraInfo) return ['', `📝 ${punto.raw.extraInfo}`];
+                            return [];
+                        }
+                    }
+                }
             },
-            plugins: { legend: { labels: { color: colors.text } } }
+            layout: { padding: 25 },
+            scales: scalesConfig
         }
     });
 }
+function renderPie(id,l,d) { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#f59e0b','#ef4444'],borderWidth:0}]},options:{animation:false, responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
+function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:ds},options:{animation:false, responsive:true,maintainAspectRatio:false,indexAxis:ax,plugins:{legend:{display:true}}}}); }
 
-// OVERVIEW RENDER
-window.renderOverview = () => {
-    if(!dataIngressi.length) return;
-    const now = new Date();
-    const monthPrefix = getStrDate(now).slice(0,7);
-    const currData = dataIngressi.filter(d => d.date.startsWith(monthPrefix) && !d.excludeStats);
-    
-    const tot = currData.reduce((a,b)=>a+b.totale,0);
-    const count = currData.length;
-    const avg = count ? (tot/count).toFixed(0) : 0;
-    document.getElementById('ov-avg').innerText = avg;
-    
-    // Forecast
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-    document.getElementById('ov-forecast').innerText = count ? ((tot/count)*daysInMonth).toFixed(0) : '-';
+window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
+function renderOverviewKPI() {
+    if(!dataIngressi || dataIngressi.length === 0) return;
+    const today = new Date();
+    const currentMonthStr = today.toISOString().slice(0, 7);
+    const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
+    const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+    const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
+    const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats && x.totale > 0);
+    const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
+    const daysCurrent = new Set(dCurrent.map(x=>x.date)).size;
 
-    // Chart 30gg
-    const labels=[], data=[];
-    for(let i=29; i>=0; i--){
-        const d = new Date(); d.setDate(now.getDate()-i);
-        const ds = getStrDate(d);
-        labels.push(d.getDate()+'/'+(d.getMonth()+1));
-        const entry = dataIngressi.find(x=>x.date===ds);
-        data.push(entry ? entry.totale : 0);
+    document.getElementById('ov-avg').innerText = daysCurrent > 0 ? (totalCurrent/daysCurrent).toFixed(0) : 0;
+    
+    // FIX: Compare up to the same day number
+    const maxDay = today.getDate();
+    const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
+    const ym_year = ym.getFullYear();
+
+    const dPrev = dataIngressi.filter(x => {
+        return x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
+    });
+    const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
+    
+    let momHtml = "";
+    if (dPrev.length > 0) {
+        let diff = 0;
+        if (totalPrev > 0) diff = ((totalCurrent - totalPrev) / totalPrev) * 100;
+        else if (totalCurrent > 0) diff = 100;
+        const color = diff >= 0 ? "#16a34a" : "#dc2626";
+        const sign = diff > 0 ? "+" : "";
+        momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
+    } else { momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
+    document.getElementById('ov-mom').innerHTML = momHtml;
+    document.getElementById('ov-mom-label').innerText = `vs ${pm_month_name} (al ${maxDay})`;
+
+    const dYoy = dataIngressi.filter(x => {
+        return x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
+    });
+    const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
+    
+    let yoyHtml = "";
+    if (dYoy.length > 0) {
+        let diff = 0;
+        if (totalYoy > 0) diff = ((totalCurrent - totalYoy) / totalYoy) * 100;
+        else if (totalCurrent > 0) diff = 100;
+        const color = diff >= 0 ? "#16a34a" : "#dc2626";
+        const sign = diff > 0 ? "+" : "";
+        yoyHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
+    } else { yoyHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
+    document.getElementById('ov-yoy').innerHTML = yoyHtml;
+    document.getElementById('ov-yoy-label').innerText = `vs ${ym_year} (al ${maxDay})`;
+
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    if(daysCurrent > 0) { 
+        document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
+        document.getElementById('ov-forecast-sub').innerText = "proiezione (su giorni aperti)";
+    } else { document.getElementById('ov-forecast').innerText = "-"; }
+}
+
+window.renderOverviewCharts = () => {
+    if(!dataIngressi || dataIngressi.length === 0 || !isChartReady()) return;
+    const chartType = document.getElementById('ov-chart-type').value;
+    const today = new Date();
+    const dates=[], l30=[], l30_prev=[];
+    for(let i=29; i>=0; i--) {
+        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
+        dates.push(`${dt.toLocaleDateString('it-IT',{weekday:'short'})} ${dt.getDate()}/${dt.getMonth()+1}`);
+        const dtPrev = getDataConfronto(dt);
+        const dtPrevStr = getStrDate(dtPrev);
+        const valOggi = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0);
+        l30.push({ x: dates[dates.length-1], y: valOggi, refDate: dtPrevStr });
+        l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
-    renderChart('chartRecent30', 'line', labels, [{
-        label: 'Ingressi', data: data, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.2)', fill: true, tension: 0.4
-    }]);
+    
+    const bgMain = chartType === 'bar' ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
+    const bgComp = chartType === 'bar' ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
+
+    renderDynamicChart('chartRecent30', dates, [
+        {label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},
+        {label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}
+    ], chartType);
+    
+    // 90 DAYS CHART
+    const dates90=[], l90=[], l90_prev=[];
+    for(let i=89; i>=0; i--) {
+        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
+        dates90.push(`${dt.getDate()}/${dt.getMonth()+1}`);
+        const dtPrev = getDataConfronto(dt);
+        const dtPrevStr = getStrDate(dtPrev);
+        const valOggi = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0);
+        l90.push({ x: dates90[dates90.length-1], y: valOggi, refDate: dtPrevStr });
+        l90_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
+    }
+    renderDynamicChart('chartRecent90', dates90, [
+        {label:'Ultimi 90gg', data:l90, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},
+        {label:'Anno Prec.', data:l90_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}
+    ], chartType);
+
+
+    const m12=[], m12_prev=[], m_labels=[];
+    for(let i=11; i>=0; i--) {
+        const d=new Date(today.getFullYear(), today.getMonth()-i, 1); m_labels.push(d.toLocaleString('it-IT',{month:'short'}));
+        m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear() && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
+        m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1) && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
+    }
+    renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}], chartType);
+}
+
+// HELPERS FOR MULTI COMPARE COLORS
+const getCompColor = (idx) => {
+    const colors = ['#94a3b8', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+    return colors[idx % colors.length];
 };
 
-// STATS RENDER
+const getFasciaColor = (f) => {
+    const map = {
+        "Mattina": "#60a5fa", "Mattina intera": "#3b82f6", "Pranzo": "#f59e0b",
+        "Sera": "#1e40af", "Sabato pom": "#8b5cf6", "Domenica": "#ec4899",
+        "Festivo": "#ef4444", "Unico": "#10b981",
+        "Estiva - Mattina": "#fcd34d", "Estiva - Pomeriggio": "#f97316", "Estiva - Unico": "#facc15"
+    };
+    return map[f] || "#94a3b8";
+};
+
 window.renderStats = () => {
+    if(!dataIngressi.length) return;
     const mode = document.getElementById('stat-mode').value;
-    let filtered = [];
-    if(mode === 'year'){
-        const y = document.getElementById('stat-year').value;
-        filtered = dataIngressi.filter(d => d.date.startsWith(y) && !d.excludeStats);
+    
+    // GET SELECTED COMPARISONS
+    const compInputs = document.querySelectorAll('#ms-compare-list input:checked');
+    const selectedComps = Array.from(compInputs).map(i => i.value);
+
+    const poolFilter = document.getElementById('stat-pool-filter').value;
+    const dayTypeFilter = document.getElementById('day-type-filter').value;
+    const chartType = document.getElementById('stat-chart-type').value;
+
+    let startDate, endDate, yearMain;
+    if(mode === 'year') {
+        yearMain = parseInt(document.getElementById('stat-year').value) || new Date().getFullYear(); // Safe Default
+        startDate = new Date(yearMain, 0, 1);
+        endDate = new Date(yearMain, 11, 31);
     } else {
-        const s = document.getElementById('stat-date-start').value;
-        const e = document.getElementById('stat-date-end').value;
-        if(s && e) filtered = dataIngressi.filter(d => d.date >= s && d.date <= e && !d.excludeStats);
+        const sVal = document.getElementById('stat-date-start').value;
+        const eVal = document.getElementById('stat-date-end').value;
+        if(!sVal || !eVal) return;
+        startDate = new Date(sVal);
+        endDate = new Date(eVal);
+        yearMain = startDate.getFullYear(); 
+    }
+
+    const filteredSource = dataIngressi.filter(d => {
+        if(d.excludeStats) return false;
+        
+        const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
+        if(poolFilter === 'indoor' && isOutdoor) return false;
+        if(poolFilter === 'outdoor' && !isOutdoor) return false;
+        if(dayTypeFilter === 'standard' && d.type !== 'standard') return false;
+        if(dayTypeFilter === 'special' && d.type === 'standard') return false;
+        return true;
+    });
+
+    const dataMap = {};
+    filteredSource.forEach(d => {
+        if(!dataMap[d.date]) dataMap[d.date] = [];
+        dataMap[d.date].push(d);
+    });
+
+    // BUILD MAIN DATASET
+    let fMain = [];
+    for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
+        const k = getStrDate(d);
+        if(dataMap[k]) fMain = fMain.concat(dataMap[k]);
     }
     
-    // YoY (Semplificato per esempio)
-    const months = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-    const mData = new Array(12).fill(0);
-    filtered.forEach(d => mData[new Date(d.date).getMonth()] += d.totale);
-    renderChart('chartYoY', 'bar', months, [{label: 'Totale', data: mData, backgroundColor: '#3b82f6'}]);
-    
-    // Week
-    const days = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
-    const wData = new Array(7).fill(0); const wCount = new Array(7).fill(0);
-    filtered.forEach(d => { const day = new Date(d.date).getDay(); wData[day]+=d.totale; wCount[day]++; });
-    const wAvg = wData.map((t,i) => wCount[i] ? t/wCount[i] : 0);
-    renderChart('chartWeek', 'bar', days, [{label: 'Media Giornaliera', data: wAvg, backgroundColor: '#8b5cf6'}]);
+    document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
+    if(!isChartReady()) return;
 
-    // Pie
-    let t = { 'Int':0, 'Rid':0, 'Abb':0, 'Grat':0 };
-    filtered.forEach(d => { t.Int+=d.int; t.Rid+=d.rid; t.Abb+=(d.abb_int+d.abb_rid); t.Grat+=d.grat; });
-    if(charts['chartPie']) charts['chartPie'].destroy();
-    charts['chartPie'] = new Chart(document.getElementById('chartPie'), {
-        type: 'doughnut', data: { labels: Object.keys(t), datasets: [{ data: Object.values(t), backgroundColor: ['#3b82f6','#60a5fa','#a855f7','#94a3b8'] }] }, options: { plugins: { legend: { position:'right', labels: { color: getChartColors().text } } } }
+    // COLOR LOGIC
+    const isBar = chartType === 'bar';
+    const bgMain = isBar ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
+
+    // --- CHART YOY ---
+    let labels = [];
+    let mainData = [];
+    
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentDay = today.getDate();
+    const isCurrentYear = (yearMain === today.getFullYear());
+
+    if(mode === 'year') {
+        labels = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+        mainData = new Array(12).fill(0);
+        fMain.forEach(d => { mainData[new Date(d.date).getMonth()] += d.totale; });
+        document.getElementById('yoy-title').innerText = `Andamento Stagionale (${yearMain})`;
+    } else {
+        const days = [];
+        for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
+            days.push(new Date(d));
+            labels.push(d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}));
+        }
+        days.forEach(d => {
+            const k = getStrDate(d);
+            const val = dataMap[k] ? dataMap[k].reduce((a,b)=>a+b.totale, 0) : 0;
+            mainData.push(val);
+        });
+        document.getElementById('yoy-title').innerText = `Andamento Periodo (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`;
+    }
+
+    const datasets = [{ label: mode==='year' ? `Anno ${yearMain}` : 'Periodo Selezionato', data: mainData, borderColor: '#2563eb', backgroundColor: bgMain, tension: 0.4, fill: true }];
+
+    // LOOP THROUGH COMPARISONS
+    selectedComps.forEach((compVal, idx) => {
+        let compData = [];
+        let compLabel = compVal === 'avg' ? 'Media Storica' : `Anno ${compVal}`;
+        let col = getCompColor(idx);
+        let bgCol = isBar ? col : 'transparent'; 
+
+        if(mode === 'year') {
+            for(let m=0; m<12; m++) {
+                let sum=0, count=0;
+                const limitDay = (isCurrentYear && m === currentMonth) ? currentDay : 32;
+
+                if(compVal === 'avg') {
+                    const allYears = [...new Set(filteredSource.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== yearMain);
+                    allYears.forEach(y => {
+                        const val = filteredSource.filter(d => {
+                            const dd = new Date(d.date);
+                            return dd.getFullYear() === y && dd.getMonth() === m && dd.getDate() <= limitDay;
+                        }).reduce((a,b)=>a+b.totale,0);
+                        if(val > 0) { sum += val; count++; }
+                    });
+                } else {
+                    const y = parseInt(compVal);
+                    sum = filteredSource.filter(d => {
+                        const dd = new Date(d.date);
+                        return dd.getFullYear() === y && dd.getMonth() === m && dd.getDate() <= limitDay;
+                    }).reduce((a,b)=>a+b.totale,0);
+                    count = 1;
+                }
+                compData.push(count>0 ? sum/count : 0);
+            }
+        } else {
+            // CUSTOM RANGE LOGIC
+            const days = [];
+            for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) days.push(new Date(d));
+
+            // Build Hist Map
+            const histMap = {}; 
+            filteredSource.forEach(d => {
+                const dDate = new Date(d.date);
+                if(dDate.getFullYear() === yearMain) return; 
+                const k = `${dDate.getMonth()}-${dDate.getDate()}`;
+                if(!histMap[k]) histMap[k] = [];
+                histMap[k].push(d);
+            });
+
+            days.forEach(d => {
+                const month = d.getMonth();
+                const day = d.getDate();
+                const k = `${month}-${day}`;
+                
+                if(compVal === 'avg') {
+                    let sum = 0, count = 0;
+                    if(histMap[k]) {
+                        const yearsInDay = [...new Set(histMap[k].map(x=>new Date(x.date).getFullYear()))];
+                        yearsInDay.forEach(y => {
+                            const val = histMap[k].filter(x => new Date(x.date).getFullYear() === y).reduce((a,b)=>a+b.totale,0);
+                            sum += val; count++;
+                        });
+                    }
+                    compData.push(count>0 ? sum/count : 0);
+                } else {
+                    const y = parseInt(compVal);
+                    const val = filteredSource.filter(x => {
+                        const xd = new Date(x.date);
+                        return xd.getFullYear() === y && xd.getMonth() === month && xd.getDate() === day;
+                    }).reduce((a,b)=>a+b.totale, 0);
+                    compData.push(val);
+                }
+            });
+        }
+
+        datasets.push({
+            label: compLabel,
+            data: compData,
+            borderColor: col,
+            backgroundColor: bgCol,
+            borderDash: isBar ? [] : [5,5],
+            fill: false, // Ensure no fill for comparison lines
+            tension: 0.4
+        });
     });
+
+    renderDynamicChart('chartYoY', labels, datasets, chartType);
+
+
+    // --- WEEKLY CHART ---
+    const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+    const getJsDay = (i) => (i + 1) % 7;
+    let weekDatasets = [];
+    let isStacked = false;
+
+    if(chartType === 'bar') {
+        isStacked = true; 
+        const uniqueFasce = [...new Set(fMain.map(d => d.fascia))];
+        weekDatasets = uniqueFasce.map(fascia => {
+            const data = weekLabels.map((_, i) => {
+                let subset = fMain.filter(d => new Date(d.date).getDay() === getJsDay(i) && d.fascia === fascia);
+                return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
+            });
+            return {
+                label: fascia,
+                data: data,
+                backgroundColor: getFasciaColor(fascia),
+                stack: 'main' 
+            };
+        });
+
+        // Add Comparisons as side-by-side bars
+        selectedComps.forEach((compVal, idx) => {
+            let compSet = [];
+            if(compVal === 'avg') {
+                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() !== yearMain);
+            } else {
+                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() === parseInt(compVal));
+            }
+            const compDataWeekly = weekLabels.map((_, i) => {
+                let subset = compSet.filter(d => new Date(d.date).getDay() === getJsDay(i));
+                return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
+            });
+            
+            weekDatasets.push({
+                label: (compVal === 'avg' ? 'Media' : compVal) + ' (Tot)',
+                data: compDataWeekly,
+                backgroundColor: getCompColor(idx),
+                stack: 'comp'+idx
+            });
+        });
+
+    } else {
+        const calcWeekly = (dataset) => {
+            return weekLabels.map((_, i) => {
+                let subset = dataset.filter(d => new Date(d.date).getDay() === getJsDay(i));
+                return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
+            });
+        };
+        weekDatasets = [{ label: `Media Selezionata`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true }];
+        
+        selectedComps.forEach((compVal, idx) => {
+            let compSet = [];
+            if(compVal === 'avg') {
+                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() !== yearMain);
+            } else {
+                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() === parseInt(compVal));
+            }
+            weekDatasets.push({
+                label: compVal === 'avg' ? 'Media' : compVal,
+                data: calcWeekly(compSet),
+                borderColor: getCompColor(idx),
+                borderDash: [5,5],
+                fill: false
+            });
+        });
+    }
+    
+    renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType, isStacked);
+
+    // ... Pie & MultiBar ...
+    let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
+    fMain.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
+    renderPie('chartPie', Object.keys(t), Object.values(t));
+
+    const buildMultiSeries = (extractor) => {
+        let allLabels = new Set(); fMain.forEach(d => allLabels.add(extractor(d).key));
+        let sortedL = Array.from(allLabels).sort();
+        let dp = sortedL.map(l => {
+            let subset = fMain.filter(d => extractor(d).key === l);
+            return subset.reduce((a,b)=>a+extractor(b).val,0);
+        });
+        return { labels: sortedL, datasets: [{ label: `Totale`, data: dp, backgroundColor: '#2563eb' }] };
+    };
+    const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}));
+    renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
+    const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}));
+    renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
 };
 
-// ARCHIVE RENDER
-window.renderIngressiArchive = () => {
-    const s = document.getElementById('arch-date-start').value;
-    const e = document.getElementById('arch-date-end').value;
-    let f = dataIngressi;
-    if(s) f = f.filter(d => d.date >= s);
-    if(e) f = f.filter(d => d.date <= e);
-    
-    const tbody = document.getElementById('tbody-ingressi');
-    tbody.innerHTML = f.length ? '' : '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--text-muted)">Nessun dato</td></tr>';
-    
-    f.forEach(d => {
-        const dateFmt = d.date.split('-').reverse().join('/');
-        const isExcl = d.excludeStats;
-        const style = isExcl ? 'opacity:0.6; text-decoration:line-through' : '';
-        tbody.innerHTML += `
-            <tr style="${style}">
-                <td style="font-weight:700">${dateFmt}</td>
-                <td><div style="font-weight:bold">${d.fascia}</div><div style="font-size:0.8rem; color:var(--text-muted)">${d.meteo}</div></td>
-                <td>${d.int}</td>
-                <td>${d.rid}</td>
-                <td>${d.abb_int + d.abb_rid}</td>
-                <td>${d.grat}</td>
-                <td style="font-weight:900; color:var(--primary)">${d.totale}</td>
-                <td style="text-align:right">
-                    <button class="btn btn-icon" onclick="editIngressi('${d.id}')">✏️</button>
-                    <button class="btn btn-icon" style="color:#ef4444" onclick="deleteDoc('sessioni','${d.id}')">🗑️</button>
+function renderVasca() { 
+    const t=document.getElementById('tbody-vasca'); t.innerHTML=""; 
+    const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); 
+    [...g.keys()].forEach(k=>{ 
+        const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); 
+        const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; 
+        e.forEach((d,i)=>{ 
+            const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; 
+            const phVal = parseFloat(d.ph); const phAlert = (phVal < 6.5 || phVal > 7.5);
+            const phStyle = phAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : 'font-weight:600';
+            const clVal = parseFloat(d.cll); const clAlert = (clVal < 0.8 || clVal > 1.7);
+            const clStyle = clAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : '';
+            
+            // POOL TYPE LOGIC
+            const typeLabel = d.type === 'esterna' ? '<span class="badge badge-summer">☀️ Esterna</span>' : '<span class="badge badge-std">🏠 Interna</span>';
+            
+            t.innerHTML+=`<tr style="${b}">
+                ${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} 
+                <td>
+                    <div style="font-weight:700;color:#2563eb">${d.time}</div>
+                    <div style="margin-top:2px">${typeLabel}</div>
                 </td>
-            </tr>
-        `;
-    });
-};
+                <td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td>
+                <td style="${phStyle}">${d.ph}</td><td style="${clStyle}">${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> 
+                <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; 
+        }); 
+    }); 
+}
 
-// CRUD INGRESSI
-window.saveIngressi = async () => {
-    const d = document.getElementById('i-date').value;
-    if(!d) return showToast("Data mancante", "error");
-    const p = {
-        date: d, type: document.getElementById('i-type').value, fascia: document.getElementById('i-fascia').value,
-        meteo: document.getElementById('i-meteo').value, excludeStats: document.getElementById('i-exclude').checked,
-        int: +document.getElementById('q-intero').value, rid: +document.getElementById('q-ridotto').value,
-        grat: +document.getElementById('q-gratuito').value, abb_int: +document.getElementById('q-abb-int').value,
-        abb_rid: +document.getElementById('q-abb-rid').value
-    };
-    p.totale = p.int + p.rid + p.grat + p.abb_int + p.abb_rid;
-    try {
-        if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), p); cancelEditIngressi(); }
-        else { await addDoc(collection(db,"sessioni"), p); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); }
-        showToast("Salvato!");
-    } catch(e) { showToast(e.message, "error"); }
-};
+window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
+function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; const sortedDae = [...dataDae].sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time)); sortedDae.forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${(d.date||'').split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time||'-'}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
 
-window.editIngressi = (id) => {
-    const d = dataIngressi.find(x=>x.id===id); if(!d) return;
-    editIdIngressi=id;
-    document.getElementById('i-date').value=d.date; document.getElementById('i-type').value=d.type||'standard';
-    document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo;
-    document.getElementById('i-exclude').checked=d.excludeStats||false;
-    document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid;
-    document.getElementById('q-gratuito').value=d.grat; document.getElementById('q-abb-int').value=d.abb_int;
-    document.getElementById('q-abb-rid').value=d.abb_rid;
-    document.getElementById('title-ingressi').innerText="Modifica Riga";
-    document.getElementById('cb-ingressi').classList.add('editing');
-    document.getElementById('cancel-ingressi').classList.remove('hidden');
-    window.scrollTo({top:0, behavior:'smooth'});
-};
-window.cancelEditIngressi = () => {
-    editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi";
-    document.getElementById('cb-ingressi').classList.remove('editing');
-    document.getElementById('cancel-ingressi').classList.add('hidden');
-    document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0);
-};
-
-// VASCA LOGIC
-window.renderVasca = () => {
-    const t = document.getElementById('tbody-vasca'); t.innerHTML="";
-    dataVasca.forEach(d => {
-        const phStyle = (d.ph<6.8 || d.ph>7.6) ? 'color:#ef4444; font-weight:bold' : '';
-        const clStyle = (d.cll<0.6 || d.cll>1.5) ? 'color:#ef4444; font-weight:bold' : '';
-        t.innerHTML += `
-            <tr>
-                <td><b>${d.date.split('-').reverse().join('/')}</b><br><span style="color:var(--primary)">${d.time}</span> <small>${d.type==='interna'?'🏠':'☀️'}</small></td>
-                <td>Bag: ${d.bag}<br>Aria: ${d.ta}° H2O: ${d.th}°</td>
-                <td>pH: <span style="${phStyle}">${d.ph}</span><br>Cl Lib: <span style="${clStyle}">${d.cll}</span> (Tot: ${d.clt})</td>
-                <td style="text-align:right"><button class="btn btn-icon" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444" onclick="deleteDoc('valori_vasca','${d.id}')">🗑️</button></td>
-            </tr>`;
-    });
-};
-window.saveVasca = async () => {
-    const d = document.getElementById('v-date').value;
-    if(!d) return showToast("Data mancante", "error");
-    const p = {
-        date:d, time:document.getElementById('v-time').value, type:document.getElementById('v-type').value,
-        bag: +document.getElementById('v-bag').value, ta: +document.getElementById('v-ta').value,
-        th: +document.getElementById('v-th').value, ph: +document.getElementById('v-ph').value,
-        cll: +document.getElementById('v-cll').value, clc: +document.getElementById('v-clc').value,
-        clt: +document.getElementById('v-clt').value
-    };
-    try {
-        if(editIdVasca) { await updateDoc(doc(db,"valori_vasca",editIdVasca), p); cancelEditVasca(); }
-        else { await addDoc(collection(db,"valori_vasca"), p); }
-        showToast("Valori salvati");
-    } catch(e) { showToast(e.message,"error"); }
-};
-window.calcClTot = () => { document.getElementById('v-clt').value = ((+document.getElementById('v-cll').value||0) + (+document.getElementById('v-clc').value||0)).toFixed(2); };
-window.editVasca = (id) => {
-    const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id;
-    document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time;
-    document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta;
-    document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph;
-    document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc;
-    document.getElementById('v-clt').value=d.clt;
-    document.getElementById('cancel-vasca').classList.remove('hidden');
-    document.getElementById('cb-vasca').classList.add('editing');
-};
-window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
-
-// GENERIC DELETE
-window.deleteDoc = async (coll, id) => { if(confirm("Eliminare definitivamente?")) { await deleteDoc(doc(db,coll,id)); showToast("Eliminato"); } };
-
-// UTENZE LOGIC (Simplified)
+// UTENZE
 window.toggleUtenzeMode = () => {
-    const t = document.getElementById('u-type').value;
-    document.getElementById('u-elec-input').style.display = t.includes('Elettricità') ? 'contents' : 'none';
-    document.getElementById('u-single-input').classList.toggle('hidden', t.includes('Elettricità'));
-    document.getElementById('u-extra-gas').classList.toggle('hidden', !t.includes('Gas'));
+    const type = document.getElementById('u-type').value;
+    const isSingle = type !== '⚡ Elettricità';
+    document.getElementById('u-single-input').classList.toggle('hidden', !isSingle);
+    const isElec = type === '⚡ Elettricità';
+    document.getElementById('u-elec-input').style.display = isElec ? 'contents' : 'none';
+    document.getElementById('u-extra-elec-meteo').classList.toggle('hidden', !isElec);
+    const isGas = type === '🔥 Gas Metano';
+    document.getElementById('u-extra-gas').classList.toggle('hidden', !isGas);
 };
+window.toggleUtenzeMode();
+window.saveUtenze = async () => {
+    const d = document.getElementById('u-date').value; const type = document.getElementById('u-type').value; const note = document.getElementById('u-note').value;
+    let p = { date: d, type, note };
+    if(type === '⚡ Elettricità') {
+        const a1 = parseFloat(document.getElementById('u-a1').value)||0;
+        const a2 = parseFloat(document.getElementById('u-a2').value)||0;
+        const a3 = parseFloat(document.getElementById('u-a3').value)||0;
+        p.a1 = a1; p.a2 = a2; p.a3 = a3; p.val = a1+a2+a3;
+        p.meteo = document.getElementById('u-meteo').value;
+    } else {
+        p.val = parseFloat(document.getElementById('u-val').value);
+        if(type === '🔥 Gas Metano') { p.temp = parseFloat(document.getElementById('u-temp').value) || null; }
+    }
+    if(!d || (type!=='⚡ Elettricità' && isNaN(p.val))) return showToast("Dati mancanti", "error");
+    try {
+        if(editIdUtenze) {
+            await updateDoc(doc(db, "utenze_log", editIdUtenze), p); showToast("Modifica salvata!"); cancelEditUtenze();
+        } else {
+            await addDoc(collection(db, "utenze_log"), p); showToast("Salvato"); document.querySelectorAll('#cb-utenze input:not([type=date])').forEach(i=>i.value='');
+        }
+    } catch(e){ showToast(e.message, "error"); }
+};
+
+window.editUtenze = (id) => {
+    const d = dataUtenze.find(x => x.id === id); if(!d) return; editIdUtenze = id;
+    document.getElementById('u-date').value = d.date; document.getElementById('u-type').value = d.type; document.getElementById('u-note').value = d.note || '';
+    toggleUtenzeMode();
+    if(d.type === '⚡ Elettricità') {
+        document.getElementById('u-a1').value = d.a1; document.getElementById('u-a2').value = d.a2; document.getElementById('u-a3').value = d.a3; document.getElementById('u-meteo').value = d.meteo || '☀️ Sole';
+    } else {
+        document.getElementById('u-val').value = d.val;
+        if(d.type === '🔥 Gas Metano') { document.getElementById('u-temp').value = d.temp || ''; }
+    }
+    document.getElementById('title-utenze').innerText = "Modifica Utenza"; document.getElementById('btn-save-utenze').innerText = "AGGIORNA"; document.getElementById('btn-save-utenze').style.background = "#f59e0b"; document.getElementById('cb-utenze').classList.add('editing'); document.getElementById('cancel-utenze').classList.remove('hidden'); window.scrollTo({top:0, behavior:'smooth'});
+};
+window.cancelEditUtenze = () => {
+    editIdUtenze = null; document.getElementById('title-utenze').innerText = "Registrazione Letture Utenze"; document.getElementById('btn-save-utenze').innerText = "SALVA"; document.getElementById('btn-save-utenze').style.background = ""; document.getElementById('cb-utenze').classList.remove('editing'); document.getElementById('cancel-utenze').classList.add('hidden'); document.querySelectorAll('#cb-utenze input:not([type=date])').forEach(i=>i.value=''); toggleUtenzeMode();
+};
+
+window.switchSubViewUtenze=(s)=>{
+    ['overview','charts','archive'].forEach(v=>{ document.getElementById('sub-u-'+v).classList.add('hidden'); document.getElementById('btn-sub-u-'+v).classList.remove('btn-primary'); });
+    document.getElementById('sub-u-'+s).classList.remove('hidden'); document.getElementById('btn-sub-u-'+s).classList.add('btn-primary');
+    renderUtenze();
+};
+
 window.renderUtenze = () => {
-    const t = document.getElementById('tbody-utenze'); t.innerHTML="";
-    // Raggruppamento per data (logica semplificata per visualizzazione)
+    if(!isChartReady()) return;
+    const viewMode = document.getElementById('u-view-mode').value; const isDelta = viewMode === 'delta'; const chartType = isDelta ? 'bar' : 'line';
+    const rangeDays = parseInt(document.getElementById('u-range').value); const limitDate = new Date(); limitDate.setDate(limitDate.getDate() - rangeDays); const limitStr = limitDate.toISOString().split('T')[0];
+    const showHistory = document.getElementById('u-compare-year').checked;
     const grouped = {};
     dataUtenze.forEach(d => {
-        if(!grouped[d.date]) grouped[d.date] = {e:null,w:null,g:null};
-        if(d.type.includes('Elettricità')) grouped[d.date].e = d.val;
-        if(d.type.includes('Acqua')) grouped[d.date].w = d.val;
-        if(d.type.includes('Gas')) grouped[d.date].g = d.val;
+        if(!grouped[d.date]) grouped[d.date] = { date: d.date, elec: null, water: null, gas: null, notes: [] };
+        if(d.type === '⚡ Elettricità') grouped[d.date].elec = d;
+        if(d.type === '💧 Acqua') grouped[d.date].water = d;
+        if(d.type === '🔥 Gas Metano') grouped[d.date].gas = d;
+        if(d.note) grouped[d.date].notes.push(d.note);
     });
-    Object.keys(grouped).sort().reverse().forEach(date => {
-        const g = grouped[date];
-        t.innerHTML += `<tr><td>${date.split('-').reverse().join('/')}</td>
-        <td style="color:#eab308; font-weight:bold">${g.e ? g.e.toFixed(1) : '-'}</td>
-        <td style="color:#3b82f6; font-weight:bold">${g.w ? g.w.toFixed(1) : '-'}</td>
-        <td style="color:#ef4444; font-weight:bold">${g.g ? g.g.toFixed(1) : '-'}</td><td></td></tr>`;
+    const allDatesAsc = Object.keys(grouped).sort();
+    let prevVals = { elec: null, water: null, gas: null }; const deltas = {};
+    allDatesAsc.forEach(date => {
+        deltas[date] = { elec: null, water: null, gas: null }; const g = grouped[date];
+        const calcDelta = (key, valObj) => {
+            if(valObj) {
+                if(prevVals[key] !== null) { let d = valObj.val - prevVals[key]; if(d < 0) d = 0; deltas[date][key] = d; } else { deltas[date][key] = 0; } prevVals[key] = valObj.val;
+            }
+        };
+        calcDelta('elec', g.elec); calcDelta('water', g.water); calcDelta('gas', g.gas);
     });
-};
-window.saveUtenze = async () => {
-    const d = document.getElementById('u-date').value; const t = document.getElementById('u-type').value;
-    let val = 0;
-    let extra = {};
-    if(t.includes('Elettricità')) {
-        const a1=+document.getElementById('u-a1').value; const a2=+document.getElementById('u-a2').value; const a3=+document.getElementById('u-a3').value;
-        val = a1+a2+a3; extra={a1,a2,a3,meteo:document.getElementById('u-meteo').value};
-    } else {
-        val = +document.getElementById('u-val').value;
-        if(t.includes('Gas')) extra={temp:+document.getElementById('u-temp').value};
+
+    // --- KPI LOGIC ---
+    let kpiDateObj = new Date(); 
+    const selectedMonthVal = document.getElementById('u-kpi-month-selector').value; 
+
+    if (selectedMonthVal) {
+        kpiDateObj = new Date(selectedMonthVal + "-01");
+    } else if (allDatesAsc.length > 0) {
+        // Use string slicing for safer default date (avoids timezone shifts)
+        const lastDate = allDatesAsc[allDatesAsc.length - 1];
+        document.getElementById('u-kpi-month-selector').value = lastDate.slice(0, 7);
+        kpiDateObj = new Date(lastDate);
     }
-    if(!d) return showToast("Data mancante","error");
-    await addDoc(collection(db,"utenze_log"), {date:d, type:t, val, ...extra});
-    showToast("Utenza salvata");
-};
-window.switchSubViewUtenze = (v) => {
-     ['overview','charts','archive'].forEach(x => {
-         document.getElementById('sub-u-'+x).classList.add('hidden');
-         document.getElementById('btn-sub-u-'+x).classList.remove('btn-primary');
-     });
-     document.getElementById('sub-u-'+v).classList.remove('hidden');
-     document.getElementById('btn-sub-u-'+v).classList.add('btn-primary');
-     if(v==='archive') renderUtenze();
-};
 
-// EXPORT CSV FIX (BOM included)
-window.downloadCSV = () => {
-    const s = document.getElementById('arch-date-start').value;
-    const e = document.getElementById('arch-date-end').value;
-    let f = dataIngressi;
-    if(s) f = f.filter(d => d.date >= s);
-    if(e) f = f.filter(d => d.date <= e);
+    const thisMonth = kpiDateObj.getMonth();
+    const thisYear = kpiDateObj.getFullYear();
+    const prevYear = thisYear - 1;
+    const monthName = kpiDateObj.toLocaleString('it-IT', { month: 'long' });
     
-    if(!f.length) return showToast("Nessun dato", "error");
-    let csv = "\uFEFFData;Tipo;Fascia;Meteo;Intero;Ridotto;Gratuito;Abbonamenti;Totale\n";
-    f.forEach(r => {
-        csv += `${r.date};${r.type};${r.fascia};${r.meteo};${r.int};${r.rid};${r.grat};${r.abb_int+r.abb_rid};${r.totale}\n`;
+    // Determine the "Max Day" for comparison
+    const realToday = new Date();
+    const isCurrentRealMonth = (thisYear === realToday.getFullYear() && thisMonth === realToday.getMonth());
+    const maxDay = isCurrentRealMonth ? realToday.getDate() : 32; 
+
+    let sumElec = { curr: 0, prev: 0, currMeteo: {sun:0, tot:0}, prevMeteo: {sun:0, tot:0} };
+    let sumWater = { curr: 0, prev: 0, currBag: {sum:0, count:0}, prevBag: {sum:0, count:0} };
+    let sumGas = { curr: 0, prev: 0, currTemp: [], prevTemp: [] };
+
+    Object.keys(deltas).forEach(dateStr => {
+        const d = new Date(dateStr);
+        if(d.getDate() <= maxDay) {
+            if(d.getMonth() === thisMonth) {
+                const gData = grouped[dateStr];
+                
+                if(d.getFullYear() === thisYear) {
+                    sumElec.curr += deltas[dateStr].elec || 0;
+                    sumWater.curr += deltas[dateStr].water || 0;
+                    sumGas.curr += deltas[dateStr].gas || 0;
+                    
+                    // Context Data Current
+                    if(gData.elec && gData.elec.meteo) {
+                        sumElec.currMeteo.tot++;
+                        if(gData.elec.meteo.includes('Sole')) sumElec.currMeteo.sun++;
+                    }
+                    if(gData.gas && gData.gas.temp) sumGas.currTemp.push(gData.gas.temp);
+                    
+                    // Bagnanti Data Integration
+                    const dayBag = dataIngressi.find(x => x.date === dateStr);
+                    if(dayBag) { sumWater.currBag.sum += dayBag.totale || 0; sumWater.currBag.count++; }
+
+                } else if(d.getFullYear() === prevYear) {
+                    sumElec.prev += deltas[dateStr].elec || 0;
+                    sumWater.prev += deltas[dateStr].water || 0;
+                    sumGas.prev += deltas[dateStr].gas || 0;
+
+                    // Context Data Prev
+                    if(gData.elec && gData.elec.meteo) {
+                        sumElec.prevMeteo.tot++;
+                        if(gData.elec.meteo.includes('Sole')) sumElec.prevMeteo.sun++;
+                    }
+                    if(gData.gas && gData.gas.temp) sumGas.prevTemp.push(gData.gas.temp);
+                    
+                    // Bagnanti Data Integration Prev
+                    const dayBag = dataIngressi.find(x => x.date === dateStr);
+                    if(dayBag) { sumWater.prevBag.sum += dayBag.totale || 0; sumWater.prevBag.count++; }
+                }
+            }
+        }
     });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `report_${s||'inizio'}_${e||'fine'}.csv`;
-    link.click();
+
+    // Helper for context strings
+    const getMeteoStr = () => {
+        const c = sumElec.currMeteo.sun;
+        const p = sumElec.prevMeteo.sun;
+        return `Giorni Sole: <b>${c}</b> (vs ${p})`;
+    };
+    const getTempStr = () => {
+        const avg = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : '-';
+        return `Temp Media: <b>${avg(sumGas.currTemp)}°C</b> (vs ${avg(sumGas.prevTemp)}°C)`;
+    };
+    const getBagStr = () => {
+        const avgC = sumWater.currBag.count ? (sumWater.currBag.sum / sumWater.currBag.count).toFixed(0) : 0;
+        const avgP = sumWater.prevBag.count ? (sumWater.prevBag.sum / sumWater.prevBag.count).toFixed(0) : 0;
+        return `Media Bagnanti: <b>${avgC}</b> (vs ${avgP})`;
+    };
+
+    const updateKpi = (type, valCurr, valPrev, unit, contextHtml) => {
+        let diff = 0;
+        let diffHtml = '<span style="color:#94a3b8; font-size:0.8rem">Dati insufficienti</span>';
+        
+        if (valPrev > 0) {
+            diff = ((valCurr - valPrev) / valPrev) * 100;
+            const color = diff > 0 ? '#ef4444' : '#10b981'; 
+            const sign = diff > 0 ? '+' : '';
+            const dayLabel = isCurrentRealMonth ? `(al ${maxDay})` : '';
+            diffHtml = `<span style="color:${color}; font-weight:800">${sign}${diff.toFixed(1)}%</span> vs ${monthName} ${prevYear} ${dayLabel}`;
+        }
+
+        document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
+        document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
+        document.getElementById(`u-kpi-${type}-sub`).innerHTML = diffHtml;
+        if(contextHtml) document.getElementById(`u-kpi-${type}-context`).innerHTML = contextHtml;
+    };
+
+    updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh', getMeteoStr());
+    updateKpi('water', sumWater.curr, sumWater.prev, 'm³', getBagStr());
+    updateKpi('gas', sumGas.curr, sumGas.prev, 'm³', getTempStr());
+
+    // Chart Logic remains unchanged...
+    function prepareChartData(type) {
+        const filteredDates = allDatesAsc.filter(d => d >= limitStr);
+        const labels = [], dataTotal = [], dataDelta = [], dataHistoryTotal = [], dataHistoryDelta = [];
+        const typeKey = type === '⚡ Elettricità' ? 'elec' : (type === '💧 Acqua' ? 'water' : 'gas');
+        filteredDates.forEach((dateStr) => {
+            const curr = grouped[dateStr];
+            const dateObj = new Date(dateStr);
+            const label = dateObj.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+            labels.push(label);
+            let val = 0; let extra = "";
+            if(typeKey === 'elec' && curr.elec) { val = curr.elec.val; extra = `Meteo: ${curr.elec.meteo||'N/D'}`; }
+            if(typeKey === 'water' && curr.water) { val = curr.water.val; }
+            if(typeKey === 'gas' && curr.gas) { val = curr.gas.val; extra = curr.gas.temp ? `Temp: ${curr.gas.temp}°C` : ''; }
+            dataTotal.push({ x: label, y: val, extraInfo: extra, rawDate: dateStr });
+            const dVal = deltas[dateStr] ? deltas[dateStr][typeKey] : 0;
+            dataDelta.push({ x: label, y: dVal, extraInfo: extra, rawDate: dateStr });
+            if(showHistory) {
+                const dObj = new Date(dateStr); dObj.setFullYear(dObj.getFullYear() - 1); const prevYearStr = dObj.toISOString().split('T')[0];
+                let hVal = null;
+                if(grouped[prevYearStr]) {
+                      if(typeKey==='elec' && grouped[prevYearStr].elec) hVal = grouped[prevYearStr].elec.val;
+                      if(typeKey==='water' && grouped[prevYearStr].water) hVal = grouped[prevYearStr].water.val;
+                      if(typeKey==='gas' && grouped[prevYearStr].gas) hVal = grouped[prevYearStr].gas.val;
+                }
+                dataHistoryTotal.push(hVal !== null ? { x: label, y: hVal, refDate: prevYearStr } : null);
+                let hDelta = null;
+                if(deltas[prevYearStr] && deltas[prevYearStr][typeKey] !== null) { hDelta = deltas[prevYearStr][typeKey]; }
+                dataHistoryDelta.push(hDelta !== null ? { x: label, y: hDelta, refDate: prevYearStr } : null);
+            }
+        });
+        return { labels, dataTotal, dataDelta, dataHistoryTotal, dataHistoryDelta };
+    }
+
+    const elecData = prepareChartData('⚡ Elettricità'); const waterData = prepareChartData('💧 Acqua'); const gasData = prepareChartData('🔥 Gas Metano');
+    function makeDatasets(mainData, historyData, colorMain, colorHist) {
+        const ds = [{ label: isDelta ? 'Consumo' : 'Lettura', data: isDelta ? mainData.dataDelta : mainData.dataTotal, borderColor: colorMain, backgroundColor: colorMain, fill: true, tension: 0.3, order: 1, type: isDelta ? 'bar' : 'line' }];
+        if(showHistory) {
+            ds.push({ label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, borderColor: colorHist, backgroundColor: isDelta ? colorHist : 'transparent', borderDash: isDelta ? [] : [4,4], borderWidth: isDelta ? 0 : 2, pointRadius: isDelta ? 0 : 2, type: isDelta ? 'bar' : 'line', order: 2, fill: false, tension: 0.3 });
+        }
+        return ds;
+    }
+    // Only render charts if their container is visible
+    if (!document.getElementById('sub-u-charts').classList.contains('hidden')) {
+        renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#fde047'), chartType);
+        renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd'), chartType);
+        renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5'), chartType);
+    }
+
+    const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse();
+    
+    // HISTORY FILTER LOGIC
+    const histStart = document.getElementById('u-hist-start').value;
+    const histEnd = document.getElementById('u-hist-end').value;
+    const histSort = document.getElementById('u-hist-sort').value;
+
+    let filteredDates = [...datesDesc];
+    if(histStart) filteredDates = filteredDates.filter(d => d >= histStart);
+    if(histEnd) filteredDates = filteredDates.filter(d => d <= histEnd);
+    if(histSort === 'asc') filteredDates.reverse();
+
+    const rowsBuffer = [];
+    filteredDates.forEach(date => {
+        const g = grouped[date]; const d = deltas[date];
+        const makeCell = (obj, deltaVal, color, suffix='') => {
+            if(!obj) return '<span style="color:#ccc">-</span>';
+            let deltaHtml = '';
+            if(deltaVal !== null) {
+                const warnStyle = (deltaVal > 1000 && suffix!=='kWh') ? 'color:#ef4444; text-decoration:underline' : `color:${color}`;
+                deltaHtml = `<div style="font-size:0.75rem; ${warnStyle}; opacity:0.8; font-weight:700">Consumo: +${deltaVal.toLocaleString('it-IT', {maximumFractionDigits: 1})} ${suffix}</div>`;
+            } else { deltaHtml = `<div style="font-size:0.75rem; color:#94a3b8">Primo dato</div>`; }
+            return `<div style="display:flex; flex-direction:column; gap:2px">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:5px"><span style="font-weight:800; font-size:1rem; color:${color}">${obj.val.toLocaleString('it-IT')}</span>
+                    <div style="display:flex; gap:2px"><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:var(--primary); border:1px solid #dbeafe; background:#eff6ff" onclick="editUtenze('${obj.id}')">✏️</button><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:#ef4444; border:1px solid #fee2e2; background:#fef2f2" onclick="delDoc('utenze_log','${obj.id}')">×</button></div>
+                </div>${deltaHtml}</div>`;
+        };
+        let elecDet = '-';
+        if(g.elec) {
+            const meteoBadge = g.elec.meteo ? `<br><span style="font-size:0.75rem; background:#f1f5f9; padding:2px 6px; border-radius:4px">Meteo: ${g.elec.meteo}</span>` : '';
+            elecDet = `<div style="font-size:0.75rem; color:#64748b">F1: <b>${g.elec.a1||0}</b> | F2: <b>${g.elec.a2||0}</b> | F3: <b>${g.elec.a3||0}</b>${meteoBadge}</div>`;
+        }
+        let gasCell = makeCell(g.gas, d.gas, '#dc2626', 'm³');
+        if(g.gas && g.gas.temp) { gasCell += `<div style="font-size:0.7rem; color:#64748b; margin-top:4px; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">🌡️ Temp: <b>${g.gas.temp}°C</b></div>`; }
+        const noteStr = g.notes.length > 0 ? g.notes.join('; ') : '';
+        const dateFmt = date.split('-').reverse().join('/');
+        rowsBuffer.push(`<tr><td style="font-weight:800; color:var(--text-main); vertical-align:top; padding-top:15px">${dateFmt}</td><td style="background:rgba(234, 179, 8, 0.05); vertical-align:top">${makeCell(g.elec, d.elec, '#d97706', 'kWh')}</td><td style="background:rgba(234, 179, 8, 0.05); vertical-align:top">${elecDet}</td><td style="background:rgba(59, 130, 246, 0.05); vertical-align:top">${makeCell(g.water, d.water, '#2563eb', 'm³')}</td><td style="background:rgba(239, 68, 68, 0.05); vertical-align:top">${gasCell}</td><td style="font-size:0.8rem; color:#64748b; font-style:italic; vertical-align:top; padding-top:15px">${noteStr}</td></tr>`);
+    });
+    t.innerHTML = rowsBuffer.join('');
 };
 
-// INIT
-const today = new Date().toISOString().split('T')[0];
-document.querySelectorAll('input[type="date"]').forEach(i => i.value = today);
-setInterval(()=>{ if(document.getElementById('d-time')) document.getElementById('d-time').value = new Date().toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}); }, 1000);
+window.resetUtenzeHistory = () => {
+    document.getElementById('u-hist-start').value = "";
+    document.getElementById('u-hist-end').value = "";
+    document.getElementById('u-hist-sort').value = "desc";
+    renderUtenze();
+};
 
+window.saveIngressi = async () => {
+    const d = document.getElementById('i-date').value; if(!d) return showToast("Data mancante","error");
+    // Removed all zero checks here
+    const p = { date:d, type:document.getElementById('i-type').value, fascia:document.getElementById('i-fascia').value, meteo:document.getElementById('i-meteo').value, excludeStats: document.getElementById('i-exclude').checked, int:parseInt(document.getElementById('q-intero').value)||0, rid:parseInt(document.getElementById('q-ridotto').value)||0, grat:parseInt(document.getElementById('q-gratuito').value)||0, abb_int:parseInt(document.getElementById('q-abb-int').value)||0, abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0 };
+    p.totale = p.int + p.rid + p.grat + p.abb_int + p.abb_rid;
+    
+    try {
+        if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), p); showToast("Aggiornato"); cancelEditIngressi(); } else { await addDoc(collection(db,"sessioni"), p); showToast("Salvato"); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; }
+    } catch(e){ showToast(e.message,"error"); }
+};
+window.editIngressi = (id) => { const d = dataIngressi.find(x=>x.id===id); if(!d) return; editIdIngressi = id; document.getElementById('i-date').value=d.date; document.getElementById('i-type').value=d.type||'standard'; document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo; document.getElementById('i-exclude').checked = d.excludeStats || false; document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid; document.getElementById('q-gratuito').value=d.grat; document.getElementById('q-abb-int').value=d.abb_int; document.getElementById('q-abb-rid').value=d.abb_rid; document.getElementById('title-ingressi').innerText="Modifica Ingressi"; document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; document.getElementById('btn-save-ingressi').style.background="#f59e0b"; document.getElementById('cancel-ingressi').classList.remove('hidden'); document.getElementById('cb-ingressi').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; };
+window.saveVasca = async () => { const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value; if(!date || !time) return showToast("Data/Ora mancanti","error"); const payload = { date, time, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value }; try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); } };
+window.editVasca = (id) => { const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id; document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time; document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta; document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph; document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc; document.getElementById('v-clt').value=d.clt; document.getElementById('title-vasca').innerText="Modifica Valori"; document.getElementById('btn-save-vasca').innerText="AGGIORNA"; document.getElementById('btn-save-vasca').style.background="#f59e0b"; document.getElementById('cancel-vasca').classList.remove('hidden'); document.getElementById('cb-vasca').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('title-vasca').innerText="Registrazione Valori"; document.getElementById('btn-save-vasca').innerText="SALVA"; document.getElementById('btn-save-vasca').style.background=""; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
+window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
+window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
+window.toggleExcludeStats = async (id, currentVal) => { try { await updateDoc(doc(db, "sessioni", id), { excludeStats: !currentVal }); showToast(!currentVal ? "Giorno escluso dalla media" : "Giorno reincluso nella media"); } catch(e) { showToast(e.message, "error"); } };
+window.renderIngressiArchive = () => {
+    const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const sort = document.getElementById('arch-sort').value;
+    const f = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; });
+    f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return sort==='desc'?db-da:da-db});
+    const t=document.getElementById('tbody-ingressi'); t.innerHTML="";
+    if(f.length === 0) { t.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px;">Nessun dato trovato.</td></tr>'; return; }
+    const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)});
+    const rowsBuffer = [];
+    [...g.keys()].forEach(k=>{
+        const e=g.get(k);
+        const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`;
+        e.forEach((d,i)=>{
+            const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)";
+            let badge = d.type === 'festivo' ? '<span class="badge badge-ko" style="margin-left:5px">🔴 Festivo</span>' : d.type === 'evento' ? '<span class="badge badge-evt" style="margin-left:5px">🏆 Evento</span>' : d.type === 'extra' ? '<span class="badge badge-summer" style="margin-left:5px">⚠️ Extra</span>' : '';
+            if (d.type === 'maltempo') badge = '<span class="badge" style="background:#475569; color:white; margin-left:5px">⛈️ Maltempo</span>';
+            const isExcluded = d.excludeStats === true;
+            const rowStyle = isExcluded ? "opacity:0.5; background: repeating-linear-gradient(45deg,rgba(0,0,0,0.02),rgba(0,0,0,0.02) 10px,rgba(0,0,0,0.06) 10px,rgba(0,0,0,0.06) 20px);" : "";
+            const excludeIcon = isExcluded ? "✅" : "🚫";
+            rowsBuffer.push(`<tr style="${b}; ${rowStyle}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b>${badge}<br><small style="color:#64748b">${d.meteo}</small>${isExcluded?'<br><b style="color:#ef4444;font-size:0.65rem">ESCLUSO MEDIA</b>':''}</td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right; min-width:110px"><button class="btn btn-icon" style="color:#64748b;background:transparent;border:1px solid #e2e8f0;margin-right:5px;width:30px;height:30px" onclick="toggleExcludeStats('${d.id}', ${isExcluded})">${excludeIcon}</button><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`);
+        });
+    });
+    t.innerHTML = rowsBuffer.join('');
+}
+window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')refreshCurrentView(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
+window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
+function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
+setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
+const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('v-date').value=today; document.getElementById('d-date').value=today; document.getElementById('u-date').value=today;
+window.downloadCSV = () => { const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const filtered = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; }); if(!filtered.length) return showToast("Nessun dato da scaricare", "error"); let csvContent = "data:text/csv;charset=utf-8,Data;Tipo;Fascia;Meteo;EsclusoMedia;Intero;Ridotto;Abbonamenti;Gratuiti;Totale\n"; filtered.forEach(row => { csvContent += `${row.date};${row.type||'standard'};${row.fascia};${row.meteo};${row.excludeStats?'SI':'NO'};${row.int};${row.rid};${row.abb_int + row.abb_rid};${row.grat};${row.totale}\n`; }); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "archivio_ingressi.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
+window.resetArchiveFilters = () => { document.getElementById('arch-date-start').value=""; document.getElementById('arch-date-end').value=""; document.getElementById('arch-filter-fascia').value="all"; document.getElementById('arch-filter-meteo').value="all"; renderIngressiArchive(); };
 </script>
+
 </body>
 </html>
