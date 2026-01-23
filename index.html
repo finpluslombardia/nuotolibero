@@ -79,7 +79,8 @@
     .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
 
     .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
-    /* CORREZIONE: DEFINIZIONE ESPLICITA DELLE CLASSI CONDIVISE PER EVITARE @EXTEND */
+    
+    /* STILI CARD E TABELLE */
     .glass-card, .kpi-card, .chart-card, .table-wrap, #login-box { 
         background: var(--glass-bg); 
         backdrop-filter: var(--glass-blur); 
@@ -669,10 +670,12 @@ window.toggleStatMode = () => {
 };
 
 let ch={};
-function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
+function renderDynamicChart(id, labels, datasets, type, extraOptions = {}) {
     if(!isChartReady()) return;
     if(ch[id]) ch[id].destroy();
-    
+
+    const isStacked = extraOptions.stacked || false; // Estrai stacked se presente
+
     const scalesConfig = { 
         y: { beginAtZero: type==='bar', stacked: isStacked },
         x: { stacked: isStacked }
@@ -690,41 +693,50 @@ function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
         parsing: { yAxisKey: 'y' }
     }));
 
-    ch[id] = new Chart(document.getElementById(id), {
-        type: type,
-        data: { labels: labels, datasets: optimizedDatasets },
-        options: {
-            animation: false,
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: { display: true },
-                tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                    padding: 12,
-                    cornerRadius: 8,
-                    titleFont: { size: 13 },
-                    bodyFont: { size: 13, weight: 'bold' },
-                    callbacks: {
-                        afterBody: function(context) {
-                            const punto = context.find(c => c.raw);
-                            if(!punto) return [];
-                            if (punto.raw.refDate) {
-                                const dRef = new Date(punto.raw.refDate);
-                                const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-                                return ['', '------------------', `Confrontato con:\n${dStr}`];
-                            }
-                            if (punto.raw.extraInfo) return ['', `📝 ${punto.raw.extraInfo}`];
-                            return [];
+    const options = {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { display: true },
+            tooltip: {
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                padding: 12,
+                cornerRadius: 8,
+                titleFont: { size: 13 },
+                bodyFont: { size: 13, weight: 'bold' },
+                callbacks: {
+                    afterBody: function(context) {
+                        const punto = context.find(c => c.raw);
+                        if(!punto) return [];
+                        if (punto.raw.refDate) {
+                            const dRef = new Date(punto.raw.refDate);
+                            const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+                            return ['', '------------------', `Confrontato con:\n${dStr}`];
                         }
+                        if (punto.raw.extraInfo) return ['', `📝 ${punto.raw.extraInfo}`];
+                        if (punto.raw.count) return ['', `Giorni rilevati: ${punto.raw.count}`, `Media: ${punto.y}`];
+                        return [];
                     }
                 }
-            },
-            layout: { padding: 25 },
-            scales: scalesConfig
+            }
+        },
+        layout: { padding: 25 },
+        scales: scalesConfig
+    };
+
+    // Merge manuale profondo per scales se presente in extraOptions
+    if(extraOptions) {
+        if(extraOptions.scales) {
+            options.scales = { ...options.scales, ...extraOptions.scales };
+            delete extraOptions.scales; // Rimuovi per non sovrascrivere brutalmente col resto
         }
-    });
+        // Merge del resto delle opzioni
+        Object.assign(options, extraOptions);
+    }
+
+    ch[id] = new Chart(document.getElementById(id), { type, data: { labels, datasets: optimizedDatasets }, options });
 }
 function renderPie(id,l,d) { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:l,datasets:[{data:d,backgroundColor:['#2563eb','#60a5fa','#a855f7','#d8b4fe','#f59e0b','#ef4444'],borderWidth:0}]},options:{animation:false, responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{usePointStyle:true}}}}}); }
 function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:ds},options:{animation:false, responsive:true,maintainAspectRatio:false,indexAxis:ax,plugins:{legend:{display:true}}}}); }
@@ -1025,7 +1037,7 @@ window.renderStats = () => {
         });
     });
 
-    renderDynamicChart('chartYoY', labels, datasets, chartType);
+    renderDynamicChart('chartYoY', labels, datasets, chartType, { stacked: false });
 
 
     // --- WEEKLY CHART ---
@@ -1097,24 +1109,44 @@ window.renderStats = () => {
         });
     }
     
-    renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType, isStacked);
+    renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType, { stacked: isStacked });
 
     // ... Pie & MultiBar ...
     let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
     fMain.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
     renderPie('chartPie', Object.keys(t), Object.values(t));
 
-    const buildMultiSeries = (extractor) => {
-        let allLabels = new Set(); fMain.forEach(d => allLabels.add(extractor(d).key));
-        let sortedL = Array.from(allLabels).sort();
-        let dp = sortedL.map(l => {
-            let subset = fMain.filter(d => extractor(d).key === l);
-            return subset.reduce((a,b)=>a+extractor(b).val,0);
-        });
-        return { labels: sortedL, datasets: [{ label: `Totale`, data: dp, backgroundColor: '#2563eb' }] };
-    };
-    const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}));
-    renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
+    // IMPATTO METEO EVOLUTO (Media invece di Totale)
+    const meteoStats = {};
+    fMain.forEach(d => { 
+        const k = d.meteo || 'N/D';
+        if(!meteoStats[k]) meteoStats[k] = { tot:0, count:0 };
+        meteoStats[k].tot += d.totale;
+        meteoStats[k].count++;
+    });
+    
+    const meteoLabels = Object.keys(meteoStats).sort();
+    // Mappa colori meteo
+    const meteoColors = meteoLabels.map(m => {
+        if(m.includes('Sole') || m.includes('Caldo')) return '#f59e0b'; // Arancio/Giallo
+        if(m.includes('Pioggia') || m.includes('Temporale') || m.includes('Neve')) return '#3b82f6'; // Blu
+        if(m.includes('Nuv') || m.includes('Coperto')) return '#64748b'; // Grigio
+        return '#8b5cf6'; // Default Viola
+    });
+
+    const meteoAvgData = meteoLabels.map(l => ({
+        x: l,
+        y: (meteoStats[l].tot / meteoStats[l].count).toFixed(0),
+        count: meteoStats[l].count // Per tooltip
+    }));
+
+    renderDynamicChart('chartMeteo', 'bar', meteoLabels, [{
+        label: 'Media Ingressi', 
+        data: meteoAvgData, 
+        backgroundColor: meteoColors,
+        barPercentage: 0.6
+    }], { stacked: false });
+
     const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}));
     renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
 };
@@ -1344,6 +1376,9 @@ window.renderUtenze = () => {
     function prepareChartData(type) {
         const filteredDates = allDatesAsc.filter(d => d >= limitStr);
         const labels = [], dataTotal = [], dataDelta = [], dataHistoryTotal = [], dataHistoryDelta = [];
+        // Array per temperatura (solo per Gas)
+        const dataTemp = []; 
+
         const typeKey = type === '⚡ Elettricità' ? 'elec' : (type === '💧 Acqua' ? 'water' : 'gas');
         filteredDates.forEach((dateStr) => {
             const curr = grouped[dateStr];
@@ -1351,12 +1386,25 @@ window.renderUtenze = () => {
             const label = dateObj.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
             labels.push(label);
             let val = 0; let extra = "";
+            let tempVal = null; // Temp esterna
+
             if(typeKey === 'elec' && curr.elec) { val = curr.elec.val; extra = `Meteo: ${curr.elec.meteo||'N/D'}`; }
             if(typeKey === 'water' && curr.water) { val = curr.water.val; }
-            if(typeKey === 'gas' && curr.gas) { val = curr.gas.val; extra = curr.gas.temp ? `Temp: ${curr.gas.temp}°C` : ''; }
+            if(typeKey === 'gas' && curr.gas) { 
+                val = curr.gas.val; 
+                if(curr.gas.temp) {
+                    tempVal = curr.gas.temp;
+                    extra = `Temp: ${tempVal}°C`; 
+                }
+            }
+            
             dataTotal.push({ x: label, y: val, extraInfo: extra, rawDate: dateStr });
             const dVal = deltas[dateStr] ? deltas[dateStr][typeKey] : 0;
             dataDelta.push({ x: label, y: dVal, extraInfo: extra, rawDate: dateStr });
+            
+            // Push temp data (null se non esiste)
+            dataTemp.push(tempVal);
+
             if(showHistory) {
                 const dObj = new Date(dateStr); dObj.setFullYear(dObj.getFullYear() - 1); const prevYearStr = dObj.toISOString().split('T')[0];
                 let hVal = null;
@@ -1371,22 +1419,82 @@ window.renderUtenze = () => {
                 dataHistoryDelta.push(hDelta !== null ? { x: label, y: hDelta, refDate: prevYearStr } : null);
             }
         });
-        return { labels, dataTotal, dataDelta, dataHistoryTotal, dataHistoryDelta };
+        return { labels, dataTotal, dataDelta, dataHistoryTotal, dataHistoryDelta, dataTemp };
     }
 
     const elecData = prepareChartData('⚡ Elettricità'); const waterData = prepareChartData('💧 Acqua'); const gasData = prepareChartData('🔥 Gas Metano');
-    function makeDatasets(mainData, historyData, colorMain, colorHist) {
-        const ds = [{ label: isDelta ? 'Consumo' : 'Lettura', data: isDelta ? mainData.dataDelta : mainData.dataTotal, borderColor: colorMain, backgroundColor: colorMain, fill: true, tension: 0.3, order: 1, type: isDelta ? 'bar' : 'line' }];
+    
+    function makeDatasets(mainData, historyData, colorMain, colorHist, addTempLine=false) {
+        // MODIFICA RICHIESTA: Se isDelta (Barra) riempimento attivo, se !isDelta (Linea) niente riempimento e niente colore sotto
+        const bg = isDelta ? colorMain : 'transparent';
+        const fillMode = isDelta; // true per barre, false per linee
+
+        const ds = [{ 
+            label: isDelta ? 'Consumo' : 'Lettura', 
+            data: isDelta ? mainData.dataDelta : mainData.dataTotal, 
+            borderColor: colorMain, 
+            backgroundColor: bg, 
+            fill: fillMode, 
+            tension: 0.3, 
+            order: 1, 
+            type: isDelta ? 'bar' : 'line',
+            yAxisID: 'y'
+        }];
+        
         if(showHistory) {
-            ds.push({ label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, borderColor: colorHist, backgroundColor: isDelta ? colorHist : 'transparent', borderDash: isDelta ? [] : [4,4], borderWidth: isDelta ? 0 : 2, pointRadius: isDelta ? 0 : 2, type: isDelta ? 'bar' : 'line', order: 2, fill: false, tension: 0.3 });
+            ds.push({ 
+                label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', 
+                data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, 
+                borderColor: colorHist, 
+                backgroundColor: isDelta ? colorHist : 'transparent', 
+                borderDash: isDelta ? [] : [4,4], 
+                borderWidth: isDelta ? 0 : 2, 
+                pointRadius: isDelta ? 0 : 2, 
+                type: isDelta ? 'bar' : 'line', 
+                order: 2, 
+                fill: false, 
+                tension: 0.3,
+                yAxisID: 'y' 
+            });
+        }
+
+        // Add Temperature Line specifically for Gas chart (if enabled and data exists)
+        if(addTempLine && mainData.dataTemp && mainData.dataTemp.some(x => x !== null)) {
+            ds.push({
+                label: 'Temp. Esterna (°C)',
+                data: mainData.dataTemp,
+                borderColor: '#ef4444', // Rosso acceso
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                pointRadius: 0,
+                borderDash: [2, 2],
+                type: 'line',
+                order: 0,
+                yAxisID: 'y1', // Asse Secondario
+                tension: 0.4
+            });
         }
         return ds;
     }
+    
     // Only render charts if their container is visible
     if (!document.getElementById('sub-u-charts').classList.contains('hidden')) {
-        renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#fde047'), chartType);
-        renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd'), chartType);
-        renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5'), chartType);
+        renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#fde047'), chartType, { stacked: false });
+        renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd'), chartType, { stacked: false });
+        
+        // GAS Chart Options with Secondary Axis
+        const gasOptions = {
+            stacked: false,
+            scales: {
+                y: { beginAtZero: isDelta, position: 'left', title: {display:true, text: isDelta?'Consumo (m³)':'Lettura'} },
+                y1: { beginAtZero: false, position: 'right', grid: {drawOnChartArea: false}, title: {display:true, text: 'Temp (°C)'} } // Asse Temp
+            }
+        };
+        // Pass addTempLine=true for Gas
+        const gasDS = makeDatasets(gasData, gasData, '#ef4444', '#fca5a5', true); 
+        
+        // Manual instantiation for Gas to pass extraOptions
+        renderDynamicChart('chartGas', gasData.labels, gasDS, chartType, gasOptions); 
     }
 
     const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse();
