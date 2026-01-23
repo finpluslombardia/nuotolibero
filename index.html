@@ -1122,7 +1122,7 @@ window.renderStats = () => {
 
     // IMPATTO METEO EVOLUTO (Media invece di Totale)
     const meteoStats = {};
-    mainSet.forEach(d => { 
+    fMain.forEach(d => { 
         const k = d.meteo || 'N/D';
         if(!meteoStats[k]) meteoStats[k] = { tot:0, count:0 };
         meteoStats[k].tot += d.totale;
