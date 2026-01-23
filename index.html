@@ -1164,7 +1164,7 @@ window.saveUtenze = async () => {
         if(editIdUtenze) {
             await updateDoc(doc(db, "utenze_log", editIdUtenze), p); showToast("Modifica salvata!"); cancelEditUtenze();
         } else {
-            await addDoc(collection(db, "utenze_log"), p); showToast("Salvato"); document.querySelectorAll('#module-utenze input:not([type=date])').forEach(i=>i.value='');
+            await addDoc(collection(db, "utenze_log"), p); showToast("Salvato"); document.querySelectorAll('#cb-utenze input:not([type=date])').forEach(i=>i.value='');
         }
     } catch(e){ showToast(e.message, "error"); }
 };
@@ -1182,7 +1182,7 @@ window.editUtenze = (id) => {
     document.getElementById('title-utenze').innerText = "Modifica Utenza"; document.getElementById('btn-save-utenze').innerText = "AGGIORNA"; document.getElementById('btn-save-utenze').style.background = "#f59e0b"; document.getElementById('cb-utenze').classList.add('editing'); document.getElementById('cancel-utenze').classList.remove('hidden'); window.scrollTo({top:0, behavior:'smooth'});
 };
 window.cancelEditUtenze = () => {
-    editIdUtenze = null; document.getElementById('title-utenze').innerText = "Registrazione Letture Utenze"; document.getElementById('btn-save-utenze').innerText = "SALVA"; document.getElementById('btn-save-utenze').style.background = ""; document.getElementById('cb-utenze').classList.remove('editing'); document.getElementById('cancel-utenze').classList.add('hidden'); document.querySelectorAll('#module-utenze input:not([type=date])').forEach(i=>i.value=''); toggleUtenzeMode();
+    editIdUtenze = null; document.getElementById('title-utenze').innerText = "Registrazione Letture Utenze"; document.getElementById('btn-save-utenze').innerText = "SALVA"; document.getElementById('btn-save-utenze').style.background = ""; document.getElementById('cb-utenze').classList.remove('editing'); document.getElementById('cancel-utenze').classList.add('hidden'); document.querySelectorAll('#cb-utenze input:not([type=date])').forEach(i=>i.value=''); toggleUtenzeMode();
 };
 
 window.renderUtenze = () => {
@@ -1217,9 +1217,10 @@ window.renderUtenze = () => {
     if (selectedMonthVal) {
         kpiDateObj = new Date(selectedMonthVal + "-01");
     } else if (allDatesAsc.length > 0) {
-        kpiDateObj = new Date(allDatesAsc[allDatesAsc.length - 1]);
-        const mStr = String(kpiDateObj.getMonth() + 1).padStart(2, '0');
-        document.getElementById('u-kpi-month-selector').value = `${kpiDateObj.getFullYear()}-${mStr}`;
+        // Use string slicing for safer default date (avoids timezone shifts)
+        const lastDate = allDatesAsc[allDatesAsc.length - 1];
+        document.getElementById('u-kpi-month-selector').value = lastDate.slice(0, 7);
+        kpiDateObj = new Date(lastDate);
     }
 
     const thisMonth = kpiDateObj.getMonth();
