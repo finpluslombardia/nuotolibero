@@ -2,7 +2,6 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Importante per mobile -->
 <title>Stat CF Lampugnano</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
@@ -49,17 +48,20 @@
     .cb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
     .cb-title { font-weight: 800; color: var(--text-main); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
     
+    /* CB-ROW BASE */
     .cb-row { display: flex; gap: 15px; align-items: flex-end; width: 100%; }
     #cb-utenze .cb-row { flex-wrap: wrap; }
     #cb-ingressi .cb-row { flex-wrap: nowrap; gap: 15px; }
     #cb-vasca .cb-row { flex-wrap: nowrap; gap: 15px; }
     
+    /* INPUT FIELDS STANDARD */
     .inp-field { display: flex; flex-direction: column; flex: 1; min-width: 0; }
     .inp-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .inp-field input, .inp-field select { padding: 0 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); font-size: 0.9rem; height: 44px; color: var(--text-main); font-family: inherit; font-weight: 500; transition: all 0.2s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); width: 100%; }
     .inp-field input:focus, .inp-field select:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
     .inp-locked { background: rgba(0,0,0,0.05) !important; color: #64748b !important; cursor: not-allowed; font-weight: 700; border: 1px solid rgba(0,0,0,0.1) !important; }
     
+    /* MULTI SELECT CUSTOM */
     .ms-container { position: relative; }
     .ms-btn { width: 100%; height: 44px; background: rgba(255,255,255,0.65); border: 1px solid rgba(255,255,255,0.8); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #64748b; }
     .ms-dropdown { position: absolute; top: 105%; left: 0; width: 220px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.6); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); padding: 8px; z-index: 100; display: none; max-height: 250px; overflow-y: auto; }
@@ -69,36 +71,29 @@
     .ms-option input { width: 16px; height: 16px; accent-color: var(--primary); }
     .ms-option span { font-size: 0.85rem; color: var(--text-main); font-weight: 500; }
 
+    /* GRUPPI DEL LAYOUT INGRESSI */
     .group-ctx { display: flex; gap: 10px; flex: 1.6; align-items: flex-end; min-width: 0; }
     .group-tickets { display: flex; gap: 5px; flex: 1; background: rgba(255, 255, 255, 0.35); padding: 5px 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     .group-actions { display: flex; align-items: flex-end; gap: 10px; flex: 0 0 auto; }
     .group-chem { display: flex; gap: 8px; flex: 2; background: rgba(255, 255, 255, 0.3); padding: 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.5); align-items: center; justify-content: space-between; height: 64px; }
     
+    /* TICKET BOX */
     .t-box { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 40px; flex: 1; }
     .t-box label { font-size: 0.6rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; text-align: center; width: 100%; opacity: 0.8; letter-spacing: -0.5px; }
     .t-box input { width: 100%; text-align: center; font-weight: 800; color: var(--primary); font-size: 1.2rem; border: none; background: transparent; padding: 0; height: auto; font-family: inherit; }
 
     .scroll-area { flex: 1; overflow-y: auto; padding: 30px; }
-    /* CORREZIONE: DEFINIZIONE ESPLICITA DELLE CLASSI CONDIVISE PER EVITARE @EXTEND */
-    .glass-card, .kpi-card, .chart-card, .table-wrap, #login-box { 
-        background: var(--glass-bg); 
-        backdrop-filter: var(--glass-blur); 
-        border-radius: 24px; 
-        box-shadow: var(--glass-shadow); 
-        border: var(--glass-border); 
-        padding: 25px; 
-        display: flex; 
-        flex-direction: column; 
-    }
-    
+    .glass-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; }
     .page-title { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
 
+    /* BUTTONS */
     .btn { padding: 0 24px; border-radius: 12px; font-weight: 700; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; height: 44px; font-family: inherit; white-space: nowrap; }
     .btn:active { transform: scale(0.97); }
     .btn-primary { background: linear-gradient(135deg, var(--primary), #1d4ed8); color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
     .btn-danger { background: rgba(254, 202, 202, 0.4); color: #dc2626; border: 1px solid rgba(252, 165, 165, 0.5); }
     .btn-icon { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
 
+    /* FILTERS & MULTI-SELECT */
     .filter-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
     .filter-select { padding: 0 15px; border-radius: 12px; height: 40px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.65); }
     .benchmark-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; background: rgba(255,255,255,0.5); padding: 0 15px; height: 40px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.6); user-select: none; transition: all 0.2s; }
@@ -106,19 +101,21 @@
     .benchmark-toggle input { width: 18px; height: 18px; accent-color: #64748b; cursor: pointer; }
     .benchmark-toggle span { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); }
 
+    /* KPI & CHARTS LAYOUT */
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-    .kpi-card { height: 130px; justify-content: center; background: rgba(255,255,255,0.55); padding: 20px; }
+    .kpi-card { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); display: flex; flex-direction: column; }
     .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
     .kpi-val { font-size: 2.4rem; font-weight: 800; color: var(--text-main); line-height: 1; margin-bottom: 5px; }
     .kpi-sub { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px; }
     .kpi-context { font-size: 0.75rem; color: #64748b; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.05); width: 100%; display: flex; justify-content: space-between; font-weight: 500; }
     
-    .chart-card { height: 360px; }
+    .chart-card { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 25px; display: flex; flex-direction: column; height: 360px; }
     .chart-wrapper { position: relative; flex: 1; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
     .charts-row-main { display: grid; grid-template-columns: 1fr; gap: 25px; margin-bottom: 25px; }
     .charts-row-split { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
 
-    .table-wrap { padding: 0; overflow: hidden; }
+    /* TABLE */
+    .table-wrap { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 0; overflow: hidden; display: flex; flex-direction: column; }
     table { width: 100%; border-collapse: collapse; min-width: 1000px; }
     th { text-align: left; padding: 18px 12px; background: rgba(255,255,255,0.5); font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid rgba(0,0,0,0.05); }
     td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.9rem; vertical-align: middle; font-weight: 500; }
@@ -140,7 +137,7 @@
 
     .hidden { display: none !important; }
     #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-    #login-box { padding: 40px; text-align: center; width: 400px; }
+    #login-box { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 40px; text-align: center; width: 400px; display: flex; flex-direction: column; }
     .archive-toolbar { display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.4); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: var(--glass-border); flex-wrap: wrap; }
     .arch-input, .arch-select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-size: 0.85rem; color: var(--text-main); font-weight: 600; }
     .trend-up { color: #16a34a; } .trend-down { color: #dc2626; }
@@ -1376,33 +1373,9 @@ window.renderUtenze = () => {
 
     const elecData = prepareChartData('⚡ Elettricità'); const waterData = prepareChartData('💧 Acqua'); const gasData = prepareChartData('🔥 Gas Metano');
     function makeDatasets(mainData, historyData, colorMain, colorHist) {
-        // Modificato: backgroundColor trasparente per le linee, fill false per togliere il riempimento
-        const bg = isDelta ? colorMain : 'transparent';
-        const ds = [{ 
-            label: isDelta ? 'Consumo' : 'Lettura', 
-            data: isDelta ? mainData.dataDelta : mainData.dataTotal, 
-            borderColor: colorMain, 
-            backgroundColor: bg, 
-            fill: false, // Disabilita riempimento area
-            tension: 0.3, 
-            order: 1, 
-            type: isDelta ? 'bar' : 'line' 
-        }];
-        
+        const ds = [{ label: isDelta ? 'Consumo' : 'Lettura', data: isDelta ? mainData.dataDelta : mainData.dataTotal, borderColor: colorMain, backgroundColor: colorMain, fill: true, tension: 0.3, order: 1, type: isDelta ? 'bar' : 'line' }];
         if(showHistory) {
-            ds.push({ 
-                label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', 
-                data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, 
-                borderColor: colorHist, 
-                backgroundColor: isDelta ? colorHist : 'transparent', 
-                borderDash: isDelta ? [] : [4,4], 
-                borderWidth: isDelta ? 0 : 2, 
-                pointRadius: isDelta ? 0 : 2, 
-                type: isDelta ? 'bar' : 'line', 
-                order: 2, 
-                fill: false, 
-                tension: 0.3 
-            });
+            ds.push({ label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, borderColor: colorHist, backgroundColor: isDelta ? colorHist : 'transparent', borderDash: isDelta ? [] : [4,4], borderWidth: isDelta ? 0 : 2, pointRadius: isDelta ? 0 : 2, type: isDelta ? 'bar' : 'line', order: 2, fill: false, tension: 0.3 });
         }
         return ds;
     }
@@ -1454,6 +1427,60 @@ window.renderUtenze = () => {
     t.innerHTML = rowsBuffer.join('');
 };
 
+window.resetUtenzeHistory = () => {
+    document.getElementById('u-hist-start').value = "";
+    document.getElementById('u-hist-end').value = "";
+    document.getElementById('u-hist-sort').value = "desc";
+    renderUtenze();
+};
+
+window.saveIngressi = async () => {
+    const d = document.getElementById('i-date').value; if(!d) return showToast("Data mancante","error");
+    // Removed all zero checks here
+    const p = { date:d, type:document.getElementById('i-type').value, fascia:document.getElementById('i-fascia').value, meteo:document.getElementById('i-meteo').value, excludeStats: document.getElementById('i-exclude').checked, int:parseInt(document.getElementById('q-intero').value)||0, rid:parseInt(document.getElementById('q-ridotto').value)||0, grat:parseInt(document.getElementById('q-gratuito').value)||0, abb_int:parseInt(document.getElementById('q-abb-int').value)||0, abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0 };
+    p.totale = p.int + p.rid + p.grat + p.abb_int + p.abb_rid;
+    
+    try {
+        if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), p); showToast("Aggiornato"); cancelEditIngressi(); } else { await addDoc(collection(db,"sessioni"), p); showToast("Salvato"); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; }
+    } catch(e){ showToast(e.message,"error"); }
+};
+window.editIngressi = (id) => { const d = dataIngressi.find(x=>x.id===id); if(!d) return; editIdIngressi = id; document.getElementById('i-date').value=d.date; document.getElementById('i-type').value=d.type||'standard'; document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo; document.getElementById('i-exclude').checked = d.excludeStats || false; document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid; document.getElementById('q-gratuito').value=d.grat; document.getElementById('q-abb-int').value=d.abb_int; document.getElementById('q-abb-rid').value=d.abb_rid; document.getElementById('title-ingressi').innerText="Modifica Ingressi"; document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; document.getElementById('btn-save-ingressi').style.background="#f59e0b"; document.getElementById('cancel-ingressi').classList.remove('hidden'); document.getElementById('cb-ingressi').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; };
+window.saveVasca = async () => { const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value; if(!date || !time) return showToast("Data/Ora mancanti","error"); const payload = { date, time, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value }; try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); } };
+window.editVasca = (id) => { const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id; document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time; document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta; document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph; document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc; document.getElementById('v-clt').value=d.clt; document.getElementById('title-vasca').innerText="Modifica Valori"; document.getElementById('btn-save-vasca').innerText="AGGIORNA"; document.getElementById('btn-save-vasca').style.background="#f59e0b"; document.getElementById('cancel-vasca').classList.remove('hidden'); document.getElementById('cb-vasca').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('title-vasca').innerText="Registrazione Valori"; document.getElementById('btn-save-vasca').innerText="SALVA"; document.getElementById('btn-save-vasca').style.background=""; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
+window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
+window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
+window.toggleExcludeStats = async (id, currentVal) => { try { await updateDoc(doc(db, "sessioni", id), { excludeStats: !currentVal }); showToast(!currentVal ? "Giorno escluso dalla media" : "Giorno reincluso nella media"); } catch(e) { showToast(e.message, "error"); } };
+window.renderIngressiArchive = () => {
+    const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const sort = document.getElementById('arch-sort').value;
+    const f = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; });
+    f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return sort==='desc'?db-da:da-db});
+    const t=document.getElementById('tbody-ingressi'); t.innerHTML="";
+    if(f.length === 0) { t.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px;">Nessun dato trovato.</td></tr>'; return; }
+    const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)});
+    const rowsBuffer = [];
+    [...g.keys()].forEach(k=>{
+        const e=g.get(k);
+        const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`;
+        e.forEach((d,i)=>{
+            const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)";
+            let badge = d.type === 'festivo' ? '<span class="badge badge-ko" style="margin-left:5px">🔴 Festivo</span>' : d.type === 'evento' ? '<span class="badge badge-evt" style="margin-left:5px">🏆 Evento</span>' : d.type === 'extra' ? '<span class="badge badge-summer" style="margin-left:5px">⚠️ Extra</span>' : '';
+            if (d.type === 'maltempo') badge = '<span class="badge" style="background:#475569; color:white; margin-left:5px">⛈️ Maltempo</span>';
+            const isExcluded = d.excludeStats === true;
+            const rowStyle = isExcluded ? "opacity:0.5; background: repeating-linear-gradient(45deg,rgba(0,0,0,0.02),rgba(0,0,0,0.02) 10px,rgba(0,0,0,0.06) 10px,rgba(0,0,0,0.06) 20px);" : "";
+            const excludeIcon = isExcluded ? "✅" : "🚫";
+            rowsBuffer.push(`<tr style="${b}; ${rowStyle}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b>${badge}<br><small style="color:#64748b">${d.meteo}</small>${isExcluded?'<br><b style="color:#ef4444;font-size:0.65rem">ESCLUSO MEDIA</b>':''}</td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right; min-width:110px"><button class="btn btn-icon" style="color:#64748b;background:transparent;border:1px solid #e2e8f0;margin-right:5px;width:30px;height:30px" onclick="toggleExcludeStats('${d.id}', ${isExcluded})">${excludeIcon}</button><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`);
+        });
+    });
+    t.innerHTML = rowsBuffer.join('');
+}
+window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')refreshCurrentView(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
+window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
+function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
+setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
+const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('v-date').value=today; document.getElementById('d-date').value=today; document.getElementById('u-date').value=today;
+window.downloadCSV = () => { const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const filtered = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; }); if(!filtered.length) return showToast("Nessun dato da scaricare", "error"); let csvContent = "data:text/csv;charset=utf-8,Data;Tipo;Fascia;Meteo;EsclusoMedia;Intero;Ridotto;Abbonamenti;Gratuiti;Totale\n"; filtered.forEach(row => { csvContent += `${row.date};${row.type||'standard'};${row.fascia};${row.meteo};${row.excludeStats?'SI':'NO'};${row.int};${row.rid};${row.abb_int + row.abb_rid};${row.grat};${row.totale}\n`; }); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "archivio_ingressi.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
 window.resetArchiveFilters = () => { document.getElementById('arch-date-start').value=""; document.getElementById('arch-date-end').value=""; document.getElementById('arch-filter-fascia').value="all"; document.getElementById('arch-filter-meteo').value="all"; renderIngressiArchive(); };
 </script>
 
