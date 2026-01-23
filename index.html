@@ -103,6 +103,7 @@
 
     /* KPI & CHARTS LAYOUT */
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+    .insight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
     .kpi-card { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); display: flex; flex-direction: column; }
     .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
     .kpi-val { font-size: 2.4rem; font-weight: 800; color: var(--text-main); line-height: 1; margin-bottom: 5px; }
@@ -241,6 +242,26 @@
                 <div class="kpi-card glass-card"><div class="kpi-head">Vs Anno Prec.</div><div class="kpi-val" id="ov-yoy">0%</div><div class="kpi-sub" id="ov-yoy-label">-</div></div>
                 <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub" id="ov-forecast-sub">proiezione</div></div>
             </div>
+            
+            <!-- NEW HIGHLIGHTS GRID -->
+            <div class="insight-grid">
+                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #f59e0b">
+                    <div class="kpi-head" style="color:#d97706">🏆 Giorno Record (Mese)</div>
+                    <div class="kpi-val" id="hl-record-val" style="font-size:1.8rem">0</div>
+                    <div class="kpi-sub" id="hl-record-date" style="font-size:0.8rem; color:#b45309">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #2563eb">
+                    <div class="kpi-head" style="color:#1d4ed8">📅 Giorno Preferito</div>
+                    <div class="kpi-val" id="hl-bestday-val" style="font-size:1.8rem">-</div>
+                    <div class="kpi-sub" id="hl-bestday-avg" style="font-size:0.8rem; color:#1e40af">Media: 0</div>
+                </div>
+                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #10b981">
+                    <div class="kpi-head" style="color:#047857">☀️ Fattore Meteo</div>
+                    <div class="kpi-val" id="hl-sun-pct" style="font-size:1.8rem">0%</div>
+                    <div class="kpi-sub" style="font-size:0.8rem; color:#065f46">Giorni di Sole</div>
+                </div>
+            </div>
+
             <div class="chart-card glass-card"><div class="chart-header">Andamento Ultimi 30 Giorni vs Anno Prec. (Intelligente)</div><div class="chart-wrapper"><canvas id="chartRecent30"></canvas></div></div>
             <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Ultimi 3 Mesi (90 gg)</div><div class="chart-wrapper"><canvas id="chartRecent90"></canvas></div></div>
             <div class="chart-card glass-card" style="margin-top:20px"><div class="chart-header">Andamento Ultimi 12 Mesi vs Anno Prec.</div><div class="chart-wrapper"><canvas id="chartRecent12M"></canvas></div></div>
@@ -785,6 +806,51 @@ function renderOverviewKPI() {
         document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
         document.getElementById('ov-forecast-sub').innerText = "proiezione (su giorni aperti)";
     } else { document.getElementById('ov-forecast').innerText = "-"; }
+
+    // --- NEW HIGHLIGHTS LOGIC ---
+    // 1. Giorno Record
+    if(dCurrent.length > 0) {
+        const recordDay = dCurrent.reduce((prev, curr) => (prev.totale > curr.totale) ? prev : curr);
+        const rd = new Date(recordDay.date);
+        document.getElementById('hl-record-val').innerText = recordDay.totale;
+        document.getElementById('hl-record-date').innerText = rd.toLocaleDateString('it-IT', {weekday:'long', day:'numeric'});
+    } else {
+        document.getElementById('hl-record-val').innerText = "-";
+        document.getElementById('hl-record-date').innerText = "Nessun dato";
+    }
+
+    // 2. Giorno Preferito (Media)
+    if(dCurrent.length > 0) {
+        const dayCounts = {}; // { 0: {sum:0, count:0}, ... }
+        dCurrent.forEach(d => {
+            const dayIdx = new Date(d.date).getDay();
+            if(!dayCounts[dayIdx]) dayCounts[dayIdx] = {sum:0, count:0};
+            dayCounts[dayIdx].sum += d.totale;
+            dayCounts[dayIdx].count++;
+        });
+        let bestDayIdx = -1; let maxAvg = -1;
+        Object.keys(dayCounts).forEach(k => {
+            const avg = dayCounts[k].sum / dayCounts[k].count;
+            if(avg > maxAvg) { maxAvg = avg; bestDayIdx = k; }
+        });
+        const daysMap = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+        if(bestDayIdx !== -1) {
+            document.getElementById('hl-bestday-val').innerText = daysMap[bestDayIdx];
+            document.getElementById('hl-bestday-avg').innerText = `Media: ${maxAvg.toFixed(0)}`;
+        }
+    } else {
+        document.getElementById('hl-bestday-val').innerText = "-";
+        document.getElementById('hl-bestday-avg').innerText = "Media: 0";
+    }
+
+    // 3. Fattore Meteo (% Sole)
+    if(dCurrent.length > 0) {
+        const sunnyCount = dCurrent.filter(d => d.meteo && (d.meteo.includes('Sole') || d.meteo.includes('Sereno'))).length;
+        const pct = (sunnyCount / dCurrent.length) * 100;
+        document.getElementById('hl-sun-pct').innerText = pct.toFixed(0) + "%";
+    } else {
+        document.getElementById('hl-sun-pct').innerText = "-%";
+    }
 }
 
 window.renderOverviewCharts = () => {
