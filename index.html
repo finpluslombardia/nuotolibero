@@ -497,6 +497,24 @@
                     <div class="kpi-context" id="u-kpi-gas-context"></div>
                 </div>
             </div>
+
+            <div class="insight-grid">
+                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #eab308">
+                    <div class="kpi-head" style="color:#a16207">⚡ Picco Elettrico</div>
+                    <div class="kpi-val" id="u-hl-elec-peak" style="font-size:1.8rem">-</div>
+                    <div class="kpi-sub" id="u-hl-elec-date" style="font-size:0.8rem; color:#854d0e">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #3b82f6">
+                    <div class="kpi-head" style="color:#1d4ed8">💧 Litri per Bagnante</div>
+                    <div class="kpi-val" id="u-hl-water-eff" style="font-size:1.8rem">-</div>
+                    <div class="kpi-sub" style="font-size:0.8rem; color:#1e40af">Efficienza Idrica</div>
+                </div>
+                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #ef4444">
+                    <div class="kpi-head" style="color:#b91c1c">🔥 Picco Gas</div>
+                    <div class="kpi-val" id="u-hl-gas-peak" style="font-size:1.8rem">-</div>
+                    <div class="kpi-sub" id="u-hl-gas-date" style="font-size:0.8rem; color:#991b1b">-</div>
+                </div>
+            </div>
         </div>
 
         <!-- Utenze Sub-View: Charts -->
@@ -1402,6 +1420,58 @@ window.renderUtenze = () => {
     updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh', getMeteoStr());
     updateKpi('water', sumWater.curr, sumWater.prev, 'm³', getBagStr());
     updateKpi('gas', sumGas.curr, sumGas.prev, 'm³', getTempStr());
+
+    // --- NEW UTENZE HIGHLIGHTS LOGIC ---
+    let maxElec = { val: 0, date: '-' };
+    let maxGas = { val: 0, date: '-' };
+    let totalWaterM3 = 0;
+    let totalSwimmers = 0;
+
+    // Re-iterate strictly for the selected month to gather specific insight data
+    const daysInMonth = [];
+    const startOfMonth = new Date(thisYear, thisMonth, 1);
+    const endOfMonth = new Date(thisYear, thisMonth + 1, 0);
+
+    for (let d = new Date(startOfMonth); d <= endOfMonth; d.setDate(d.getDate() + 1)) {
+        if (d > realToday) break; // Don't count future days
+        const dStr = getStrDate(d);
+        
+        // Utenze Data
+        if (deltas[dStr]) {
+            // Elec Peak
+            const eVal = deltas[dStr].elec || 0;
+            if (eVal > maxElec.val) { maxElec.val = eVal; maxElec.date = dStr; }
+            
+            // Gas Peak
+            const gVal = deltas[dStr].gas || 0;
+            if (gVal > maxGas.val) { maxGas.val = gVal; maxGas.date = dStr; }
+            
+            // Water Sum for efficiency
+            totalWaterM3 += deltas[dStr].water || 0;
+        }
+
+        // Ingressi Data (for efficiency calculation)
+        const dayBag = dataIngressi.find(x => x.date === dStr);
+        if (dayBag) totalSwimmers += dayBag.totale || 0;
+    }
+
+    // 1. Picco Elettrico
+    document.getElementById('u-hl-elec-peak').innerText = maxElec.val > 0 ? maxElec.val.toLocaleString('it-IT', {maximumFractionDigits:1}) + " kWh" : "-";
+    const dateElecObj = new Date(maxElec.date);
+    document.getElementById('u-hl-elec-date').innerText = maxElec.val > 0 ? dateElecObj.toLocaleDateString('it-IT', {weekday:'long', day:'numeric'}) : "Nessun dato";
+
+    // 2. Litri per Bagnante (Efficiency)
+    if (totalSwimmers > 0 && totalWaterM3 > 0) {
+        const litersPerPerson = (totalWaterM3 * 1000) / totalSwimmers;
+        document.getElementById('u-hl-water-eff').innerText = litersPerPerson.toFixed(0) + " L";
+    } else {
+        document.getElementById('u-hl-water-eff').innerText = "-";
+    }
+
+    // 3. Picco Gas
+    document.getElementById('u-hl-gas-peak').innerText = maxGas.val > 0 ? maxGas.val.toLocaleString('it-IT', {maximumFractionDigits:1}) + " m³" : "-";
+    const dateGasObj = new Date(maxGas.date);
+    document.getElementById('u-hl-gas-date').innerText = maxGas.val > 0 ? dateGasObj.toLocaleDateString('it-IT', {weekday:'long', day:'numeric'}) : "Nessun dato";
 
     // Chart Logic remains unchanged...
     function prepareChartData(type) {
