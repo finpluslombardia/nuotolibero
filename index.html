@@ -543,7 +543,7 @@
 
             <div style="display:flex; flex-direction:column; gap:25px; margin-bottom:25px;">
                 <div class="chart-card glass-card" style="height:300px; padding:15px">
-                    <div class="chart-header" style="font-size:0.85rem; color:#eab308">⚡ Elettricità (kWh)</div>
+                    <div class="chart-header" style="font-size:0.85rem; color:#eab308">⚡ Elettricità (kWh) vs Meteo</div>
                     <div class="chart-wrapper"><canvas id="chartElec"></canvas></div>
                 </div>
                 <div class="chart-card glass-card" style="height:300px; padding:15px">
@@ -551,7 +551,7 @@
                     <div class="chart-wrapper"><canvas id="chartWater"></canvas></div>
                 </div>
                 <div class="chart-card glass-card" style="height:300px; padding:15px">
-                    <div class="chart-header" style="font-size:0.85rem; color:#ef4444">🔥 Gas (m³)</div>
+                    <div class="chart-header" style="font-size:0.85rem; color:#ef4444">🔥 Gas (m³) vs Temp. Esterna</div>
                     <div class="chart-wrapper"><canvas id="chartGas"></canvas></div>
                 </div>
             </div>
@@ -709,17 +709,34 @@ function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
     if(!isChartReady()) return;
     if(ch[id]) ch[id].destroy();
     
+    // Check for secondary axis usage in datasets
+    const useSecondary = datasets.some(d => d.yAxisID === 'y1');
+
     const scalesConfig = { 
-        y: { beginAtZero: type==='bar', stacked: isStacked },
+        y: { 
+            beginAtZero: type==='bar', 
+            stacked: isStacked,
+            display: true,
+            position: 'left'
+        },
         x: { stacked: isStacked }
     };
+
+    if(useSecondary) {
+        scalesConfig.y1 = {
+            beginAtZero: true,
+            display: true,
+            position: 'right',
+            grid: { drawOnChartArea: false } // Only draw grid for main axis
+        };
+    }
 
     const isBar = type === 'bar';
     const optimizedDatasets = datasets.map(d => ({
         ...d,
         backgroundColor: d.backgroundColor ? d.backgroundColor : (isBar ? '#2563eb' : (d.fill ? d.borderColor + '20' : undefined)),
-        borderWidth: isBar ? 0 : 2,
-        pointRadius: isBar ? 0 : 3,
+        borderWidth: d.borderWidth !== undefined ? d.borderWidth : (isBar ? 0 : 2),
+        pointRadius: d.pointRadius !== undefined ? d.pointRadius : (isBar ? 0 : 3),
         type: d.type || type, 
         borderDash: isBar ? [] : (d.borderDash || []),
         tension: 0.4,
@@ -1473,23 +1490,45 @@ window.renderUtenze = () => {
     const dateGasObj = new Date(maxGas.date);
     document.getElementById('u-hl-gas-date').innerText = maxGas.val > 0 ? dateGasObj.toLocaleDateString('it-IT', {weekday:'long', day:'numeric'}) : "Nessun dato";
 
-    // Chart Logic remains unchanged...
+    // Chart Logic UPDATED with dual axis support
     function prepareChartData(type) {
         const filteredDates = allDatesAsc.filter(d => d >= limitStr);
-        const labels = [], dataTotal = [], dataDelta = [], dataHistoryTotal = [], dataHistoryDelta = [];
+        const labels = [], dataTotal = [], dataDelta = [], dataSecondary = [], dataHistoryTotal = [], dataHistoryDelta = [];
         const typeKey = type === '⚡ Elettricità' ? 'elec' : (type === '💧 Acqua' ? 'water' : 'gas');
+        
         filteredDates.forEach((dateStr) => {
             const curr = grouped[dateStr];
             const dateObj = new Date(dateStr);
             const label = dateObj.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
             labels.push(label);
+            
             let val = 0; let extra = "";
-            if(typeKey === 'elec' && curr.elec) { val = curr.elec.val; extra = `Meteo: ${curr.elec.meteo||'N/D'}`; }
+            let secVal = null; // Secondary value (Temp or Meteo Score)
+
+            if(typeKey === 'elec' && curr.elec) { 
+                val = curr.elec.val; 
+                extra = `Meteo: ${curr.elec.meteo||'N/D'}`;
+                // Meteo Score Mapping (1-100 scale for plotting)
+                const m = curr.elec.meteo || '';
+                if(m.includes('Sole')) secVal = 100;
+                else if(m.includes('Variabile')) secVal = 60;
+                else if(m.includes('Nuvoloso')) secVal = 30;
+                else if(m.includes('Pioggia')) secVal = 10;
+            }
             if(typeKey === 'water' && curr.water) { val = curr.water.val; }
-            if(typeKey === 'gas' && curr.gas) { val = curr.gas.val; extra = curr.gas.temp ? `Temp: ${curr.gas.temp}°C` : ''; }
+            if(typeKey === 'gas' && curr.gas) { 
+                val = curr.gas.val; 
+                extra = curr.gas.temp ? `Temp: ${curr.gas.temp}°C` : ''; 
+                secVal = curr.gas.temp; // Direct temp value
+            }
+
             dataTotal.push({ x: label, y: val, extraInfo: extra, rawDate: dateStr });
             const dVal = deltas[dateStr] ? deltas[dateStr][typeKey] : 0;
             dataDelta.push({ x: label, y: dVal, extraInfo: extra, rawDate: dateStr });
+            
+            // Push secondary data point
+            dataSecondary.push({ x: label, y: secVal }); // y can be null
+
             if(showHistory) {
                 const dObj = new Date(dateStr); dObj.setFullYear(dObj.getFullYear() - 1); const prevYearStr = dObj.toISOString().split('T')[0];
                 let hVal = null;
@@ -1504,22 +1543,66 @@ window.renderUtenze = () => {
                 dataHistoryDelta.push(hDelta !== null ? { x: label, y: hDelta, refDate: prevYearStr } : null);
             }
         });
-        return { labels, dataTotal, dataDelta, dataHistoryTotal, dataHistoryDelta };
+        return { labels, dataTotal, dataDelta, dataSecondary, dataHistoryTotal, dataHistoryDelta };
     }
 
     const elecData = prepareChartData('⚡ Elettricità'); const waterData = prepareChartData('💧 Acqua'); const gasData = prepareChartData('🔥 Gas Metano');
-    function makeDatasets(mainData, historyData, colorMain, colorHist) {
-        const ds = [{ label: isDelta ? 'Consumo' : 'Lettura', data: isDelta ? mainData.dataDelta : mainData.dataTotal, borderColor: colorMain, backgroundColor: colorMain, fill: false, tension: 0.3, order: 1, type: isDelta ? 'bar' : 'line' }];
+    
+    function makeDatasets(mainData, historyData, colorMain, colorHist, secondaryLabel) {
+        const ds = [{ 
+            label: isDelta ? 'Consumo' : 'Lettura', 
+            data: isDelta ? mainData.dataDelta : mainData.dataTotal, 
+            borderColor: colorMain, 
+            backgroundColor: colorMain, 
+            fill: false, 
+            tension: 0.3, 
+            order: 2, // Main data behind secondary line
+            type: isDelta ? 'bar' : 'line',
+            yAxisID: 'y'
+        }];
+        
+        // Add Secondary Dataset (Line) if label provided and data exists
+        if(secondaryLabel && mainData.dataSecondary.some(d => d.y !== null)) {
+            ds.push({
+                label: secondaryLabel,
+                data: mainData.dataSecondary,
+                borderColor: '#1e293b', // Dark color for overlay
+                backgroundColor: '#1e293b',
+                borderDash: [2, 2],
+                borderWidth: 2,
+                pointRadius: 2,
+                type: 'line',
+                fill: false,
+                tension: 0.4,
+                yAxisID: 'y1', // Key change for dual axis
+                order: 1 // On top
+            });
+        }
+
         if(showHistory) {
-            ds.push({ label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, borderColor: colorHist, backgroundColor: isDelta ? colorHist : 'transparent', borderDash: isDelta ? [] : [4,4], borderWidth: isDelta ? 0 : 2, pointRadius: isDelta ? 0 : 2, type: isDelta ? 'bar' : 'line', order: 2, fill: false, tension: 0.3 });
+            ds.push({ 
+                label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', 
+                data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, 
+                borderColor: colorHist, 
+                backgroundColor: isDelta ? colorHist : 'transparent', 
+                borderDash: isDelta ? [] : [4,4], 
+                borderWidth: isDelta ? 0 : 2, 
+                pointRadius: isDelta ? 0 : 2, 
+                type: isDelta ? 'bar' : 'line', 
+                order: 3, 
+                fill: false, 
+                tension: 0.3,
+                yAxisID: 'y'
+            });
         }
         return ds;
     }
+
     // Only render charts if their container is visible
     if (!document.getElementById('sub-u-charts').classList.contains('hidden')) {
-        renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#fde047'), chartType);
-        renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd'), chartType);
-        renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5'), chartType);
+        renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#fde047', 'Indice Meteo (10=Pioggia, 100=Sole)'), chartType);
+        renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd', null), chartType); // No secondary for water
+        renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5', 'Temp. Esterna (°C)'), chartType);
     }
 
     const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse();
