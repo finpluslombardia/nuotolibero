@@ -500,9 +500,15 @@
 
             <div class="insight-grid">
                 <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #eab308">
-                    <div class="kpi-head" style="color:#a16207">⚡ Picco Elettrico</div>
-                    <div class="kpi-val" id="u-hl-elec-peak" style="font-size:1.8rem">-</div>
-                    <div class="kpi-sub" id="u-hl-elec-date" style="font-size:0.8rem; color:#854d0e">-</div>
+                    <div class="kpi-head" style="color:#a16207">⚡ Consumi Estremi (Mese)</div>
+                    <div style="display:flex; justify-content:space-between; width:100%; margin-top:5px; font-size:0.85rem; font-weight:600">
+                        <div>Max: <span style="color:#a16207; font-weight:800" id="u-hl-elec-max">-</span></div>
+                        <div style="color:#854d0e; font-size:0.75rem" id="u-hl-elec-max-date">-</div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; width:100%; margin-top:2px; font-size:0.85rem; font-weight:600; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">
+                        <div>Min: <span style="color:#10b981; font-weight:800" id="u-hl-elec-min">-</span></div>
+                        <div style="color:#047857; font-size:0.75rem" id="u-hl-elec-min-date">-</div>
+                    </div>
                 </div>
                 <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #3b82f6">
                     <div class="kpi-head" style="color:#1d4ed8">💧 Litri per Bagnante</div>
@@ -510,9 +516,32 @@
                     <div class="kpi-sub" style="font-size:0.8rem; color:#1e40af">Efficienza Idrica</div>
                 </div>
                 <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #ef4444">
-                    <div class="kpi-head" style="color:#b91c1c">🔥 Picco Gas</div>
-                    <div class="kpi-val" id="u-hl-gas-peak" style="font-size:1.8rem">-</div>
-                    <div class="kpi-sub" id="u-hl-gas-date" style="font-size:0.8rem; color:#991b1b">-</div>
+                    <div class="kpi-head" style="color:#b91c1c">🔥 Consumi Estremi (Mese)</div>
+                    <div style="display:flex; justify-content:space-between; width:100%; margin-top:5px; font-size:0.85rem; font-weight:600">
+                        <div>Max: <span style="color:#b91c1c; font-weight:800" id="u-hl-gas-max">-</span></div>
+                        <div style="color:#7f1d1d; font-size:0.75rem" id="u-hl-gas-max-date">-</div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; width:100%; margin-top:2px; font-size:0.85rem; font-weight:600; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">
+                        <div>Min: <span style="color:#10b981; font-weight:800" id="u-hl-gas-min">-</span></div>
+                        <div style="color:#047857; font-size:0.75rem" id="u-hl-gas-min-date">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrap glass-card" style="margin-top:25px">
+                <h3 style="padding:15px 20px; margin:0; font-size:1rem; border-bottom:1px solid rgba(0,0,0,0.05)">📅 Riepilogo Mensile Consumi</h3>
+                <div style="overflow-x:auto;">
+                    <table id="table-utenze-monthly">
+                        <thead>
+                            <tr>
+                                <th>Mese</th>
+                                <th style="color:#eab308">⚡ Elettricità (kWh)</th>
+                                <th style="color:#3b82f6">💧 Acqua (m³)</th>
+                                <th style="color:#ef4444">🔥 Gas (m³)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-utenze-monthly"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -1338,7 +1367,6 @@ window.renderUtenze = () => {
     if (selectedMonthVal) {
         kpiDateObj = new Date(selectedMonthVal + "-01");
     } else if (allDatesAsc.length > 0) {
-        // Use string slicing for safer default date (avoids timezone shifts)
         const lastDate = allDatesAsc[allDatesAsc.length - 1];
         document.getElementById('u-kpi-month-selector').value = lastDate.slice(0, 7);
         kpiDateObj = new Date(lastDate);
@@ -1349,7 +1377,6 @@ window.renderUtenze = () => {
     const prevYear = thisYear - 1;
     const monthName = kpiDateObj.toLocaleString('it-IT', { month: 'long' });
     
-    // Determine the "Max Day" for comparison
     const realToday = new Date();
     const isCurrentRealMonth = (thisYear === realToday.getFullYear() && thisMonth === realToday.getMonth());
     const maxDay = isCurrentRealMonth ? realToday.getDate() : 32; 
@@ -1358,8 +1385,19 @@ window.renderUtenze = () => {
     let sumWater = { curr: 0, prev: 0, currBag: {sum:0, count:0}, prevBag: {sum:0, count:0} };
     let sumGas = { curr: 0, prev: 0, currTemp: [], prevTemp: [] };
 
+    // --- AGGREGATION FOR MONTHLY TABLE & KPI ---
+    const monthlyAgg = {}; // YYYY-MM -> {elec:0, water:0, gas:0}
+
     Object.keys(deltas).forEach(dateStr => {
         const d = new Date(dateStr);
+        const yyyymm = dateStr.slice(0, 7);
+        if(!monthlyAgg[yyyymm]) monthlyAgg[yyyymm] = {elec:0, water:0, gas:0};
+        
+        const dVals = deltas[dateStr];
+        monthlyAgg[yyyymm].elec += dVals.elec || 0;
+        monthlyAgg[yyyymm].water += dVals.water || 0;
+        monthlyAgg[yyyymm].gas += dVals.gas || 0;
+
         if(d.getDate() <= maxDay) {
             if(d.getMonth() === thisMonth) {
                 const gData = grouped[dateStr];
@@ -1369,14 +1407,12 @@ window.renderUtenze = () => {
                     sumWater.curr += deltas[dateStr].water || 0;
                     sumGas.curr += deltas[dateStr].gas || 0;
                     
-                    // Context Data Current
                     if(gData.elec && gData.elec.meteo) {
                         sumElec.currMeteo.tot++;
                         if(gData.elec.meteo.includes('Sole')) sumElec.currMeteo.sun++;
                     }
                     if(gData.gas && gData.gas.temp) sumGas.currTemp.push(gData.gas.temp);
                     
-                    // Bagnanti Data Integration
                     const dayBag = dataIngressi.find(x => x.date === dateStr);
                     if(dayBag) { sumWater.currBag.sum += dayBag.totale || 0; sumWater.currBag.count++; }
 
@@ -1385,20 +1421,37 @@ window.renderUtenze = () => {
                     sumWater.prev += deltas[dateStr].water || 0;
                     sumGas.prev += deltas[dateStr].gas || 0;
 
-                    // Context Data Prev
                     if(gData.elec && gData.elec.meteo) {
                         sumElec.prevMeteo.tot++;
                         if(gData.elec.meteo.includes('Sole')) sumElec.prevMeteo.sun++;
                     }
                     if(gData.gas && gData.gas.temp) sumGas.prevTemp.push(gData.gas.temp);
                     
-                    // Bagnanti Data Integration Prev
                     const dayBag = dataIngressi.find(x => x.date === dateStr);
                     if(dayBag) { sumWater.prevBag.sum += dayBag.totale || 0; sumWater.prevBag.count++; }
                 }
             }
         }
     });
+
+    // --- RENDER MONTHLY TABLE ---
+    const tBodyMonthly = document.getElementById('tbody-utenze-monthly');
+    tBodyMonthly.innerHTML = "";
+    const sortedMonths = Object.keys(monthlyAgg).sort().reverse();
+    sortedMonths.forEach(mStr => {
+        const d = monthlyAgg[mStr];
+        const [y, m] = mStr.split('-');
+        const dateObj = new Date(y, parseInt(m)-1, 1);
+        const monthLabel = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+        const row = `<tr>
+            <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
+            <td style="font-weight:600; color:#a16207">${d.elec.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+            <td style="font-weight:600; color:#1d4ed8">${d.water.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+            <td style="font-weight:600; color:#b91c1c">${d.gas.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+        </tr>`;
+        tBodyMonthly.innerHTML += row;
+    });
+
 
     // Helper for context strings
     const getMeteoStr = () => {
@@ -1440,12 +1493,13 @@ window.renderUtenze = () => {
 
     // --- NEW UTENZE HIGHLIGHTS LOGIC ---
     let maxElec = { val: 0, date: '-' };
+    let minElec = { val: Infinity, date: '-' };
     let maxGas = { val: 0, date: '-' };
+    let minGas = { val: Infinity, date: '-' };
     let totalWaterM3 = 0;
     let totalSwimmers = 0;
 
     // Re-iterate strictly for the selected month to gather specific insight data
-    const daysInMonth = [];
     const startOfMonth = new Date(thisYear, thisMonth, 1);
     const endOfMonth = new Date(thisYear, thisMonth + 1, 0);
 
@@ -1455,13 +1509,19 @@ window.renderUtenze = () => {
         
         // Utenze Data
         if (deltas[dStr]) {
-            // Elec Peak
-            const eVal = deltas[dStr].elec || 0;
-            if (eVal > maxElec.val) { maxElec.val = eVal; maxElec.date = dStr; }
+            // Elec Peak & Min
+            const eVal = deltas[dStr].elec;
+            if (eVal !== null) {
+                if (eVal > maxElec.val) { maxElec.val = eVal; maxElec.date = dStr; }
+                if (eVal < minElec.val) { minElec.val = eVal; minElec.date = dStr; }
+            }
             
-            // Gas Peak
-            const gVal = deltas[dStr].gas || 0;
-            if (gVal > maxGas.val) { maxGas.val = gVal; maxGas.date = dStr; }
+            // Gas Peak & Min
+            const gVal = deltas[dStr].gas;
+            if (gVal !== null) {
+                if (gVal > maxGas.val) { maxGas.val = gVal; maxGas.date = dStr; }
+                if (gVal < minGas.val) { minGas.val = gVal; minGas.date = dStr; }
+            }
             
             // Water Sum for efficiency
             totalWaterM3 += deltas[dStr].water || 0;
@@ -1472,10 +1532,19 @@ window.renderUtenze = () => {
         if (dayBag) totalSwimmers += dayBag.totale || 0;
     }
 
-    // 1. Picco Elettrico
-    document.getElementById('u-hl-elec-peak').innerText = maxElec.val > 0 ? maxElec.val.toLocaleString('it-IT', {maximumFractionDigits:1}) + " kWh" : "-";
-    const dateElecObj = new Date(maxElec.date);
-    document.getElementById('u-hl-elec-date').innerText = maxElec.val > 0 ? dateElecObj.toLocaleDateString('it-IT', {weekday:'long', day:'numeric'}) : "Nessun dato";
+    // 1. Estremi Elettrico
+    const fmtDate = (dStr) => dStr !== '-' ? new Date(dStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}) : '-';
+    
+    document.getElementById('u-hl-elec-max').innerText = maxElec.val > 0 ? maxElec.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
+    document.getElementById('u-hl-elec-max-date').innerText = fmtDate(maxElec.date);
+    
+    if(minElec.val !== Infinity) {
+        document.getElementById('u-hl-elec-min').innerText = minElec.val.toLocaleString('it-IT', {maximumFractionDigits:0});
+        document.getElementById('u-hl-elec-min-date').innerText = fmtDate(minElec.date);
+    } else {
+        document.getElementById('u-hl-elec-min').innerText = "-";
+        document.getElementById('u-hl-elec-min-date').innerText = "-";
+    }
 
     // 2. Litri per Bagnante (Efficiency)
     if (totalSwimmers > 0 && totalWaterM3 > 0) {
@@ -1485,10 +1554,17 @@ window.renderUtenze = () => {
         document.getElementById('u-hl-water-eff').innerText = "-";
     }
 
-    // 3. Picco Gas
-    document.getElementById('u-hl-gas-peak').innerText = maxGas.val > 0 ? maxGas.val.toLocaleString('it-IT', {maximumFractionDigits:1}) + " m³" : "-";
-    const dateGasObj = new Date(maxGas.date);
-    document.getElementById('u-hl-gas-date').innerText = maxGas.val > 0 ? dateGasObj.toLocaleDateString('it-IT', {weekday:'long', day:'numeric'}) : "Nessun dato";
+    // 3. Estremi Gas
+    document.getElementById('u-hl-gas-max').innerText = maxGas.val > 0 ? maxGas.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
+    document.getElementById('u-hl-gas-max-date').innerText = fmtDate(maxGas.date);
+
+    if(minGas.val !== Infinity) {
+        document.getElementById('u-hl-gas-min').innerText = minGas.val.toLocaleString('it-IT', {maximumFractionDigits:0});
+        document.getElementById('u-hl-gas-min-date').innerText = fmtDate(minGas.date);
+    } else {
+        document.getElementById('u-hl-gas-min').innerText = "-";
+        document.getElementById('u-hl-gas-min-date').innerText = "-";
+    }
 
     // Chart Logic UPDATED with dual axis support
     function prepareChartData(type) {
