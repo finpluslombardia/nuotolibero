@@ -380,6 +380,16 @@
     </div>
     <div class="scroll-area">
         <h2 class="page-title">💧 Diario Vasca</h2>
+        
+        <!-- NEW VASCA TOOLBAR -->
+        <div class="archive-toolbar" style="margin-bottom: 15px; background: rgba(255,255,255,0.5);">
+            <div class="arch-group">
+                <span class="arch-label">Cerca Data:</span>
+                <input type="date" id="v-search-date" class="arch-input" onchange="renderVasca()">
+            </div>
+            <button class="btn btn-danger" style="height:36px; padding:0 15px" onclick="resetVascaFilter()">✕</button>
+        </div>
+
         <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-vasca"><thead><tr><th>Data</th><th>Ora / Vasca</th><th>Bagnanti</th><th>T. Aria</th><th>T. Acqua</th><th>pH</th><th>Cl Lib</th><th>Cl Comb</th><th>Cl Tot</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-vasca"></tbody></table></div></div>
     </div>
 </div>
@@ -1281,33 +1291,125 @@ window.renderStats = () => {
 };
 
 function renderVasca() { 
+    const searchDate = document.getElementById('v-search-date') ? document.getElementById('v-search-date').value : null;
     const t=document.getElementById('tbody-vasca'); t.innerHTML=""; 
-    const g=new Map(); dataVasca.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]);g.get(d.date).push(d)}); 
-    [...g.keys()].forEach(k=>{ 
-        const e=g.get(k); e.sort((a,b)=>b.time.localeCompare(a.time)); 
-        const dh=`<div style="font-weight:800;color:#1e293b">${k.split('-').reverse().join('/')}</div>`; 
-        e.forEach((d,i)=>{ 
-            const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)"; 
-            const phVal = parseFloat(d.ph); const phAlert = (phVal < 6.5 || phVal > 7.5);
-            const phStyle = phAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : 'font-weight:600';
-            const clVal = parseFloat(d.cll); const clAlert = (clVal < 0.8 || clVal > 1.7);
-            const clStyle = clAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : '';
-            
-            // POOL TYPE LOGIC
-            const typeLabel = d.type === 'esterna' ? '<span class="badge badge-summer">☀️ Esterna</span>' : '<span class="badge badge-std">🏠 Interna</span>';
-            
-            t.innerHTML+=`<tr style="${b}">
-                ${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} 
-                <td>
-                    <div style="font-weight:700;color:#2563eb">${d.time}</div>
-                    <div style="margin-top:2px">${typeLabel}</div>
+    
+    let list = [...dataVasca];
+    if(searchDate) list = list.filter(d => d.date === searchDate);
+    
+    // Sort globale per raggruppamento corretto
+    list.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
+
+    if(list.length === 0) {
+        t.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:#64748b">Nessuna registrazione trovata.</td></tr>';
+        return;
+    }
+
+    // Raggruppamento per Mese
+    const groups = {};
+    list.forEach(d => {
+        const key = d.date.substring(0, 7); // YYYY-MM
+        if(!groups[key]) groups[key] = [];
+        groups[key].push(d);
+    });
+
+    const sortedMonths = Object.keys(groups).sort().reverse();
+
+    sortedMonths.forEach((mKey, mIndex) => {
+        // Header Mese
+        const [y, m] = mKey.split('-');
+        const dateObj = new Date(y, m - 1, 1);
+        const monthName = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+        const groupId = 'vasca-g-' + mKey;
+        const count = groups[mKey].length;
+        
+        const isExpanded = searchDate ? true : false; // Default chiuso, aperto se cerco
+        const displayStyle = isExpanded ? 'table-row' : 'none';
+        const arrow = isExpanded ? '▼' : '▶';
+        const bgHeader = mIndex === 0 ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.5)';
+
+        t.innerHTML += `
+            <tr style="background:${bgHeader}; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.6); transition:background 0.2s" onclick="toggleVascaGroup('${groupId}', this)" onmouseover="this.style.background='rgba(37,99,235,0.2)'" onmouseout="this.style.background='${bgHeader}'">
+                <td colspan="10" style="font-weight:800; color:var(--text-main); padding:15px; font-size:0.95rem">
+                    <span class="group-arrow" style="display:inline-block; width:20px; color:var(--primary)">${arrow}</span> 
+                    ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} 
+                    <span style="font-weight:500; font-size:0.8rem; color:var(--text-muted); margin-left:10px; background:rgba(255,255,255,0.6); padding:2px 8px; border-radius:10px">${count} reg.</span>
                 </td>
-                <td>${d.bag}</td><td>${d.ta}°</td><td>${d.th}°</td>
-                <td style="${phStyle}">${d.ph}</td><td style="${clStyle}">${d.cll}</td><td>${d.clc}</td><td style="font-weight:700">${d.clt}</td> 
-                <td style="text-align:right"><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button></td></tr>`; 
-        }); 
-    }); 
+            </tr>
+        `;
+
+        // Raggruppamento per Giorno all'interno del Mese per rowspan
+        const dayGroups = new Map();
+        groups[mKey].forEach(d => {
+            if(!dayGroups.has(d.date)) dayGroups.set(d.date, []);
+            dayGroups.get(d.date).push(d);
+        });
+
+        // Itero i giorni del mese
+        [...dayGroups.keys()].forEach(dKey => {
+            const entries = dayGroups.get(dKey);
+            // Sort per ora decrescente
+            entries.sort((a,b) => b.time.localeCompare(a.time));
+            
+            const dateFmt = dKey.split('-').reverse().join('/');
+            const dh = `<div style="font-weight:800;color:#1e293b">${dateFmt}</div>`;
+
+            entries.forEach((d, i) => {
+                const isLast = i === entries.length - 1;
+                const borderStyle = isLast ? "border-bottom:2px solid rgba(0,0,0,0.1)" : "border-bottom:1px solid rgba(0,0,0,0.05)";
+                
+                const phVal = parseFloat(d.ph); const phAlert = (phVal < 6.5 || phVal > 7.5);
+                const phStyle = phAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : 'font-weight:600';
+                const clVal = parseFloat(d.cll); const clAlert = (clVal < 0.8 || clVal > 1.7);
+                const clStyle = clAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : '';
+                
+                const typeLabel = d.type === 'esterna' ? '<span class="badge badge-summer">☀️ Est.</span>' : '<span class="badge badge-std">🏠 Int.</span>';
+
+                // Costruzione riga
+                let rowHtml = `<tr class="group-item ${groupId}" style="display:${displayStyle}; ${borderStyle}; background:rgba(255,255,255,0.25)">`;
+                
+                // Cella Data con Rowspan (solo alla prima occorrenza)
+                if (i === 0) {
+                    rowHtml += `<td rowspan="${entries.length}" style="vertical-align:middle; background:rgba(255,255,255,0.4); min-width:90px">${dh}</td>`;
+                }
+
+                rowHtml += `
+                    <td>
+                        <div style="font-weight:700;color:#2563eb">${d.time}</div>
+                        <div style="margin-top:2px; font-size:0.75rem">${typeLabel}</div>
+                    </td>
+                    <td>${d.bag}</td>
+                    <td>${d.ta}°</td>
+                    <td>${d.th}°</td>
+                    <td style="${phStyle}">${d.ph}</td>
+                    <td style="${clStyle}">${d.cll}</td>
+                    <td>${d.clc}</td>
+                    <td style="font-weight:700">${d.clt}</td> 
+                    <td style="text-align:right">
+                        <button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button>
+                        <button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button>
+                    </td>
+                </tr>`;
+                
+                t.innerHTML += rowHtml;
+            });
+        });
+    });
 }
+
+window.toggleVascaGroup = (groupId, headerTr) => {
+    const rows = document.querySelectorAll(`.${groupId}`);
+    const arrow = headerTr.querySelector('.group-arrow');
+    const isHidden = rows[0].style.display === 'none';
+    rows.forEach(r => r.style.display = isHidden ? 'table-row' : 'none');
+    arrow.innerText = isHidden ? '▼' : '▶';
+};
+
+window.resetVascaFilter = () => {
+    const inp = document.getElementById('v-search-date');
+    if(inp) inp.value = "";
+    renderVasca();
+};
 
 window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
 window.renderDae = () => {
