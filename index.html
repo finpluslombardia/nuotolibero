@@ -1289,8 +1289,7 @@ window.renderStats = () => {
     const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}));
     renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
 };
-
-function renderVasca() { 
+window.renderVasca = () => { 
     const searchDate = document.getElementById('v-search-date') ? document.getElementById('v-search-date').value : null;
     const t=document.getElementById('tbody-vasca'); t.innerHTML=""; 
     
@@ -1323,7 +1322,8 @@ function renderVasca() {
         const groupId = 'vasca-g-' + mKey;
         const count = groups[mKey].length;
         
-        const isExpanded = searchDate ? true : false; // Default chiuso, aperto se cerco
+        // Auto-expand if searching or if it's the very first group (current/latest month)
+        const isExpanded = searchDate ? true : (mIndex === 0); 
         const displayStyle = isExpanded ? 'table-row' : 'none';
         const arrow = isExpanded ? '▼' : '▶';
         const bgHeader = mIndex === 0 ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.5)';
@@ -1449,8 +1449,8 @@ window.renderDae = () => {
         const groupId = 'dae-g-' + key;
         const count = groups[key].length;
         
-        // Auto-expand if searching or if it's the very first group (current month usually)
-        const isExpanded = searchDate ? true : false; 
+        // Auto-expand if searching or if it's the very first group (current/latest month)
+        const isExpanded = searchDate ? true : (index === 0); 
         const displayStyle = isExpanded ? 'table-row' : 'none';
         const arrow = isExpanded ? '▼' : '▶';
         const bgHeader = index === 0 ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.5)';
