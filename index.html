@@ -398,7 +398,24 @@
     </div>
     <div class="scroll-area">
         <h2 class="page-title">⚡ Registro Controlli DAE</h2>
-        <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-dae"><thead><tr><th>Data</th><th>Ora</th><th>Stato</th><th>Assistente Bagnanti</th><th>Operatore Segreteria</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-dae"></tbody></table></div></div>
+        
+        <!-- NEW DAE TOOLBAR -->
+        <div class="archive-toolbar" style="margin-bottom: 15px; background: rgba(255,255,255,0.5);">
+            <div class="arch-group">
+                <span class="arch-label">Cerca Data:</span>
+                <input type="date" id="d-search-date" class="arch-input" onchange="renderDae()">
+            </div>
+            <button class="btn btn-danger" style="height:36px; padding:0 15px" onclick="resetDaeFilter()">✕</button>
+        </div>
+
+        <div class="table-wrap glass-card">
+            <div style="overflow-x:auto;">
+                <table id="table-dae">
+                    <thead><tr><th>Data</th><th>Ora</th><th>Stato</th><th>Assistente Bagnanti</th><th>Operatore Segreteria</th><th style="text-align:right"></th></tr></thead>
+                    <tbody id="tbody-dae"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1293,7 +1310,96 @@ function renderVasca() {
 }
 
 window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
-function renderDae() { const t=document.getElementById('tbody-dae'); t.innerHTML=""; const sortedDae = [...dataDae].sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time)); sortedDae.forEach(d=>{ const b=d.status==='OK'?'<span class="badge badge-ok">✅ OK</span>':'<span class="badge badge-ko">❌ GUASTO</span>'; t.innerHTML+=`<tr><td style="font-weight:700">${(d.date||'').split('-').reverse().join('/')}</td><td style="color:#2563eb;font-weight:600">${d.time||'-'}</td><td>${b}</td><td>${d.ass}</td><td>${d.op}</td><td style="text-align:right"><button class="btn btn-icon" style="color:#ef4444" onclick="delDoc('dae_log','${d.id}')">🗑️</button></td></tr>`; }); }
+window.renderDae = () => {
+    const searchDate = document.getElementById('d-search-date') ? document.getElementById('d-search-date').value : null;
+    const t = document.getElementById('tbody-dae');
+    t.innerHTML = "";
+
+    let list = [...dataDae];
+    
+    // Filter
+    if (searchDate) {
+        list = list.filter(d => d.date === searchDate);
+    }
+
+    // Sort Descending
+    list.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
+
+    if(list.length === 0) {
+        t.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#64748b">Nessun controllo trovato.</td></tr>';
+        return;
+    }
+
+    // Grouping
+    const groups = {};
+    list.forEach(d => {
+        const key = d.date.substring(0, 7); // YYYY-MM
+        if(!groups[key]) groups[key] = [];
+        groups[key].push(d);
+    });
+
+    const sortedKeys = Object.keys(groups).sort().reverse();
+
+    sortedKeys.forEach((key, index) => {
+        const [y, m] = key.split('-');
+        const dateObj = new Date(y, m - 1, 1);
+        const monthName = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+        const groupId = 'dae-g-' + key;
+        const count = groups[key].length;
+        
+        // Auto-expand if searching or if it's the very first group (current month usually)
+        const isExpanded = searchDate ? true : false; 
+        const displayStyle = isExpanded ? 'table-row' : 'none';
+        const arrow = isExpanded ? '▼' : '▶';
+        const bgHeader = index === 0 ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.5)';
+
+        t.innerHTML += `
+            <tr style="background:${bgHeader}; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.6); transition:background 0.2s" onclick="toggleDaeGroup('${groupId}', this)" onmouseover="this.style.background='rgba(37,99,235,0.2)'" onmouseout="this.style.background='${bgHeader}'">
+                <td colspan="6" style="font-weight:800; color:var(--text-main); padding:15px; font-size:0.95rem">
+                    <span class="group-arrow" style="display:inline-block; width:20px; color:var(--primary)">${arrow}</span> 
+                    ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} 
+                    <span style="font-weight:500; font-size:0.8rem; color:var(--text-muted); margin-left:10px; background:rgba(255,255,255,0.6); padding:2px 8px; border-radius:10px">${count} reg.</span>
+                </td>
+            </tr>
+        `;
+
+        groups[key].forEach(d => {
+            const b = d.status === 'OK' ? '<span class="badge badge-ok">✅ OK</span>' : '<span class="badge badge-ko">❌ GUASTO</span>';
+            const dateFmt = d.date.split('-').reverse().join('/');
+            
+            t.innerHTML += `
+                <tr class="group-item ${groupId}" style="display:${displayStyle}; background:rgba(255,255,255,0.25)">
+                    <td style="font-weight:700; padding-left:40px; border-left:4px solid transparent">${dateFmt}</td>
+                    <td style="color:#2563eb; font-weight:600">${d.time || '-'}</td>
+                    <td>${b}</td>
+                    <td>${d.ass}</td>
+                    <td>${d.op}</td>
+                    <td style="text-align:right">
+                        <button class="btn btn-icon" style="color:#ef4444; background:transparent" onclick="delDoc('dae_log','${d.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+};
+
+window.toggleDaeGroup = (groupId, headerTr) => {
+    const rows = document.querySelectorAll(`.${groupId}`);
+    const arrow = headerTr.querySelector('.group-arrow');
+    // Check current state based on first row
+    const isHidden = rows[0].style.display === 'none';
+    
+    rows.forEach(r => {
+        r.style.display = isHidden ? 'table-row' : 'none';
+    });
+    arrow.innerText = isHidden ? '▼' : '▶';
+};
+
+window.resetDaeFilter = () => {
+    const inp = document.getElementById('d-search-date');
+    if(inp) inp.value = "";
+    renderDae();
+};
 
 // UTENZE
 window.toggleUtenzeMode = () => {
@@ -1384,6 +1490,7 @@ window.renderUtenze = () => {
     if (selectedMonthVal) {
         kpiDateObj = new Date(selectedMonthVal + "-01");
     } else if (allDatesAsc.length > 0) {
+        // Use string slicing for safer default date (avoids timezone shifts)
         const lastDate = allDatesAsc[allDatesAsc.length - 1];
         document.getElementById('u-kpi-month-selector').value = lastDate.slice(0, 7);
         kpiDateObj = new Date(lastDate);
@@ -1394,6 +1501,7 @@ window.renderUtenze = () => {
     const prevYear = thisYear - 1;
     const monthName = kpiDateObj.toLocaleString('it-IT', { month: 'long' });
     
+    // Determine the "Max Day" for comparison
     const realToday = new Date();
     const isCurrentRealMonth = (thisYear === realToday.getFullYear() && thisMonth === realToday.getMonth());
     const maxDay = isCurrentRealMonth ? realToday.getDate() : 32; 
@@ -1424,12 +1532,14 @@ window.renderUtenze = () => {
                     sumWater.curr += deltas[dateStr].water || 0;
                     sumGas.curr += deltas[dateStr].gas || 0;
                     
+                    // Context Data Current
                     if(gData.elec && gData.elec.meteo) {
                         sumElec.currMeteo.tot++;
                         if(gData.elec.meteo.includes('Sole')) sumElec.currMeteo.sun++;
                     }
                     if(gData.gas && gData.gas.temp) sumGas.currTemp.push(gData.gas.temp);
                     
+                    // Bagnanti Data Integration
                     const dayBag = dataIngressi.find(x => x.date === dateStr);
                     if(dayBag) { sumWater.currBag.sum += dayBag.totale || 0; sumWater.currBag.count++; }
 
@@ -1438,12 +1548,14 @@ window.renderUtenze = () => {
                     sumWater.prev += deltas[dateStr].water || 0;
                     sumGas.prev += deltas[dateStr].gas || 0;
 
+                    // Context Data Prev
                     if(gData.elec && gData.elec.meteo) {
                         sumElec.prevMeteo.tot++;
                         if(gData.elec.meteo.includes('Sole')) sumElec.prevMeteo.sun++;
                     }
                     if(gData.gas && gData.gas.temp) sumGas.prevTemp.push(gData.gas.temp);
                     
+                    // Bagnanti Data Integration Prev
                     const dayBag = dataIngressi.find(x => x.date === dateStr);
                     if(dayBag) { sumWater.prevBag.sum += dayBag.totale || 0; sumWater.prevBag.count++; }
                 }
