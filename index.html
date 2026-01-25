@@ -687,6 +687,17 @@ window.populateStatFilters = () => {
     if(!dataIngressi.length) return;
     const years = [...new Set(dataIngressi.map(d => new Date(d.date).getFullYear()))].sort().reverse();
     const yearSel = document.getElementById('stat-year');
+    
+    // FIX: Populate the main year selector options
+    const currentVal = yearSel.value;
+    yearSel.innerHTML = "";
+    years.forEach(y => {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.innerText = y;
+        yearSel.appendChild(opt);
+    });
+
     // Multi-Select Logic (Replacing <select>)
     const msList = document.getElementById('ms-compare-list');
     msList.innerHTML = `<div class="ms-option"><input type="checkbox" value="avg" checked onchange="renderStats()"><span>📊 Media Storica</span></div>`;
@@ -694,9 +705,15 @@ window.populateStatFilters = () => {
         msList.innerHTML += `<div class="ms-option"><input type="checkbox" value="${y}" onchange="renderStats()"><span>${y}</span></div>`;
     });
 
-    const currYear = yearSel.value;
     const todayYear = new Date().getFullYear();
-    if(!currYear) yearSel.value = years.includes(todayYear) ? todayYear : years[0];
+    if(currentVal && years.includes(parseInt(currentVal))) {
+        yearSel.value = currentVal;
+    } else if(years.includes(todayYear)) {
+        yearSel.value = todayYear;
+    } else {
+        yearSel.value = years[0];
+    }
+    
     renderStats();
 };
 
