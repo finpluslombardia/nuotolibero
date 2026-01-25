@@ -383,10 +383,16 @@
         
         <!-- NEW VASCA TOOLBAR -->
         <div class="archive-toolbar" style="margin-bottom: 15px; background: rgba(255,255,255,0.5);">
-            <div class="arch-group">
-                <span class="arch-label">Cerca Data:</span>
-                <input type="date" id="v-search-date" class="arch-input" onchange="renderVasca()">
-            </div>
+            <div class="arch-group"><span class="arch-label">Data:</span><input type="date" id="v-search-date" class="arch-input" onchange="renderVasca()"></div>
+            <select id="v-search-type" class="arch-select" onchange="renderVasca()">
+                <option value="all">🏊 Tutte le Vasche</option>
+                <option value="interna">🏠 Interna</option>
+                <option value="esterna">☀️ Esterna</option>
+            </select>
+            <select id="v-search-alert" class="arch-select" onchange="renderVasca()" style="color:#b91c1c; font-weight:700">
+                <option value="all" style="color:var(--text-main)">✅ Tutti i Dati</option>
+                <option value="alert">⚠️ Solo Anomalie</option>
+            </select>
             <button class="btn btn-danger" style="height:36px; padding:0 15px" onclick="resetVascaFilter()">✕</button>
         </div>
 
@@ -1291,11 +1297,30 @@ window.renderStats = () => {
 };
 window.renderVasca = () => { 
     const searchDate = document.getElementById('v-search-date') ? document.getElementById('v-search-date').value : null;
+    const searchType = document.getElementById('v-search-type').value;
+    const searchAlert = document.getElementById('v-search-alert').value;
+
     const t=document.getElementById('tbody-vasca'); t.innerHTML=""; 
     
     let list = [...dataVasca];
     if(searchDate) list = list.filter(d => d.date === searchDate);
     
+    // Filter Type
+    if (searchType !== 'all') {
+        list = list.filter(d => (d.type || 'interna') === searchType);
+    }
+
+    // Filter Anomalies
+    if (searchAlert === 'alert') {
+        list = list.filter(d => {
+            const ph = parseFloat(d.ph);
+            const cl = parseFloat(d.cll);
+            const phBad = (ph < 6.5 || ph > 7.5);
+            const clBad = (cl < 0.8 || cl > 1.7);
+            return phBad || clBad;
+        });
+    }
+
     // Sort globale per raggruppamento corretto
     list.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
 
@@ -1408,6 +1433,8 @@ window.toggleVascaGroup = (groupId, headerTr) => {
 window.resetVascaFilter = () => {
     const inp = document.getElementById('v-search-date');
     if(inp) inp.value = "";
+    document.getElementById('v-search-type').value = "all";
+    document.getElementById('v-search-alert').value = "all";
     renderVasca();
 };
 
