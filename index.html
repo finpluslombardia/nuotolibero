@@ -104,6 +104,7 @@
     /* KPI & CHARTS LAYOUT */
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
     .insight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
+    .insight-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
     .kpi-card { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); display: flex; flex-direction: column; }
     .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
     .kpi-val { font-size: 2.4rem; font-weight: 800; color: var(--text-main); line-height: 1; margin-bottom: 5px; }
@@ -236,29 +237,52 @@
                     <option value="bar">📊 Grafico a Colonne</option>
                 </select>
             </div>
+            
+            <!-- NEW TOP KPI GRID -->
             <div class="kpi-grid">
-                <div class="kpi-card glass-card"><div class="kpi-head">Media (Mese)</div><div class="kpi-val" id="ov-avg">0</div><div class="kpi-sub">persone / giorno</div></div>
-                <div class="kpi-card glass-card"><div class="kpi-head">Vs Mese Prec.</div><div class="kpi-val" id="ov-mom">0%</div><div class="kpi-sub" id="ov-mom-label">-</div></div>
-                <div class="kpi-card glass-card"><div class="kpi-head">Vs Anno Prec.</div><div class="kpi-val" id="ov-yoy">0%</div><div class="kpi-sub" id="ov-yoy-label">-</div></div>
-                <div class="kpi-card glass-card"><div class="kpi-head">Stima Fine Mese</div><div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div><div class="kpi-sub" id="ov-forecast-sub">proiezione</div></div>
+                <div class="kpi-card glass-card">
+                    <div class="kpi-head">Ingressi Totali (Mese)</div>
+                    <div class="kpi-val" id="ov-total-curr">0</div>
+                    <div class="kpi-sub" style="color:#2563eb">in questo mese</div>
+                </div>
+                <div class="kpi-card glass-card">
+                    <div class="kpi-head">Media Giornaliera</div>
+                    <div class="kpi-val" id="ov-avg">0</div>
+                    <div class="kpi-sub" id="ov-avg-trend">-</div>
+                </div>
+                <div class="kpi-card glass-card">
+                    <div class="kpi-head">Stima Fine Mese</div>
+                    <div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div>
+                    <div class="kpi-sub" id="ov-forecast-sub">proiezione</div>
+                </div>
+                <div class="kpi-card glass-card">
+                    <div class="kpi-head">Performance Anno Prec.</div>
+                    <div class="kpi-val" id="ov-yoy">0%</div>
+                    <div class="kpi-sub" id="ov-yoy-label">-</div>
+                </div>
             </div>
             
-            <!-- NEW HIGHLIGHTS GRID -->
-            <div class="insight-grid">
+            <!-- NEW HIGHLIGHTS GRID 4-COL -->
+            <div class="insight-grid-4">
                 <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #f59e0b">
-                    <div class="kpi-head" style="color:#d97706">🏆 Giorno Record (Mese)</div>
+                    <div class="kpi-head" style="color:#d97706">🏆 Giorno Record</div>
                     <div class="kpi-val" id="hl-record-val" style="font-size:1.8rem">0</div>
                     <div class="kpi-sub" id="hl-record-date" style="font-size:0.8rem; color:#b45309">-</div>
                 </div>
+                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #ef4444">
+                    <div class="kpi-head" style="color:#b91c1c">📉 Giorno "Nero"</div>
+                    <div class="kpi-val" id="hl-min-val" style="font-size:1.8rem">-</div>
+                    <div class="kpi-sub" id="hl-min-date" style="font-size:0.8rem; color:#7f1d1d">-</div>
+                </div>
                 <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #2563eb">
-                    <div class="kpi-head" style="color:#1d4ed8">📅 Giorno Preferito</div>
-                    <div class="kpi-val" id="hl-bestday-val" style="font-size:1.8rem">-</div>
+                    <div class="kpi-head" style="color:#1d4ed8">❤️ Giorno Preferito</div>
+                    <div class="kpi-val" id="hl-bestday-val" style="font-size:1.6rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">-</div>
                     <div class="kpi-sub" id="hl-bestday-avg" style="font-size:0.8rem; color:#1e40af">Media: 0</div>
                 </div>
-                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #10b981">
-                    <div class="kpi-head" style="color:#047857">☀️ Fattore Meteo</div>
-                    <div class="kpi-val" id="hl-sun-pct" style="font-size:1.8rem">0%</div>
-                    <div class="kpi-sub" style="font-size:0.8rem; color:#065f46">Giorni di Sole</div>
+                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #64748b">
+                    <div class="kpi-head" style="color:#334155">💔 Meno Ambito</div>
+                    <div class="kpi-val" id="hl-worstday-val" style="font-size:1.6rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">-</div>
+                    <div class="kpi-sub" id="hl-worstday-avg" style="font-size:0.8rem; color:#475569">Media: 0</div>
                 </div>
             </div>
 
@@ -874,35 +898,35 @@ function renderOverviewKPI() {
     const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
     const daysCurrent = new Set(dCurrent.map(x=>x.date)).size;
 
-    document.getElementById('ov-avg').innerText = daysCurrent > 0 ? (totalCurrent/daysCurrent).toFixed(0) : 0;
+    // 1. Current Total
+    document.getElementById('ov-total-curr').innerText = totalCurrent.toLocaleString();
+
+    // 2. Average with Trend
+    const avgCurrent = daysCurrent > 0 ? (totalCurrent/daysCurrent) : 0;
+    document.getElementById('ov-avg').innerText = avgCurrent.toFixed(0);
     
-    // FIX: Compare up to the same day number
+    // Trend logic vs Previous Month (Final Average)
+    const maxDayPrev = new Date(pm.getFullYear(), pm.getMonth() + 1, 0).getDate(); // Full previous month
+    const dPrevFull = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0);
+    const totalPrevFull = dPrevFull.reduce((a,b)=>a+b.totale,0);
+    const daysPrevFull = new Set(dPrevFull.map(x=>x.date)).size;
+    const avgPrev = daysPrevFull > 0 ? (totalPrevFull / daysPrevFull) : 0;
+
+    let trendHtml = '-';
+    if(avgPrev > 0) {
+        const diff = avgCurrent - avgPrev;
+        const color = diff >= 0 ? '#10b981' : '#ef4444';
+        const icon = diff >= 0 ? '⬆' : '⬇';
+        trendHtml = `<span style="color:${color}; font-weight:700">${icon} vs ${avgPrev.toFixed(0)}</span> (media sc.)`;
+    }
+    document.getElementById('ov-avg-trend').innerHTML = trendHtml;
+    
+    // 3. YoY
     const maxDay = today.getDate();
-    const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
-    const ym_year = ym.getFullYear();
-
-    const dPrev = dataIngressi.filter(x => {
-        return x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
-    });
-    const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
-    
-    let momHtml = "";
-    if (dPrev.length > 0) {
-        let diff = 0;
-        if (totalPrev > 0) diff = ((totalCurrent - totalPrev) / totalPrev) * 100;
-        else if (totalCurrent > 0) diff = 100;
-        const color = diff >= 0 ? "#16a34a" : "#dc2626";
-        const sign = diff > 0 ? "+" : "";
-        momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
-    } else { momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
-    document.getElementById('ov-mom').innerHTML = momHtml;
-    document.getElementById('ov-mom-label').innerText = `vs ${pm_month_name} (al ${maxDay})`;
-
     const dYoy = dataIngressi.filter(x => {
         return x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
     });
     const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
-    
     let yoyHtml = "";
     if (dYoy.length > 0) {
         let diff = 0;
@@ -913,8 +937,10 @@ function renderOverviewKPI() {
         yoyHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
     } else { yoyHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
     document.getElementById('ov-yoy').innerHTML = yoyHtml;
+    const ym_year = ym.getFullYear();
     document.getElementById('ov-yoy-label').innerText = `vs ${ym_year} (al ${maxDay})`;
 
+    // 4. Forecast
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     if(daysCurrent > 0) { 
         document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
@@ -922,48 +948,56 @@ function renderOverviewKPI() {
     } else { document.getElementById('ov-forecast').innerText = "-"; }
 
     // --- NEW HIGHLIGHTS LOGIC ---
-    // 1. Giorno Record
     if(dCurrent.length > 0) {
+        // 1. Record Max
         const recordDay = dCurrent.reduce((prev, curr) => (prev.totale > curr.totale) ? prev : curr);
         const rd = new Date(recordDay.date);
         document.getElementById('hl-record-val').innerText = recordDay.totale;
-        document.getElementById('hl-record-date').innerText = rd.toLocaleDateString('it-IT', {weekday:'long', day:'numeric'});
-    } else {
-        document.getElementById('hl-record-val').innerText = "-";
-        document.getElementById('hl-record-date').innerText = "Nessun dato";
-    }
+        document.getElementById('hl-record-date').innerText = rd.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
 
-    // 2. Giorno Preferito (Media)
-    if(dCurrent.length > 0) {
-        const dayCounts = {}; // { 0: {sum:0, count:0}, ... }
+        // 2. Minimo (excluding 0 if wanted, but dCurrent already filters > 0)
+        const minDay = dCurrent.reduce((prev, curr) => (prev.totale < curr.totale) ? prev : curr);
+        const md = new Date(minDay.date);
+        document.getElementById('hl-min-val').innerText = minDay.totale;
+        document.getElementById('hl-min-date').innerText = md.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
+
+        // Day of Week Stats
+        const dayCounts = {}; 
         dCurrent.forEach(d => {
             const dayIdx = new Date(d.date).getDay();
             if(!dayCounts[dayIdx]) dayCounts[dayIdx] = {sum:0, count:0};
             dayCounts[dayIdx].sum += d.totale;
             dayCounts[dayIdx].count++;
         });
+
         let bestDayIdx = -1; let maxAvg = -1;
+        let worstDayIdx = -1; let minAvg = Infinity;
+
         Object.keys(dayCounts).forEach(k => {
             const avg = dayCounts[k].sum / dayCounts[k].count;
             if(avg > maxAvg) { maxAvg = avg; bestDayIdx = k; }
+            if(avg < minAvg) { minAvg = avg; worstDayIdx = k; }
         });
+
         const daysMap = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+        
+        // 3. Best Day
         if(bestDayIdx !== -1) {
             document.getElementById('hl-bestday-val').innerText = daysMap[bestDayIdx];
             document.getElementById('hl-bestday-avg').innerText = `Media: ${maxAvg.toFixed(0)}`;
         }
-    } else {
-        document.getElementById('hl-bestday-val').innerText = "-";
-        document.getElementById('hl-bestday-avg').innerText = "Media: 0";
-    }
+        // 4. Worst Day
+        if(worstDayIdx !== -1) {
+            document.getElementById('hl-worstday-val').innerText = daysMap[worstDayIdx];
+            document.getElementById('hl-worstday-avg').innerText = `Media: ${minAvg.toFixed(0)}`;
+        }
 
-    // 3. Fattore Meteo (% Sole)
-    if(dCurrent.length > 0) {
-        const sunnyCount = dCurrent.filter(d => d.meteo && (d.meteo.includes('Sole') || d.meteo.includes('Sereno'))).length;
-        const pct = (sunnyCount / dCurrent.length) * 100;
-        document.getElementById('hl-sun-pct').innerText = pct.toFixed(0) + "%";
     } else {
-        document.getElementById('hl-sun-pct').innerText = "-%";
+        // Empty states
+        document.getElementById('hl-record-val').innerText = "-";
+        document.getElementById('hl-min-val').innerText = "-";
+        document.getElementById('hl-bestday-val').innerText = "-";
+        document.getElementById('hl-worstday-val').innerText = "-";
     }
 }
 
@@ -1295,7 +1329,8 @@ window.renderStats = () => {
     const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}));
     renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
 };
-window.renderVasca = () => { 
+
+function renderVasca() { 
     const searchDate = document.getElementById('v-search-date') ? document.getElementById('v-search-date').value : null;
     const searchType = document.getElementById('v-search-type').value;
     const searchAlert = document.getElementById('v-search-alert').value;
