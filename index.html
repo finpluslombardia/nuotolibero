@@ -930,10 +930,13 @@ function renderOverviewKPI() {
     const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
     const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
     
-    // Filtro dati correnti (incluso oggi per i totali, ma lo gestiremo dopo per i Minimi)
+    // Filtro dati correnti
     const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats && x.totale > 0);
     const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
-    const daysCurrent = new Set(dCurrent.map(x=>x.date)).size;
+    
+    // Calcolo giorni unici con dati (per la media)
+    const uniqueDays = new Set(dCurrent.map(x=>x.date));
+    const daysCurrent = uniqueDays.size;
 
     // 1. Current Total
     document.getElementById('ov-total-curr').innerText = totalCurrent.toLocaleString();
@@ -1002,38 +1005,45 @@ function renderOverviewKPI() {
         document.getElementById('ov-forecast-sub').innerText = "proiezione";
     } else { document.getElementById('ov-forecast').innerText = "-"; }
 
-    // --- HIGHLIGHTS LOGIC (Fixed "Giorno Nero") ---
+    // --- HIGHLIGHTS LOGIC (Fixed Aggregation for "Giorno Nero/Record") ---
     
-    // Per i Minimi/Massimi usiamo un dataset che ESCLUDE oggi per evitare dati parziali (giorno nero errato)
-    const dFinished = dCurrent.filter(d => d.date !== todayStr);
-    
-    // Se dFinished è vuoto (es. è il primo del mese), usiamo dCurrent ma sapendo che è parziale, 
-    // oppure mostriamo "-" per il minimo. Per il massimo va bene anche oggi.
-    const hasFinishedData = dFinished.length > 0;
+    // 1. Aggreghiamo i dati per data (somma di tutte le fasce per quel giorno)
+    const dailyTotals = {};
+    dCurrent.forEach(d => {
+        if (!dailyTotals[d.date]) dailyTotals[d.date] = 0;
+        dailyTotals[d.date] += d.totale;
+    });
 
-    if(dCurrent.length > 0) {
-        // 1. Record Max (Consideriamo anche oggi, se oggi è record ben venga)
-        const recordDay = dCurrent.reduce((prev, curr) => (prev.totale > curr.totale) ? prev : curr);
+    // Creiamo un array di oggetti {date, totale}
+    const dailyArr = Object.keys(dailyTotals).map(date => ({
+        date: date,
+        totale: dailyTotals[date]
+    }));
+
+    if(dailyArr.length > 0) {
+        // 1. Record Max (su tutti i giorni, incluso oggi)
+        const recordDay = dailyArr.reduce((prev, curr) => (prev.totale > curr.totale) ? prev : curr);
         const rd = new Date(recordDay.date);
         document.getElementById('hl-record-val').innerText = recordDay.totale;
         document.getElementById('hl-record-date').innerText = rd.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
 
-        // 2. Minimo (Escludiamo oggi se possibile)
-        if (hasFinishedData) {
-            const minDay = dFinished.reduce((prev, curr) => (prev.totale < curr.totale) ? prev : curr);
+        // 2. Minimo (Escludiamo oggi per evitare falsi positivi mattutini)
+        // Filtriamo l'array aggregato
+        const dailyArrFinished = dailyArr.filter(d => d.date !== todayStr);
+
+        if (dailyArrFinished.length > 0) {
+            const minDay = dailyArrFinished.reduce((prev, curr) => (prev.totale < curr.totale) ? prev : curr);
             const md = new Date(minDay.date);
             document.getElementById('hl-min-val').innerText = minDay.totale;
             document.getElementById('hl-min-date').innerText = md.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
         } else {
-            // Se abbiamo solo oggi, non ha senso parlare di giorno nero
             document.getElementById('hl-min-val').innerText = "-";
             document.getElementById('hl-min-date').innerText = "Dati parziali";
         }
 
-        // Day of Week Stats (Uses dCurrent is fine, or dFinished better for averages)
-        // Let's use dCurrent for robust stats, averages stabilize over month
+        // Day of Week Stats (Utilizza i totali aggregati per coerenza)
         const dayCounts = {}; 
-        dCurrent.forEach(d => {
+        dailyArr.forEach(d => {
             const dayIdx = new Date(d.date).getDay();
             if(!dayCounts[dayIdx]) dayCounts[dayIdx] = {sum:0, count:0};
             dayCounts[dayIdx].sum += d.totale;
