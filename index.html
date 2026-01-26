@@ -267,8 +267,8 @@
                 </div>
             </div>
             
-            <!-- HIGHLIGHTS GRID (2 COLUMNS) -->
-            <div class="insight-grid" style="grid-template-columns: 1fr 1fr;">
+            <!-- HIGHLIGHTS GRID (3 COLUMNS NOW) -->
+            <div class="insight-grid" style="grid-template-columns: repeat(3, 1fr);">
                 <!-- BOX 1: ESTREMI (Record + Nero) -->
                 <div class="kpi-card glass-card" style="height:140px; border-left:4px solid #f59e0b; justify-content:space-evenly">
                     <div class="kpi-head" style="color:#b45309">📈 Estremi Giornalieri</div>
@@ -317,6 +317,13 @@
                         </div>
                         <div class="kpi-sub" id="hl-worstday-avg" style="font-size:0.8rem; color:#475569; margin-bottom:5px">Media: 0</div>
                     </div>
+                </div>
+
+                <!-- BOX 3: METEO -->
+                <div class="kpi-card glass-card" style="height:140px; border-left:4px solid #10b981; justify-content:center; align-items:center; text-align:center">
+                    <div class="kpi-head" style="color:#047857; margin-bottom:10px">☀️ Fattore Meteo</div>
+                    <div class="kpi-val" id="hl-sun-pct" style="font-size:2.8rem; color:#10b981; line-height:1">0%</div>
+                    <div class="kpi-sub" style="font-size:0.85rem; color:#065f46; margin-top:5px">Giorni di Sole nel Mese</div>
                 </div>
             </div>
 
@@ -1072,12 +1079,18 @@ function renderOverviewKPI() {
             document.getElementById('hl-worstday-avg').innerText = `Media: ${minAvg.toFixed(0)}`;
         }
 
+        // 5. Fattore Meteo (% Sole)
+        const sunnyCount = dCurrent.filter(d => d.meteo && (d.meteo.includes('Sole') || d.meteo.includes('Sereno') || d.meteo.includes('Caldo'))).length;
+        const pct = (sunnyCount / dCurrent.length) * 100;
+        document.getElementById('hl-sun-pct').innerText = pct.toFixed(0) + "%";
+
     } else {
         // Empty states
         document.getElementById('hl-record-val').innerText = "-";
         document.getElementById('hl-min-val').innerText = "-";
         document.getElementById('hl-bestday-val').innerText = "-";
         document.getElementById('hl-worstday-val').innerText = "-";
+        document.getElementById('hl-sun-pct').innerText = "-%";
     }
 }
 
