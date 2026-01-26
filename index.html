@@ -238,12 +238,17 @@
                 </select>
             </div>
             
-            <!-- TOP KPI GRID -->
-            <div class="kpi-grid">
+            <!-- TOP KPI GRID (5 COLUMNS) -->
+            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
                 <div class="kpi-card glass-card">
                     <div class="kpi-head">Ingressi Totali (Mese)</div>
                     <div class="kpi-val" id="ov-total-curr">0</div>
-                    <div class="kpi-sub" id="ov-total-sub" style="color:#2563eb; font-size:0.8rem">Media: 0 / giorno</div>
+                    <div class="kpi-sub" style="color:#2563eb">in corso...</div>
+                </div>
+                <div class="kpi-card glass-card">
+                    <div class="kpi-head">Media Giornaliera</div>
+                    <div class="kpi-val" id="ov-avg">0</div>
+                    <div class="kpi-sub" id="ov-avg-trend">-</div>
                 </div>
                 <div class="kpi-card glass-card">
                     <div class="kpi-head">Vs Mese Prec.</div>
@@ -262,27 +267,56 @@
                 </div>
             </div>
             
-            <!-- NEW HIGHLIGHTS GRID 4-COL -->
-            <div class="insight-grid-4">
-                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #f59e0b">
-                    <div class="kpi-head" style="color:#d97706">🏆 Giorno Record</div>
-                    <div class="kpi-val" id="hl-record-val" style="font-size:1.8rem">0</div>
-                    <div class="kpi-sub" id="hl-record-date" style="font-size:0.8rem; color:#b45309">-</div>
+            <!-- HIGHLIGHTS GRID (2 COLUMNS) -->
+            <div class="insight-grid" style="grid-template-columns: 1fr 1fr;">
+                <!-- BOX 1: ESTREMI (Record + Nero) -->
+                <div class="kpi-card glass-card" style="height:140px; border-left:4px solid #f59e0b; justify-content:space-evenly">
+                    <div class="kpi-head" style="color:#b45309">📈 Estremi Giornalieri</div>
+                    
+                    <!-- Record -->
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; width:100%">
+                        <div>
+                            <div style="font-size:0.7rem; color:#d97706; font-weight:700">🏆 RECORD</div>
+                            <div class="kpi-val" id="hl-record-val" style="font-size:1.5rem; margin:0">0</div>
+                        </div>
+                        <div class="kpi-sub" id="hl-record-date" style="font-size:0.8rem; color:#b45309; margin-bottom:5px">-</div>
+                    </div>
+                    
+                    <div style="width:100%; height:1px; background:rgba(0,0,0,0.05); margin:5px 0"></div>
+
+                    <!-- Nero -->
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; width:100%">
+                        <div>
+                            <div style="font-size:0.7rem; color:#b91c1c; font-weight:700">📉 NERO</div>
+                            <div class="kpi-val" id="hl-min-val" style="font-size:1.5rem; margin:0; color:#ef4444">-</div>
+                        </div>
+                        <div class="kpi-sub" id="hl-min-date" style="font-size:0.8rem; color:#7f1d1d; margin-bottom:5px">-</div>
+                    </div>
                 </div>
-                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #ef4444">
-                    <div class="kpi-head" style="color:#b91c1c">📉 Giorno "Nero"</div>
-                    <div class="kpi-val" id="hl-min-val" style="font-size:1.8rem">-</div>
-                    <div class="kpi-sub" id="hl-min-date" style="font-size:0.8rem; color:#7f1d1d">-</div>
-                </div>
-                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #2563eb">
-                    <div class="kpi-head" style="color:#1d4ed8">❤️ Giorno Preferito</div>
-                    <div class="kpi-val" id="hl-bestday-val" style="font-size:1.6rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">-</div>
-                    <div class="kpi-sub" id="hl-bestday-avg" style="font-size:0.8rem; color:#1e40af">Media: 0</div>
-                </div>
-                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #64748b">
-                    <div class="kpi-head" style="color:#334155">💔 Meno Ambito</div>
-                    <div class="kpi-val" id="hl-worstday-val" style="font-size:1.6rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">-</div>
-                    <div class="kpi-sub" id="hl-worstday-avg" style="font-size:0.8rem; color:#475569">Media: 0</div>
+
+                <!-- BOX 2: PREFERENZE (Best + Worst) -->
+                <div class="kpi-card glass-card" style="height:140px; border-left:4px solid #2563eb; justify-content:space-evenly">
+                    <div class="kpi-head" style="color:#1d4ed8">📅 Analisi Settimanale</div>
+                    
+                    <!-- Best -->
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; width:100%">
+                        <div>
+                            <div style="font-size:0.7rem; color:#1e40af; font-weight:700">❤️ PREFERITO</div>
+                            <div class="kpi-val" id="hl-bestday-val" style="font-size:1.3rem; margin:0; color:#2563eb">-</div>
+                        </div>
+                        <div class="kpi-sub" id="hl-bestday-avg" style="font-size:0.8rem; color:#1e40af; margin-bottom:5px">Media: 0</div>
+                    </div>
+
+                    <div style="width:100%; height:1px; background:rgba(0,0,0,0.05); margin:5px 0"></div>
+
+                    <!-- Worst -->
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; width:100%">
+                        <div>
+                            <div style="font-size:0.7rem; color:#475569; font-weight:700">💔 MENO AMBITO</div>
+                            <div class="kpi-val" id="hl-worstday-val" style="font-size:1.3rem; margin:0; color:#64748b">-</div>
+                        </div>
+                        <div class="kpi-sub" id="hl-worstday-avg" style="font-size:0.8rem; color:#475569; margin-bottom:5px">Media: 0</div>
+                    </div>
                 </div>
             </div>
 
@@ -889,46 +923,61 @@ window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 function renderOverviewKPI() {
     if(!dataIngressi || dataIngressi.length === 0) return;
     const today = new Date();
+    const todayStr = getStrDate(today); // Usato per escludere oggi dai minimi
     const currentMonthStr = today.toISOString().slice(0, 7);
     const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
     const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
     const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
+    
+    // Filtro dati correnti (incluso oggi per i totali, ma lo gestiremo dopo per i Minimi)
     const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats && x.totale > 0);
     const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
     const daysCurrent = new Set(dCurrent.map(x=>x.date)).size;
 
-    // 1. Current Total & Average
+    // 1. Current Total
     document.getElementById('ov-total-curr').innerText = totalCurrent.toLocaleString();
-    const avgCurrent = daysCurrent > 0 ? (totalCurrent/daysCurrent) : 0;
-    document.getElementById('ov-total-sub').innerText = `Media: ${avgCurrent.toFixed(0)} / giorno`;
 
-    // 2. Vs Mese Prec (MoM) logic
-    // Determine the comparison day limit (e.g., if today is 15th, compare vs 1st-15th of prev month)
+    // 2. Average with Trend
+    const avgCurrent = daysCurrent > 0 ? (totalCurrent/daysCurrent) : 0;
+    document.getElementById('ov-avg').innerText = avgCurrent.toFixed(0);
+    
+    // Trend logic
+    const dPrevFull = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0);
+    const totalPrevFull = dPrevFull.reduce((a,b)=>a+b.totale,0);
+    const daysPrevFull = new Set(dPrevFull.map(x=>x.date)).size;
+    const avgPrev = daysPrevFull > 0 ? (totalPrevFull / daysPrevFull) : 0;
+
+    let trendHtml = '-';
+    if(avgPrev > 0) {
+        const diff = avgCurrent - avgPrev;
+        const color = diff >= 0 ? '#10b981' : '#ef4444';
+        const icon = diff >= 0 ? '⬆' : '⬇';
+        trendHtml = `<span style="color:${color}; font-weight:700">${icon} vs ${avgPrev.toFixed(0)}</span>`;
+    }
+    document.getElementById('ov-avg-trend').innerHTML = trendHtml;
+    
+    // 3. Vs Mese Prec (MoM) partial comparison
     const maxDay = today.getDate();
     const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
-    
-    const dPrev = dataIngressi.filter(x => {
+    const dPrevPartial = dataIngressi.filter(x => {
         return x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
     });
-    const totalPrev = dPrev.reduce((a,b)=>a+b.totale,0);
+    const totalPrevPartial = dPrevPartial.reduce((a,b)=>a+b.totale,0);
     
     let momHtml = "";
-    if (dPrev.length > 0) { // If we have data for prev month
+    if (dPrevPartial.length > 0) {
         let diff = 0;
-        if (totalPrev > 0) diff = ((totalCurrent - totalPrev) / totalPrev) * 100;
+        if (totalPrevPartial > 0) diff = ((totalCurrent - totalPrevPartial) / totalPrevPartial) * 100;
         else if (totalCurrent > 0) diff = 100;
-        
         const color = diff >= 0 ? "#16a34a" : "#dc2626";
         const sign = diff > 0 ? "+" : "";
         momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
-    } else { 
-        momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; 
-    }
+    } else { momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
     document.getElementById('ov-mom').innerHTML = momHtml;
     document.getElementById('ov-mom-label').innerText = `vs ${pm_month_name} (al ${maxDay})`;
 
-    // 3. YoY
+    // 4. YoY
     const dYoy = dataIngressi.filter(x => {
         return x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
     });
@@ -946,28 +995,43 @@ function renderOverviewKPI() {
     const ym_year = ym.getFullYear();
     document.getElementById('ov-yoy-label').innerText = `vs ${ym_year} (al ${maxDay})`;
 
-    // 4. Forecast
+    // 5. Forecast
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     if(daysCurrent > 0) { 
         document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
-        document.getElementById('ov-forecast-sub').innerText = "proiezione (su giorni aperti)";
+        document.getElementById('ov-forecast-sub').innerText = "proiezione";
     } else { document.getElementById('ov-forecast').innerText = "-"; }
 
-    // --- NEW HIGHLIGHTS LOGIC ---
+    // --- HIGHLIGHTS LOGIC (Fixed "Giorno Nero") ---
+    
+    // Per i Minimi/Massimi usiamo un dataset che ESCLUDE oggi per evitare dati parziali (giorno nero errato)
+    const dFinished = dCurrent.filter(d => d.date !== todayStr);
+    
+    // Se dFinished è vuoto (es. è il primo del mese), usiamo dCurrent ma sapendo che è parziale, 
+    // oppure mostriamo "-" per il minimo. Per il massimo va bene anche oggi.
+    const hasFinishedData = dFinished.length > 0;
+
     if(dCurrent.length > 0) {
-        // 1. Record Max
+        // 1. Record Max (Consideriamo anche oggi, se oggi è record ben venga)
         const recordDay = dCurrent.reduce((prev, curr) => (prev.totale > curr.totale) ? prev : curr);
         const rd = new Date(recordDay.date);
         document.getElementById('hl-record-val').innerText = recordDay.totale;
         document.getElementById('hl-record-date').innerText = rd.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
 
-        // 2. Minimo (excluding 0 if wanted, but dCurrent already filters > 0)
-        const minDay = dCurrent.reduce((prev, curr) => (prev.totale < curr.totale) ? prev : curr);
-        const md = new Date(minDay.date);
-        document.getElementById('hl-min-val').innerText = minDay.totale;
-        document.getElementById('hl-min-date').innerText = md.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
+        // 2. Minimo (Escludiamo oggi se possibile)
+        if (hasFinishedData) {
+            const minDay = dFinished.reduce((prev, curr) => (prev.totale < curr.totale) ? prev : curr);
+            const md = new Date(minDay.date);
+            document.getElementById('hl-min-val').innerText = minDay.totale;
+            document.getElementById('hl-min-date').innerText = md.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
+        } else {
+            // Se abbiamo solo oggi, non ha senso parlare di giorno nero
+            document.getElementById('hl-min-val').innerText = "-";
+            document.getElementById('hl-min-date').innerText = "Dati parziali";
+        }
 
-        // Day of Week Stats
+        // Day of Week Stats (Uses dCurrent is fine, or dFinished better for averages)
+        // Let's use dCurrent for robust stats, averages stabilize over month
         const dayCounts = {}; 
         dCurrent.forEach(d => {
             const dayIdx = new Date(d.date).getDay();
