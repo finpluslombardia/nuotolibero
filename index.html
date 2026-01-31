@@ -695,6 +695,7 @@
                     <option value="asc">⬆️ Più Vecchi</option>
                 </select>
                 <button class="btn btn-danger" style="height:36px; padding:0 15px" onclick="resetUtenzeHistory()">✕</button>
+                <button class="btn btn-primary" style="height:36px; font-size:0.8rem; padding:0 20px" onclick="downloadUtenzeCSV()">Scarica Excel</button>
             </div>
 
             <div class="table-wrap glass-card">
@@ -2113,6 +2114,96 @@ window.resetUtenzeHistory = () => {
     document.getElementById('u-hist-end').value = "";
     document.getElementById('u-hist-sort').value = "desc";
     renderUtenze();
+};
+
+window.downloadUtenzeCSV = () => {
+    if(!dataUtenze.length) return showToast("Nessun dato da esportare", "error");
+
+    // 1. Preparazione Dati (Simile a renderUtenze per avere i delta corretti)
+    const grouped = {};
+    dataUtenze.forEach(d => {
+        if(!grouped[d.date]) grouped[d.date] = { date: d.date, elec: null, water: null, gas: null, notes: [] };
+        if(d.type === '⚡ Elettricità') grouped[d.date].elec = d;
+        if(d.type === '💧 Acqua') grouped[d.date].water = d;
+        if(d.type === '🔥 Gas Metano') grouped[d.date].gas = d;
+        if(d.note) grouped[d.date].notes.push(d.note);
+    });
+
+    const allDatesAsc = Object.keys(grouped).sort();
+    let prevVals = { elec: null, water: null, gas: null };
+    
+    // Arricchiamo l'oggetto grouped con i delta
+    const enrichedData = allDatesAsc.map(date => {
+        const g = grouped[date];
+        const row = { date: date, raw: g, delta: { elec: 0, water: 0, gas: 0 } };
+        
+        ['elec', 'water', 'gas'].forEach(key => {
+            if(g[key]) {
+                if(prevVals[key] !== null) {
+                    let d = g[key].val - prevVals[key];
+                    row.delta[key] = d < 0 ? 0 : d;
+                }
+                prevVals[key] = g[key].val;
+            } else {
+                row.delta[key] = null; // Nessuna lettura quel giorno
+            }
+        });
+        return row;
+    });
+
+    // 2. Filtro Date (Rispetta i filtri attivi nell'UI)
+    const start = document.getElementById('u-hist-start').value;
+    const end = document.getElementById('u-hist-end').value;
+    
+    const filtered = enrichedData.filter(r => {
+        if (start && r.date < start) return false;
+        if (end && r.date > end) return false;
+        return true;
+    });
+
+    if(!filtered.length) return showToast("Nessun dato nel periodo selezionato", "error");
+
+    // 3. Generazione CSV
+    // Header
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Data;Elettricita_Lettura;Elettricita_Consumo;F1;F2;F3;Meteo;Acqua_Lettura;Acqua_Consumo;Gas_Lettura;Gas_Consumo;Gas_Temp;Note\n";
+
+    // Rows
+    filtered.forEach(r => {
+        const d = r.raw;
+        const dt = r.date.split('-').reverse().join('/'); // DD/MM/YYYY
+        
+        // Elec Fields
+        const elVal = d.elec ? d.elec.val.toString().replace('.', ',') : "";
+        const elCons = r.delta.elec !== null ? r.delta.elec.toFixed(1).replace('.', ',') : "";
+        const f1 = d.elec ? (d.elec.a1||0).toString().replace('.', ',') : "";
+        const f2 = d.elec ? (d.elec.a2||0).toString().replace('.', ',') : "";
+        const f3 = d.elec ? (d.elec.a3||0).toString().replace('.', ',') : "";
+        const meteo = d.elec ? (d.elec.meteo || "") : "";
+
+        // Water Fields
+        const waVal = d.water ? d.water.val.toString().replace('.', ',') : "";
+        const waCons = r.delta.water !== null ? r.delta.water.toFixed(1).replace('.', ',') : "";
+
+        // Gas Fields
+        const gaVal = d.gas ? d.gas.val.toString().replace('.', ',') : "";
+        const gaCons = r.delta.gas !== null ? r.delta.gas.toFixed(1).replace('.', ',') : "";
+        const gaTemp = (d.gas && d.gas.temp) ? d.gas.temp.toString().replace('.', ',') : "";
+
+        // Note
+        const notes = d.notes.join(" | ").replace(/;/g, ","); // Escape semicolons
+
+        csvContent += `${dt};${elVal};${elCons};${f1};${f2};${f3};${meteo};${waVal};${waCons};${gaVal};${gaCons};${gaTemp};${notes}\n`;
+    });
+
+    // 4. Download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `utenze_export_${start||'inizio'}_${end||'fine'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 };
 
 window.saveIngressi = async () => {
