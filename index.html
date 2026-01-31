@@ -648,15 +648,24 @@
         <div id="sub-u-charts" class="hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px">
                 <h2 class="page-title" style="margin:0; font-size:1.3rem">📊 Analisi Utenze</h2>
-                <div style="display:flex; gap:10px; align-items:center">
-                    <select id="u-range" class="filter-select" onchange="renderUtenze()" style="font-weight:700">
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+                    <select id="u-range" class="filter-select" onchange="toggleUtenzeChartRange()" style="font-weight:700">
                         <option value="7">Ultimi 7 Giorni</option>
                         <option value="15">Ultimi 15 Giorni</option>
                         <option value="30">Ultimi 30 Giorni</option>
                         <option value="90">Ultimi 3 Mesi</option>
                         <option value="180">Ultimi 6 Mesi</option>
                         <option value="365">Ultimi 12 Mesi</option>
+                        <option value="custom">📆 Periodo Personalizzato</option>
                     </select>
+
+                    <div id="u-custom-range-box" class="hidden" style="display:flex; gap:5px; align-items:center; background:rgba(255,255,255,0.5); padding:5px 10px; border-radius:10px;">
+                        <input type="date" id="u-chart-start" class="arch-input" style="height:32px">
+                        <span style="font-weight:bold">-</span>
+                        <input type="date" id="u-chart-end" class="arch-input" style="height:32px">
+                        <button class="btn btn-primary" style="height:32px; padding:0 10px" onclick="renderUtenze()">OK</button>
+                    </div>
+
                     <select id="u-view-mode" class="filter-select" onchange="renderUtenze()" style="border:2px solid var(--primary); color:var(--primary); font-weight:700">
                         <option value="delta">📊 Consumo (Delta)</option>
                         <option value="total">📈 Lettura (Totale)</option>
@@ -931,20 +940,14 @@ window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 function renderOverviewKPI() {
     if(!dataIngressi || dataIngressi.length === 0) return;
     const today = new Date();
-    const todayStr = getStrDate(today); // Usato per escludere oggi dai minimi
     const currentMonthStr = today.toISOString().slice(0, 7);
     const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
     const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
     const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
-    
-    // Filtro dati correnti
     const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats && x.totale > 0);
     const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
-    
-    // Calcolo giorni unici con dati (per la media)
-    const uniqueDays = new Set(dCurrent.map(x=>x.date));
-    const daysCurrent = uniqueDays.size;
+    const daysCurrent = new Set(dCurrent.map(x=>x.date)).size;
 
     // 1. Current Total
     document.getElementById('ov-total-curr').innerText = totalCurrent.toLocaleString();
@@ -953,7 +956,8 @@ function renderOverviewKPI() {
     const avgCurrent = daysCurrent > 0 ? (totalCurrent/daysCurrent) : 0;
     document.getElementById('ov-avg').innerText = avgCurrent.toFixed(0);
     
-    // Trend logic
+    // Trend logic vs Previous Month (Final Average)
+    const maxDayPrev = new Date(pm.getFullYear(), pm.getMonth() + 1, 0).getDate(); // Full previous month
     const dPrevFull = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0);
     const totalPrevFull = dPrevFull.reduce((a,b)=>a+b.totale,0);
     const daysPrevFull = new Set(dPrevFull.map(x=>x.date)).size;
@@ -964,31 +968,12 @@ function renderOverviewKPI() {
         const diff = avgCurrent - avgPrev;
         const color = diff >= 0 ? '#10b981' : '#ef4444';
         const icon = diff >= 0 ? '⬆' : '⬇';
-        trendHtml = `<span style="color:${color}; font-weight:700">${icon} vs ${avgPrev.toFixed(0)}</span>`;
+        trendHtml = `<span style="color:${color}; font-weight:700">${icon} vs ${avgPrev.toFixed(0)}</span> (media sc.)`;
     }
     document.getElementById('ov-avg-trend').innerHTML = trendHtml;
     
-    // 3. Vs Mese Prec (MoM) partial comparison
+    // 3. YoY
     const maxDay = today.getDate();
-    const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
-    const dPrevPartial = dataIngressi.filter(x => {
-        return x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
-    });
-    const totalPrevPartial = dPrevPartial.reduce((a,b)=>a+b.totale,0);
-    
-    let momHtml = "";
-    if (dPrevPartial.length > 0) {
-        let diff = 0;
-        if (totalPrevPartial > 0) diff = ((totalCurrent - totalPrevPartial) / totalPrevPartial) * 100;
-        else if (totalCurrent > 0) diff = 100;
-        const color = diff >= 0 ? "#16a34a" : "#dc2626";
-        const sign = diff > 0 ? "+" : "";
-        momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
-    } else { momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
-    document.getElementById('ov-mom').innerHTML = momHtml;
-    document.getElementById('ov-mom-label').innerText = `vs ${pm_month_name} (al ${maxDay})`;
-
-    // 4. YoY
     const dYoy = dataIngressi.filter(x => {
         return x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
     });
@@ -1006,52 +991,30 @@ function renderOverviewKPI() {
     const ym_year = ym.getFullYear();
     document.getElementById('ov-yoy-label').innerText = `vs ${ym_year} (al ${maxDay})`;
 
-    // 5. Forecast
+    // 4. Forecast
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     if(daysCurrent > 0) { 
         document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
-        document.getElementById('ov-forecast-sub').innerText = "proiezione";
+        document.getElementById('ov-forecast-sub').innerText = "proiezione (su giorni aperti)";
     } else { document.getElementById('ov-forecast').innerText = "-"; }
 
-    // --- HIGHLIGHTS LOGIC (Fixed Aggregation for "Giorno Nero/Record") ---
-    
-    // 1. Aggreghiamo i dati per data (somma di tutte le fasce per quel giorno)
-    const dailyTotals = {};
-    dCurrent.forEach(d => {
-        if (!dailyTotals[d.date]) dailyTotals[d.date] = 0;
-        dailyTotals[d.date] += d.totale;
-    });
-
-    // Creiamo un array di oggetti {date, totale}
-    const dailyArr = Object.keys(dailyTotals).map(date => ({
-        date: date,
-        totale: dailyTotals[date]
-    }));
-
-    if(dailyArr.length > 0) {
-        // 1. Record Max (su tutti i giorni, incluso oggi)
-        const recordDay = dailyArr.reduce((prev, curr) => (prev.totale > curr.totale) ? prev : curr);
+    // --- NEW HIGHLIGHTS LOGIC ---
+    if(dCurrent.length > 0) {
+        // 1. Record Max
+        const recordDay = dCurrent.reduce((prev, curr) => (prev.totale > curr.totale) ? prev : curr);
         const rd = new Date(recordDay.date);
         document.getElementById('hl-record-val').innerText = recordDay.totale;
         document.getElementById('hl-record-date').innerText = rd.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
 
-        // 2. Minimo (Escludiamo oggi per evitare falsi positivi mattutini)
-        // Filtriamo l'array aggregato
-        const dailyArrFinished = dailyArr.filter(d => d.date !== todayStr);
+        // 2. Minimo (excluding 0 if wanted, but dCurrent already filters > 0)
+        const minDay = dCurrent.reduce((prev, curr) => (prev.totale < curr.totale) ? prev : curr);
+        const md = new Date(minDay.date);
+        document.getElementById('hl-min-val').innerText = minDay.totale;
+        document.getElementById('hl-min-date').innerText = md.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
 
-        if (dailyArrFinished.length > 0) {
-            const minDay = dailyArrFinished.reduce((prev, curr) => (prev.totale < curr.totale) ? prev : curr);
-            const md = new Date(minDay.date);
-            document.getElementById('hl-min-val').innerText = minDay.totale;
-            document.getElementById('hl-min-date').innerText = md.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
-        } else {
-            document.getElementById('hl-min-val').innerText = "-";
-            document.getElementById('hl-min-date').innerText = "Dati parziali";
-        }
-
-        // Day of Week Stats (Utilizza i totali aggregati per coerenza)
+        // Day of Week Stats
         const dayCounts = {}; 
-        dailyArr.forEach(d => {
+        dCurrent.forEach(d => {
             const dayIdx = new Date(d.date).getDay();
             if(!dayCounts[dayIdx]) dayCounts[dayIdx] = {sum:0, count:0};
             dayCounts[dayIdx].sum += d.totale;
@@ -1424,302 +1387,42 @@ window.renderStats = () => {
     renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
 };
 
-function renderVasca() { 
-    const searchDate = document.getElementById('v-search-date') ? document.getElementById('v-search-date').value : null;
-    const searchType = document.getElementById('v-search-type').value;
-    const searchAlert = document.getElementById('v-search-alert').value;
-
-    const t=document.getElementById('tbody-vasca'); t.innerHTML=""; 
-    
-    let list = [...dataVasca];
-    if(searchDate) list = list.filter(d => d.date === searchDate);
-    
-    // Filter Type
-    if (searchType !== 'all') {
-        list = list.filter(d => (d.type || 'interna') === searchType);
-    }
-
-    // Filter Anomalies
-    if (searchAlert === 'alert') {
-        list = list.filter(d => {
-            const ph = parseFloat(d.ph);
-            const cl = parseFloat(d.cll);
-            const phBad = (ph < 6.5 || ph > 7.5);
-            const clBad = (cl < 0.8 || cl > 1.7);
-            return phBad || clBad;
-        });
-    }
-
-    // Sort globale per raggruppamento corretto
-    list.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
-
-    if(list.length === 0) {
-        t.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:#64748b">Nessuna registrazione trovata.</td></tr>';
-        return;
-    }
-
-    // Raggruppamento per Mese
-    const groups = {};
-    list.forEach(d => {
-        const key = d.date.substring(0, 7); // YYYY-MM
-        if(!groups[key]) groups[key] = [];
-        groups[key].push(d);
-    });
-
-    const sortedMonths = Object.keys(groups).sort().reverse();
-
-    sortedMonths.forEach((mKey, mIndex) => {
-        // Header Mese
-        const [y, m] = mKey.split('-');
-        const dateObj = new Date(y, m - 1, 1);
-        const monthName = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
-        const groupId = 'vasca-g-' + mKey;
-        const count = groups[mKey].length;
-        
-        // Auto-expand if searching or if it's the very first group (current/latest month)
-        const isExpanded = searchDate ? true : (mIndex === 0); 
-        const displayStyle = isExpanded ? 'table-row' : 'none';
-        const arrow = isExpanded ? '▼' : '▶';
-        const bgHeader = mIndex === 0 ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.5)';
-
-        t.innerHTML += `
-            <tr style="background:${bgHeader}; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.6); transition:background 0.2s" onclick="toggleVascaGroup('${groupId}', this)" onmouseover="this.style.background='rgba(37,99,235,0.2)'" onmouseout="this.style.background='${bgHeader}'">
-                <td colspan="10" style="font-weight:800; color:var(--text-main); padding:15px; font-size:0.95rem">
-                    <span class="group-arrow" style="display:inline-block; width:20px; color:var(--primary)">${arrow}</span> 
-                    ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} 
-                    <span style="font-weight:500; font-size:0.8rem; color:var(--text-muted); margin-left:10px; background:rgba(255,255,255,0.6); padding:2px 8px; border-radius:10px">${count} reg.</span>
-                </td>
-            </tr>
-        `;
-
-        // Raggruppamento per Giorno all'interno del Mese per rowspan
-        const dayGroups = new Map();
-        groups[mKey].forEach(d => {
-            if(!dayGroups.has(d.date)) dayGroups.set(d.date, []);
-            dayGroups.get(d.date).push(d);
-        });
-
-        // Itero i giorni del mese
-        [...dayGroups.keys()].forEach(dKey => {
-            const entries = dayGroups.get(dKey);
-            // Sort per ora decrescente
-            entries.sort((a,b) => b.time.localeCompare(a.time));
-            
-            const dateFmt = dKey.split('-').reverse().join('/');
-            const dh = `<div style="font-weight:800;color:#1e293b">${dateFmt}</div>`;
-
-            entries.forEach((d, i) => {
-                const isLast = i === entries.length - 1;
-                const borderStyle = isLast ? "border-bottom:2px solid rgba(0,0,0,0.1)" : "border-bottom:1px solid rgba(0,0,0,0.05)";
-                
-                const phVal = parseFloat(d.ph); const phAlert = (phVal < 6.5 || phVal > 7.5);
-                const phStyle = phAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : 'font-weight:600';
-                const clVal = parseFloat(d.cll); const clAlert = (clVal < 0.8 || clVal > 1.7);
-                const clStyle = clAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : '';
-                
-                const typeLabel = d.type === 'esterna' ? '<span class="badge badge-summer">☀️ Est.</span>' : '<span class="badge badge-std">🏠 Int.</span>';
-
-                // Costruzione riga
-                let rowHtml = `<tr class="group-item ${groupId}" style="display:${displayStyle}; ${borderStyle}; background:rgba(255,255,255,0.25)">`;
-                
-                // Cella Data con Rowspan (solo alla prima occorrenza)
-                if (i === 0) {
-                    rowHtml += `<td rowspan="${entries.length}" style="vertical-align:middle; background:rgba(255,255,255,0.4); min-width:90px">${dh}</td>`;
-                }
-
-                rowHtml += `
-                    <td>
-                        <div style="font-weight:700;color:#2563eb">${d.time}</div>
-                        <div style="margin-top:2px; font-size:0.75rem">${typeLabel}</div>
-                    </td>
-                    <td>${d.bag}</td>
-                    <td>${d.ta}°</td>
-                    <td>${d.th}°</td>
-                    <td style="${phStyle}">${d.ph}</td>
-                    <td style="${clStyle}">${d.cll}</td>
-                    <td>${d.clc}</td>
-                    <td style="font-weight:700">${d.clt}</td> 
-                    <td style="text-align:right">
-                        <button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button>
-                        <button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button>
-                    </td>
-                </tr>`;
-                
-                t.innerHTML += rowHtml;
-            });
-        });
-    });
-}
-
-window.toggleVascaGroup = (groupId, headerTr) => {
-    const rows = document.querySelectorAll(`.${groupId}`);
-    const arrow = headerTr.querySelector('.group-arrow');
-    const isHidden = rows[0].style.display === 'none';
-    rows.forEach(r => r.style.display = isHidden ? 'table-row' : 'none');
-    arrow.innerText = isHidden ? '▼' : '▶';
-};
-
-window.resetVascaFilter = () => {
-    const inp = document.getElementById('v-search-date');
-    if(inp) inp.value = "";
-    document.getElementById('v-search-type').value = "all";
-    document.getElementById('v-search-alert').value = "all";
-    renderVasca();
-};
-
-window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
-window.renderDae = () => {
-    const searchDate = document.getElementById('d-search-date') ? document.getElementById('d-search-date').value : null;
-    const t = document.getElementById('tbody-dae');
-    t.innerHTML = "";
-
-    let list = [...dataDae];
-    
-    // Filter
-    if (searchDate) {
-        list = list.filter(d => d.date === searchDate);
-    }
-
-    // Sort Descending
-    list.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
-
-    if(list.length === 0) {
-        t.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#64748b">Nessun controllo trovato.</td></tr>';
-        return;
-    }
-
-    // Grouping
-    const groups = {};
-    list.forEach(d => {
-        const key = d.date.substring(0, 7); // YYYY-MM
-        if(!groups[key]) groups[key] = [];
-        groups[key].push(d);
-    });
-
-    const sortedKeys = Object.keys(groups).sort().reverse();
-
-    sortedKeys.forEach((key, index) => {
-        const [y, m] = key.split('-');
-        const dateObj = new Date(y, m - 1, 1);
-        const monthName = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
-        const groupId = 'dae-g-' + key;
-        const count = groups[key].length;
-        
-        // Auto-expand if searching or if it's the very first group (current/latest month)
-        const isExpanded = searchDate ? true : (index === 0); 
-        const displayStyle = isExpanded ? 'table-row' : 'none';
-        const arrow = isExpanded ? '▼' : '▶';
-        const bgHeader = index === 0 ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.5)';
-
-        t.innerHTML += `
-            <tr style="background:${bgHeader}; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.6); transition:background 0.2s" onclick="toggleDaeGroup('${groupId}', this)" onmouseover="this.style.background='rgba(37,99,235,0.2)'" onmouseout="this.style.background='${bgHeader}'">
-                <td colspan="6" style="font-weight:800; color:var(--text-main); padding:15px; font-size:0.95rem">
-                    <span class="group-arrow" style="display:inline-block; width:20px; color:var(--primary)">${arrow}</span> 
-                    ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} 
-                    <span style="font-weight:500; font-size:0.8rem; color:var(--text-muted); margin-left:10px; background:rgba(255,255,255,0.6); padding:2px 8px; border-radius:10px">${count} reg.</span>
-                </td>
-            </tr>
-        `;
-
-        groups[key].forEach(d => {
-            const b = d.status === 'OK' ? '<span class="badge badge-ok">✅ OK</span>' : '<span class="badge badge-ko">❌ GUASTO</span>';
-            const dateFmt = d.date.split('-').reverse().join('/');
-            
-            t.innerHTML += `
-                <tr class="group-item ${groupId}" style="display:${displayStyle}; background:rgba(255,255,255,0.25)">
-                    <td style="font-weight:700; padding-left:40px; border-left:4px solid transparent">${dateFmt}</td>
-                    <td style="color:#2563eb; font-weight:600">${d.time || '-'}</td>
-                    <td>${b}</td>
-                    <td>${d.ass}</td>
-                    <td>${d.op}</td>
-                    <td style="text-align:right">
-                        <button class="btn btn-icon" style="color:#ef4444; background:transparent" onclick="delDoc('dae_log','${d.id}')">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        });
-    });
-};
-
-window.toggleDaeGroup = (groupId, headerTr) => {
-    const rows = document.querySelectorAll(`.${groupId}`);
-    const arrow = headerTr.querySelector('.group-arrow');
-    // Check current state based on first row
-    const isHidden = rows[0].style.display === 'none';
-    
-    rows.forEach(r => {
-        r.style.display = isHidden ? 'table-row' : 'none';
-    });
-    arrow.innerText = isHidden ? '▼' : '▶';
-};
-
-window.resetDaeFilter = () => {
-    const inp = document.getElementById('d-search-date');
-    if(inp) inp.value = "";
-    renderDae();
-};
-
-// UTENZE
-window.toggleUtenzeMode = () => {
-    const type = document.getElementById('u-type').value;
-    const isSingle = type !== '⚡ Elettricità';
-    document.getElementById('u-single-input').classList.toggle('hidden', !isSingle);
-    const isElec = type === '⚡ Elettricità';
-    document.getElementById('u-elec-input').style.display = isElec ? 'contents' : 'none';
-    document.getElementById('u-extra-elec-meteo').classList.toggle('hidden', !isElec);
-    const isGas = type === '🔥 Gas Metano';
-    document.getElementById('u-extra-gas').classList.toggle('hidden', !isGas);
-};
-window.toggleUtenzeMode();
-window.saveUtenze = async () => {
-    const d = document.getElementById('u-date').value; const type = document.getElementById('u-type').value; const note = document.getElementById('u-note').value;
-    let p = { date: d, type, note };
-    if(type === '⚡ Elettricità') {
-        const a1 = parseFloat(document.getElementById('u-a1').value)||0;
-        const a2 = parseFloat(document.getElementById('u-a2').value)||0;
-        const a3 = parseFloat(document.getElementById('u-a3').value)||0;
-        p.a1 = a1; p.a2 = a2; p.a3 = a3; p.val = a1+a2+a3;
-        p.meteo = document.getElementById('u-meteo').value;
+window.toggleUtenzeChartRange = () => {
+    const val = document.getElementById('u-range').value;
+    const box = document.getElementById('u-custom-range-box');
+    if(val === 'custom') {
+        box.classList.remove('hidden');
+        box.style.display = 'flex'; // Ensure flex layout
     } else {
-        p.val = parseFloat(document.getElementById('u-val').value);
-        if(type === '🔥 Gas Metano') { p.temp = parseFloat(document.getElementById('u-temp').value) || null; }
+        box.classList.add('hidden');
+        renderUtenze(); // Trigger render immediately for presets
     }
-    if(!d || (type!=='⚡ Elettricità' && isNaN(p.val))) return showToast("Dati mancanti", "error");
-    try {
-        if(editIdUtenze) {
-            await updateDoc(doc(db, "utenze_log", editIdUtenze), p); showToast("Modifica salvata!"); cancelEditUtenze();
-        } else {
-            await addDoc(collection(db, "utenze_log"), p); showToast("Salvato"); document.querySelectorAll('#cb-utenze input:not([type=date])').forEach(i=>i.value='');
-        }
-    } catch(e){ showToast(e.message, "error"); }
-};
-
-window.editUtenze = (id) => {
-    const d = dataUtenze.find(x => x.id === id); if(!d) return; editIdUtenze = id;
-    document.getElementById('u-date').value = d.date; document.getElementById('u-type').value = d.type; document.getElementById('u-note').value = d.note || '';
-    toggleUtenzeMode();
-    if(d.type === '⚡ Elettricità') {
-        document.getElementById('u-a1').value = d.a1; document.getElementById('u-a2').value = d.a2; document.getElementById('u-a3').value = d.a3; document.getElementById('u-meteo').value = d.meteo || '☀️ Sole';
-    } else {
-        document.getElementById('u-val').value = d.val;
-        if(d.type === '🔥 Gas Metano') { document.getElementById('u-temp').value = d.temp || ''; }
-    }
-    document.getElementById('title-utenze').innerText = "Modifica Utenza"; document.getElementById('btn-save-utenze').innerText = "AGGIORNA"; document.getElementById('btn-save-utenze').style.background = "#f59e0b"; document.getElementById('cb-utenze').classList.add('editing'); document.getElementById('cancel-utenze').classList.remove('hidden'); window.scrollTo({top:0, behavior:'smooth'});
-};
-window.cancelEditUtenze = () => {
-    editIdUtenze = null; document.getElementById('title-utenze').innerText = "Registrazione Letture Utenze"; document.getElementById('btn-save-utenze').innerText = "SALVA"; document.getElementById('btn-save-utenze').style.background = ""; document.getElementById('cb-utenze').classList.remove('editing'); document.getElementById('cancel-utenze').classList.add('hidden'); document.querySelectorAll('#cb-utenze input:not([type=date])').forEach(i=>i.value=''); toggleUtenzeMode();
-};
-
-window.switchSubViewUtenze=(s)=>{
-    ['overview','charts','archive'].forEach(v=>{ document.getElementById('sub-u-'+v).classList.add('hidden'); document.getElementById('btn-sub-u-'+v).classList.remove('btn-primary'); });
-    document.getElementById('sub-u-'+s).classList.remove('hidden'); document.getElementById('btn-sub-u-'+s).classList.add('btn-primary');
-    renderUtenze();
 };
 
 window.renderUtenze = () => {
     if(!isChartReady()) return;
     const viewMode = document.getElementById('u-view-mode').value; const isDelta = viewMode === 'delta'; const chartType = isDelta ? 'bar' : 'line';
-    const rangeDays = parseInt(document.getElementById('u-range').value); const limitDate = new Date(); limitDate.setDate(limitDate.getDate() - rangeDays); const limitStr = limitDate.toISOString().split('T')[0];
+    
+    // --- NEW RANGE LOGIC ---
+    const rangeVal = document.getElementById('u-range').value;
+    let limitStr = "";
+    let customStart = null;
+    let customEnd = null;
+
+    if (rangeVal === 'custom') {
+        customStart = document.getElementById('u-chart-start').value;
+        customEnd = document.getElementById('u-chart-end').value;
+        // If empty, default to show all or nothing? Let's assume start 1970 if empty
+        if (!customStart) customStart = "1970-01-01";
+        if (!customEnd) customEnd = "9999-12-31";
+    } else {
+        const rangeDays = parseInt(rangeVal); 
+        const limitDate = new Date(); 
+        limitDate.setDate(limitDate.getDate() - rangeDays); 
+        limitStr = limitDate.toISOString().split('T')[0];
+    }
+    // -----------------------
+
     const showHistory = document.getElementById('u-compare-year').checked;
     const grouped = {};
     dataUtenze.forEach(d => {
@@ -1955,7 +1658,16 @@ window.renderUtenze = () => {
 
     // Chart Logic UPDATED with dual axis support
     function prepareChartData(type) {
-        const filteredDates = allDatesAsc.filter(d => d >= limitStr);
+        // --- UPDATED FILTER LOGIC ---
+        const filteredDates = allDatesAsc.filter(d => {
+            if (rangeVal === 'custom') {
+                return d >= customStart && d <= customEnd;
+            } else {
+                return d >= limitStr;
+            }
+        });
+        // ---------------------------
+
         const labels = [], dataTotal = [], dataDelta = [], dataSecondary = [], dataHistoryTotal = [], dataHistoryDelta = [];
         const typeKey = type === '⚡ Elettricità' ? 'elec' : (type === '💧 Acqua' ? 'water' : 'gas');
         
@@ -2114,96 +1826,6 @@ window.resetUtenzeHistory = () => {
     document.getElementById('u-hist-end').value = "";
     document.getElementById('u-hist-sort').value = "desc";
     renderUtenze();
-};
-
-window.downloadUtenzeCSV = () => {
-    if(!dataUtenze.length) return showToast("Nessun dato da esportare", "error");
-
-    // 1. Preparazione Dati (Simile a renderUtenze per avere i delta corretti)
-    const grouped = {};
-    dataUtenze.forEach(d => {
-        if(!grouped[d.date]) grouped[d.date] = { date: d.date, elec: null, water: null, gas: null, notes: [] };
-        if(d.type === '⚡ Elettricità') grouped[d.date].elec = d;
-        if(d.type === '💧 Acqua') grouped[d.date].water = d;
-        if(d.type === '🔥 Gas Metano') grouped[d.date].gas = d;
-        if(d.note) grouped[d.date].notes.push(d.note);
-    });
-
-    const allDatesAsc = Object.keys(grouped).sort();
-    let prevVals = { elec: null, water: null, gas: null };
-    
-    // Arricchiamo l'oggetto grouped con i delta
-    const enrichedData = allDatesAsc.map(date => {
-        const g = grouped[date];
-        const row = { date: date, raw: g, delta: { elec: 0, water: 0, gas: 0 } };
-        
-        ['elec', 'water', 'gas'].forEach(key => {
-            if(g[key]) {
-                if(prevVals[key] !== null) {
-                    let d = g[key].val - prevVals[key];
-                    row.delta[key] = d < 0 ? 0 : d;
-                }
-                prevVals[key] = g[key].val;
-            } else {
-                row.delta[key] = null; // Nessuna lettura quel giorno
-            }
-        });
-        return row;
-    });
-
-    // 2. Filtro Date (Rispetta i filtri attivi nell'UI)
-    const start = document.getElementById('u-hist-start').value;
-    const end = document.getElementById('u-hist-end').value;
-    
-    const filtered = enrichedData.filter(r => {
-        if (start && r.date < start) return false;
-        if (end && r.date > end) return false;
-        return true;
-    });
-
-    if(!filtered.length) return showToast("Nessun dato nel periodo selezionato", "error");
-
-    // 3. Generazione CSV
-    // Header
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Data;Elettricita_Lettura;Elettricita_Consumo;F1;F2;F3;Meteo;Acqua_Lettura;Acqua_Consumo;Gas_Lettura;Gas_Consumo;Gas_Temp;Note\n";
-
-    // Rows
-    filtered.forEach(r => {
-        const d = r.raw;
-        const dt = r.date.split('-').reverse().join('/'); // DD/MM/YYYY
-        
-        // Elec Fields
-        const elVal = d.elec ? d.elec.val.toString().replace('.', ',') : "";
-        const elCons = r.delta.elec !== null ? r.delta.elec.toFixed(1).replace('.', ',') : "";
-        const f1 = d.elec ? (d.elec.a1||0).toString().replace('.', ',') : "";
-        const f2 = d.elec ? (d.elec.a2||0).toString().replace('.', ',') : "";
-        const f3 = d.elec ? (d.elec.a3||0).toString().replace('.', ',') : "";
-        const meteo = d.elec ? (d.elec.meteo || "") : "";
-
-        // Water Fields
-        const waVal = d.water ? d.water.val.toString().replace('.', ',') : "";
-        const waCons = r.delta.water !== null ? r.delta.water.toFixed(1).replace('.', ',') : "";
-
-        // Gas Fields
-        const gaVal = d.gas ? d.gas.val.toString().replace('.', ',') : "";
-        const gaCons = r.delta.gas !== null ? r.delta.gas.toFixed(1).replace('.', ',') : "";
-        const gaTemp = (d.gas && d.gas.temp) ? d.gas.temp.toString().replace('.', ',') : "";
-
-        // Note
-        const notes = d.notes.join(" | ").replace(/;/g, ","); // Escape semicolons
-
-        csvContent += `${dt};${elVal};${elCons};${f1};${f2};${f3};${meteo};${waVal};${waCons};${gaVal};${gaCons};${gaTemp};${notes}\n`;
-    });
-
-    // 4. Download
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `utenze_export_${start||'inizio'}_${end||'fine'}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 };
 
 window.saveIngressi = async () => {
