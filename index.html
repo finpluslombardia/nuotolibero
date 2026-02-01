@@ -243,7 +243,7 @@
                 <div class="kpi-card glass-card">
                     <div class="kpi-head">Ingressi Totali (Mese)</div>
                     <div class="kpi-val" id="ov-total-curr">0</div>
-                    <div class="kpi-sub" style="color:#2563eb">in corso...</div>
+                    <div class="kpi-sub" id="ov-total-sub" style="color:#2563eb">in corso...</div>
                 </div>
                 <div class="kpi-card glass-card">
                     <div class="kpi-head">Media Giornaliera</div>
@@ -955,6 +955,9 @@ function renderOverviewKPI() {
     const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
     const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
     const currYear = today.getFullYear();
+    const maxDay = today.getDate();
+    const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
+    const ym_year = ym.getFullYear();
     
     // Filtro dati correnti (Mese)
     const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats && x.totale > 0);
@@ -962,31 +965,47 @@ function renderOverviewKPI() {
     const uniqueDays = new Set(dCurrent.map(x=>x.date));
     const daysCurrent = uniqueDays.size;
 
+    // 4. YoY Calculation (Moved UP for use in Total/Avg)
+    const dYoy = dataIngressi.filter(x => {
+        return x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
+    });
+    const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
+
     // 1. Current Total
     document.getElementById('ov-total-curr').innerText = totalCurrent.toLocaleString();
+    
+    // 1b. Update Box 1: Total with YoY comparison (Replaces "in corso...")
+    let totalYoyDiffHtml = '<span style="color:#94a3b8">Dati insuff.</span>';
+    if(totalYoy > 0) {
+        const diff = ((totalCurrent - totalYoy) / totalYoy) * 100;
+        const color = diff >= 0 ? '#10b981' : '#ef4444';
+        const sign = diff > 0 ? '+' : '';
+        totalYoyDiffHtml = `<span style="color:${color}; font-weight:700">${sign}${diff.toFixed(1)}%</span> <span style="font-size:0.75rem; color:#64748b">vs ${ym_year}</span>`;
+    } else if (totalCurrent > 0 && totalYoy === 0) {
+         totalYoyDiffHtml = `<span style="color:#10b981; font-weight:700">+100%</span> <span style="font-size:0.75rem; color:#64748b">vs ${ym_year}</span>`;
+    }
+    document.getElementById('ov-total-sub').innerHTML = totalYoyDiffHtml;
 
-    // 2. Average with Trend
+    // 2. Average
     const avgCurrent = daysCurrent > 0 ? (totalCurrent/daysCurrent) : 0;
     document.getElementById('ov-avg').innerText = avgCurrent.toFixed(0);
     
-    // Trend logic (Vs Mese Precedente Completo per la media)
-    const dPrevFull = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0);
-    const totalPrevFull = dPrevFull.reduce((a,b)=>a+b.totale,0);
-    const daysPrevFull = new Set(dPrevFull.map(x=>x.date)).size;
-    const avgPrev = daysPrevFull > 0 ? (totalPrevFull / daysPrevFull) : 0;
+    // 2b. Update Box 2: Avg with YoY comparison
+    const uniqueDaysYoy = new Set(dYoy.map(x=>x.date)).size;
+    const avgYoy = uniqueDaysYoy > 0 ? (totalYoy / uniqueDaysYoy) : 0;
 
-    let trendHtml = '-';
-    if(avgPrev > 0) {
-        const diff = avgCurrent - avgPrev;
+    let avgTrendHtml = '-';
+    if(avgYoy > 0) {
+        const diff = avgCurrent - avgYoy;
         const color = diff >= 0 ? '#10b981' : '#ef4444';
         const icon = diff >= 0 ? '⬆' : '⬇';
-        trendHtml = `<span style="color:${color}; font-weight:700">${icon} vs ${avgPrev.toFixed(0)}</span>`;
+        avgTrendHtml = `<span style="color:${color}; font-weight:700">${icon} vs ${avgYoy.toFixed(0)}</span> <span style="font-size:0.7rem; color:#64748b">(${ym_year})</span>`;
+    } else {
+        avgTrendHtml = '<span style="color:#94a3b8">vs -</span>';
     }
-    document.getElementById('ov-avg-trend').innerHTML = trendHtml;
+    document.getElementById('ov-avg-trend').innerHTML = avgTrendHtml;
     
     // 3. Vs Mese Prec (MoM) partial comparison
-    const maxDay = today.getDate();
-    const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
     const dPrevPartial = dataIngressi.filter(x => {
         return x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
     });
@@ -1004,11 +1023,7 @@ function renderOverviewKPI() {
     document.getElementById('ov-mom').innerHTML = momHtml;
     document.getElementById('ov-mom-label').innerText = `vs ${pm_month_name} (al ${maxDay})`;
 
-    // 4. YoY (Month vs Prev Year Month)
-    const dYoy = dataIngressi.filter(x => {
-        return x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
-    });
-    const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
+    // 4. YoY (Month vs Prev Year Month) - Keep existing box 4 for now as per code structure, but Box 1 now also has this info.
     let yoyHtml = "";
     if (dYoy.length > 0) {
         let diff = 0;
@@ -1019,7 +1034,6 @@ function renderOverviewKPI() {
         yoyHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
     } else { yoyHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
     document.getElementById('ov-yoy').innerHTML = yoyHtml;
-    const ym_year = ym.getFullYear();
     document.getElementById('ov-yoy-label').innerText = `vs ${ym_year} (al ${maxDay})`;
 
     // 5. NEW: YTD Trend (Anno vs Anno Prec)
