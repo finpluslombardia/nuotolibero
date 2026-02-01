@@ -750,10 +750,10 @@
                             <tr>
                                 <th style="width:100px">Data</th>
                                 <th style="color:#b45309; background:rgba(234, 179, 8, 0.1); width:15%">⚡ Elettricità</th>
-                                <th style="color:#b45309; background:rgba(234, 179, 8, 0.05); width:20%">Dettaglio Fasce</th>
+                                <th style="color:#b45309; background:rgba(234, 179, 8, 0.05); width:20%">Dettaglio Fasce / Meteo</th>
                                 <th style="color:#1e40af; background:rgba(59, 130, 246, 0.1); width:15%">💧 Acqua</th>
                                 <th style="color:#b91c1c; background:rgba(239, 68, 68, 0.1); width:15%">🔥 Gas</th>
-                                <th style="width:25%">Note / Meteo</th>
+                                <th style="width:25%">Note</th>
                                 <th style="width:50px"></th>
                             </tr>
                         </thead>
@@ -2225,12 +2225,16 @@ window.renderUtenze = () => {
                         <span class="u-big-num" style="color:#a16207">${fmtBig(d.elec.val)}</span>
                         ${fmtDelta(r.delta.elec, 'elec')}
                     `;
+                    
+                    const meteoHtml = d.elec.meteo ? `<div class="meteo-tag" style="justify-content:center; margin-top:6px; background:rgba(255,255,255,0.6); padding:2px 5px; border-radius:6px">${d.elec.meteo}</div>` : '';
+                    
                     cellFasce = `
                         <div class="f-grid">
                             <div class="f-item"><small>F1</small> <strong>${d.elec.a1||0}</strong></div>
                             <div class="f-item"><small>F2</small> <strong>${d.elec.a2||0}</strong></div>
                             <div class="f-item"><small>F3</small> <strong>${d.elec.a3||0}</strong></div>
                         </div>
+                        ${meteoHtml}
                     `;
                 }
 
@@ -2253,9 +2257,8 @@ window.renderUtenze = () => {
                     }
                 }
 
-                // Notes & Meteo Combined
+                // Notes Only
                 let notesHtml = [];
-                if(d.elec && d.elec.meteo) notesHtml.push(`<div class="meteo-tag">${d.elec.meteo}</div>`);
                 if(d.notes.length) notesHtml.push(`<div style="font-size:0.8rem; color:#475569; margin-top:4px">${d.notes.join(' | ')}</div>`);
                 
                 const editBtn = `<button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editUtenze('${d.elec ? d.elec.id : (d.water ? d.water.id : (d.gas ? d.gas.id : ''))}')">✏️</button>`;
