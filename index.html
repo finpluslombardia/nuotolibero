@@ -961,6 +961,7 @@ window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 function renderOverviewKPI() {
     if(!dataIngressi || dataIngressi.length === 0) return;
     const today = new Date();
+    const todayStr = getStrDate(today); 
     const currentMonthStr = today.toISOString().slice(0, 7);
     const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
@@ -994,16 +995,21 @@ function renderOverviewKPI() {
     // DISPLAY: Ingressi Totali
     document.getElementById('ov-total-curr').innerText = totalCurrent.toLocaleString();
     
-    let totalYoyDiffHtml = '<span style="color:#94a3b8">Dati insuff.</span>';
-    if(totalYoy > 0) {
-        const diff = ((totalCurrent - totalYoy) / totalYoy) * 100;
-        const color = diff >= 0 ? '#10b981' : '#ef4444';
-        const sign = diff > 0 ? '+' : '';
-        totalYoyDiffHtml = `<span style="color:${color}; font-weight:700">${sign}${diff.toFixed(1)}%</span> <span style="font-size:0.75rem; color:#64748b">vs ${ym_year}</span>`;
+    let totalYoyDiffHtml = '';
+    // Always calculate diff, assuming 0 if no data
+    let diffYoy = 0;
+    if (totalYoy > 0) {
+        diffYoy = ((totalCurrent - totalYoy) / totalYoy) * 100;
     } else if (totalCurrent > 0) {
-         // Se anno scorso 0 e quest'anno > 0, è +100% (o infinito)
-         totalYoyDiffHtml = `<span style="color:#10b981; font-weight:700">+100%</span> <span style="font-size:0.75rem; color:#64748b">vs ${ym_year}</span>`;
+        diffYoy = 100; // 0 to >0 is 100% growth (symbolic)
+    } else {
+        diffYoy = 0; // 0 vs 0
     }
+    
+    const colorYoy = diffYoy === 0 ? "#64748b" : (diffYoy > 0 ? "#16a34a" : "#dc2626"); 
+    const signYoy = diffYoy > 0 ? "+" : "";
+    totalYoyDiffHtml = `<span style="color:${colorYoy}; font-weight:700">${signYoy}${diffYoy.toFixed(1)}%</span> <span style="font-size:0.75rem; color:#64748b">vs ${ym_year}</span>`;
+    
     document.getElementById('ov-total-sub').innerHTML = totalYoyDiffHtml;
 
     // DISPLAY: Media Giornaliera
@@ -1016,15 +1022,12 @@ function renderOverviewKPI() {
     const avgYoy = uniqueDaysYoyFull > 0 ? (dYoyFullMonth.reduce((a,b)=>a+b.totale,0) / uniqueDaysYoyFull) : 0;
 
     let avgTrendHtml = '-';
-    if(avgYoy > 0) {
-        const diff = avgCurrent - avgYoy;
-        const color = diff >= 0 ? '#10b981' : '#ef4444';
-        const icon = diff >= 0 ? '⬆' : '⬇';
-        avgTrendHtml = `<span style="color:${color}; font-weight:700">${icon} vs ${avgYoy.toFixed(0)}</span> <span style="font-size:0.7rem; color:#64748b">(${ym_year})</span>`;
-    } else {
-        // Se non c'è media anno scorso, mostra solo trattino o "vs 0"
-        avgTrendHtml = `<span style="color:#94a3b8">vs 0 (${ym_year})</span>`;
-    }
+    // Always show vs avg, even if 0
+    const diffAvg = avgCurrent - avgYoy;
+    const colorAvg = diffAvg === 0 ? '#64748b' : (diffAvg > 0 ? '#10b981' : '#ef4444');
+    const iconAvg = diffAvg > 0 ? '⬆' : (diffAvg < 0 ? '⬇' : '=');
+    avgTrendHtml = `<span style="color:${colorAvg}; font-weight:700">${iconAvg} vs ${avgYoy.toFixed(0)}</span> <span style="font-size:0.7rem; color:#64748b">(${ym_year})</span>`;
+    
     document.getElementById('ov-avg-trend').innerHTML = avgTrendHtml;
     
     // 3. Vs Mese Prec (MoM) partial comparison
@@ -1034,30 +1037,32 @@ function renderOverviewKPI() {
     const totalPrevPartial = dPrevPartial.reduce((a,b)=>a+b.totale,0);
     
     let momHtml = "";
-    if (dPrevPartial.length > 0 || totalPrevPartial === 0) { // Accept 0
-        let diff = 0;
-        if (totalPrevPartial > 0) diff = ((totalCurrent - totalPrevPartial) / totalPrevPartial) * 100;
-        else if (totalCurrent > 0) diff = 100;
-        
-        const color = diff >= 0 ? "#16a34a" : "#dc2626";
-        const sign = diff > 0 ? "+" : "";
-        momHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
-    } else { momHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
+    let diffMom = 0;
+    if (totalPrevPartial > 0) {
+        diffMom = ((totalCurrent - totalPrevPartial) / totalPrevPartial) * 100;
+    } else if (totalCurrent > 0) {
+        diffMom = 100;
+    } else {
+        diffMom = 0;
+    }
+    
+    const colorMom = diffMom === 0 ? "#64748b" : (diffMom > 0 ? "#16a34a" : "#dc2626");
+    const signMom = diffMom > 0 ? "+" : "";
+    momHtml = `<span style="color:${colorMom}">${signMom}${diffMom.toFixed(1)}%</span>`;
+    
     document.getElementById('ov-mom').innerHTML = momHtml;
     document.getElementById('ov-mom-label').innerText = `vs ${pm_month_name} (al ${maxDay})`;
 
     // 4. YoY (Month vs Prev Year Month)
-    let yoyHtml = "";
-    if (totalYoy > 0 || (totalCurrent > 0)) { // Allow if totalYoy is 0 but current is > 0
-        let diff = 0;
-        if (totalYoy > 0) diff = ((totalCurrent - totalYoy) / totalYoy) * 100;
-        else if (totalCurrent > 0) diff = 100;
-        
-        const color = diff >= 0 ? "#16a34a" : "#dc2626";
-        const sign = diff > 0 ? "+" : "";
-        yoyHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
-    } else { yoyHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
-    document.getElementById('ov-yoy').innerHTML = yoyHtml;
+    let yoyBoxHtml = "";
+    // Reuse diffYoy calculated for the first box, but formatted differently if needed
+    // Actually exact same logic applies
+    
+    const colorYoyBox = diffYoy === 0 ? "#64748b" : (diffYoy > 0 ? "#16a34a" : "#dc2626");
+    const signYoyBox = diffYoy > 0 ? "+" : "";
+    yoyBoxHtml = `<span style="color:${colorYoyBox}">${signYoyBox}${diffYoy.toFixed(1)}%</span>`;
+
+    document.getElementById('ov-yoy').innerHTML = yoyBoxHtml;
     document.getElementById('ov-yoy-label').innerText = `vs ${ym_year} (al ${maxDay})`;
 
     // 5. YTD Trend (Anno vs Anno Prec)
@@ -1085,15 +1090,18 @@ function renderOverviewKPI() {
     const totalYtdPrev = dYtdPrev.reduce((a,b)=>a+b.totale,0);
 
     let ytdHtml = "";
-    if (totalYtdPrev > 0 || totalYtdCurr > 0) {
-        let diff = 0;
-        if(totalYtdPrev > 0) diff = ((totalYtdCurr - totalYtdPrev) / totalYtdPrev) * 100;
-        else diff = 100;
+    let diffYtd = 0;
+    if (totalYtdPrev > 0) {
+        diffYtd = ((totalYtdCurr - totalYtdPrev) / totalYtdPrev) * 100;
+    } else if (totalYtdCurr > 0) {
+        diffYtd = 100;
+    } else {
+        diffYtd = 0;
+    }
 
-        const color = diff >= 0 ? "#16a34a" : "#dc2626";
-        const sign = diff > 0 ? "+" : "";
-        ytdHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
-    } else { ytdHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
+    const colorYtd = diffYtd === 0 ? "#64748b" : (diffYtd > 0 ? "#16a34a" : "#dc2626");
+    const signYtd = diffYtd > 0 ? "+" : "";
+    ytdHtml = `<span style="color:${colorYtd}">${signYtd}${diffYtd.toFixed(1)}%</span>`;
     
     document.getElementById('ov-ytd').innerHTML = ytdHtml;
     document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${limitYTD.getDate()}/${limitYTD.getMonth()+1})`;
@@ -1109,7 +1117,7 @@ function renderOverviewKPI() {
     // --- HIGHLIGHTS LOGIC ---
     // 1. Aggreghiamo i dati per data
     const dailyTotals = {};
-    const todayStr = getStrDate(new Date()); // For highlighting only
+    const todayStrHighlights = getStrDate(new Date()); // Renamed to avoid confusion
     dCurrent.forEach(d => {
         if (!dailyTotals[d.date]) dailyTotals[d.date] = 0;
         dailyTotals[d.date] += d.totale;
@@ -1125,7 +1133,7 @@ function renderOverviewKPI() {
 
         // Minimo (No oggi, per evitare falsi positivi mentre si inseriscono i dati)
         // Se l'unico dato è oggi, mostra quello.
-        let dailyArrFinished = dailyArr.filter(d => d.date !== todayStr);
+        let dailyArrFinished = dailyArr.filter(d => d.date !== todayStrHighlights);
         if(dailyArrFinished.length === 0) dailyArrFinished = dailyArr; // Fallback
 
         if (dailyArrFinished.length > 0) {
@@ -2001,7 +2009,9 @@ window.renderUtenze = () => {
     let minElec = { val: Infinity, date: '-' };
     let maxGas = { val: 0, date: '-' };
     let minGas = { val: Infinity, date: '-' };
-    
+    let totalWaterM3 = 0;
+    let totalSwimmers = 0;
+
     // Re-iterate strictly for the selected month to gather specific insight data
     const startOfMonth = new Date(thisYear, thisMonth, 1);
     const endOfMonth = new Date(thisYear, thisMonth + 1, 0);
@@ -2025,7 +2035,14 @@ window.renderUtenze = () => {
                 if (gVal > maxGas.val) { maxGas.val = gVal; maxGas.date = dStr; }
                 if (gVal < minGas.val) { minGas.val = gVal; minGas.date = dStr; }
             }
+            
+            // Water Sum for efficiency
+            totalWaterM3 += deltas[dStr].water || 0;
         }
+
+        // Ingressi Data (for efficiency calculation)
+        const dayBag = dataIngressi.find(x => x.date === dStr);
+        if (dayBag) totalSwimmers += dayBag.totale || 0;
     }
 
     // 1. Estremi Elettrico
