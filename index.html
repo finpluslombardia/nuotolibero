@@ -739,6 +739,7 @@
                                 <th style="color:#3b82f6; background:rgba(59, 130, 246, 0.1)">💧 Lettura Acqua</th>
                                 <th style="color:#ef4444; background:rgba(239, 68, 68, 0.1)">🔥 Lettura Gas</th>
                                 <th>Note</th>
+                                <th style="text-align:right"></th>
                             </tr>
                         </thead>
                         <tbody id="tbody-utenze"></tbody>
@@ -760,6 +761,19 @@ const firebaseConfig = { apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0", auth
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 let dataIngressi=[], dataVasca=[], dataDae=[], dataUtenze=[]; let editIdIngressi=null, editIdVasca=null, editIdUtenze=null;
 const isChartReady = () => typeof Chart !== 'undefined';
+
+// UTILS: Debounce for performance optimization
+const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
 
 const FESTIVITA_FISSE = ["01-01", "06-01", "25-04", "01-05", "02-06", "15-08", "01-11", "08-12", "25-12", "26-12"];
 function getDataConfronto(dataCorrente) {
@@ -785,14 +799,19 @@ window.doLogin = async () => { try { await signInWithEmailAndPassword(auth, docu
 window.doLogout = () => signOut(auth);
 onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen').classList.add('hidden'); document.getElementById('user-display').innerText=u.email.split('@')[0]; startListening(); } else { document.getElementById('login-screen').classList.remove('hidden'); } });
 
+// Debounced refresh to prevent UI freezing on rapid updates
+const debouncedRefresh = debounce(() => {
+    refreshCurrentView();
+    if(dataUtenze.length > 0 && !document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze();
+}, 300);
+
 function startListening() {
     try {
         // IMPORTANT: LIMIT 10000 (Maximum allowed)
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(10000)), (snap) => { 
             dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); 
             populateStatFilters(); 
-            refreshCurrentView();
-            if(dataUtenze.length > 0) renderUtenze(); 
+            debouncedRefresh();
         });
         
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { 
@@ -807,7 +826,8 @@ function startListening() {
 
         onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc"), limit(4000)), (snap) => { 
             dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); 
-            if(!document.getElementById('module-utenze').classList.contains('hidden')) renderUtenze(); 
+            // Use debounced render for utenze too if visible
+            if(!document.getElementById('module-utenze').classList.contains('hidden')) debouncedRefresh();
         });
     } catch(e) { console.error(e); }
 }
@@ -842,8 +862,7 @@ window.populateStatFilters = () => {
     } else {
         yearSel.value = years[0];
     }
-    
-    renderStats();
+    // No direct renderStats() here, rely on debouncedRefresh
 };
 
 window.toggleMsDropdown = () => {
@@ -959,12 +978,23 @@ function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])
 
 window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 
-// FIXED FUNCTION FOR ROBUST DATE COMPARISON (INTEGER BASED)
+// FIXED FUNCTION FOR ROBUST DATE COMPARISON (INTEGER BASED + ANCHOR TO DATA)
 function renderOverviewKPI() {
     if(!dataIngressi || dataIngressi.length === 0) return;
-    const today = new Date();
-    // Manual local time string to avoid UTC/Timezone shift
-    const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+    
+    // ANCHOR LOGIC: Determine "Today" based on the LATEST DATA ENTRY, not system clock
+    // This allows backfilling or simulating future dates correctly
+    let anchorDate = new Date();
+    if(dataIngressi.length > 0) {
+        // dataIngressi is already sorted descending by date
+        const latestEntryDate = new Date(dataIngressi[0].date);
+        // We use the latest entry date as "Today" for KPI calculation purposes
+        anchorDate = latestEntryDate;
+    }
+
+    const currentYear = anchorDate.getFullYear();
+    const currentMonth = anchorDate.getMonth() + 1;
+    const currentMonthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
     
     // Parse helper
     const parseDate = (dateStr) => {
@@ -973,24 +1003,18 @@ function renderOverviewKPI() {
         return { y: parseInt(parts[0]), m: parseInt(parts[1]), d: parseInt(parts[2]) };
     };
 
-    // 1. Filtro dati correnti (Mese)
+    // 1. Filtro dati correnti (Mese Ancorato)
     const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats);
     const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
     const uniqueDays = new Set(dCurrent.map(x=>x.date));
     const daysCurrent = uniqueDays.size;
 
-    // DETERMINAZIONE GIORNO MASSIMO (Progressive Month Day)
-    let maxDay = today.getDate();
-    if (dCurrent.length > 0) {
-        const days = dCurrent.map(x => parseDate(x.date).d); 
-        const maxDataDay = Math.max(...days);
-        if (maxDataDay > maxDay) maxDay = maxDataDay;
-    }
-
+    // DETERMINAZIONE GIORNO MASSIMO (Progressive Month Day based on ANCHOR)
+    let maxDay = anchorDate.getDate(); // Use the anchor's day (e.g., 1st)
+    
     // 2. YoY Calculation (Mese Corrente vs Stesso Mese Anno Scorso)
-    const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
-    const targetYoyYear = ym.getFullYear();
-    const targetYoyMonth = ym.getMonth() + 1;
+    const targetYoyYear = currentYear - 1;
+    const targetYoyMonth = currentMonth;
 
     const dYoy = dataIngressi.filter(x => {
         if(x.excludeStats) return false;
@@ -1040,10 +1064,13 @@ function renderOverviewKPI() {
     document.getElementById('ov-avg-trend').innerHTML = avgTrendHtml;
     
     // 3. Vs Mese Prec (MoM) partial comparison
-    const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const targetMomYear = pm.getFullYear();
-    const targetMomMonth = pm.getMonth() + 1;
-    const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
+    // Calculate previous month carefully
+    let targetMomYear = currentYear;
+    let targetMomMonth = currentMonth - 1;
+    if (targetMomMonth === 0) { targetMomMonth = 12; targetMomYear--; }
+    
+    const pmDate = new Date(targetMomYear, targetMomMonth - 1, 1);
+    const pm_month_name = pmDate.toLocaleString('it-IT',{month:'long'});
 
     const dPrevPartial = dataIngressi.filter(x => {
         if(x.excludeStats) return false;
@@ -1079,30 +1106,12 @@ function renderOverviewKPI() {
     document.getElementById('ov-yoy-label').innerText = `vs ${targetYoyYear} (al ${maxDay})`;
 
     // 5. YTD Trend (Anno vs Anno Prec)
-    const currYear = today.getFullYear();
-    const prevYearVal = currYear - 1;
+    const prevYearVal = currentYear - 1;
     
     const allCurrentYearData = dataIngressi.filter(x => {
         const {y} = parseDate(x.date);
-        return y === currYear && !x.excludeStats;
+        return y === currentYear && !x.excludeStats;
     });
-
-    let limitYTD = new Date();
-    if(allCurrentYearData.length > 0) {
-        const maxDateStr = allCurrentYearData.reduce((max, p) => p.date > max ? p.date : max, allCurrentYearData[0].date);
-        limitYTD = new Date(maxDateStr);
-    }
-    
-    // Parse limitYTD manually to get Month and Day limit
-    // Note: limitYTD is a Date object, usually local time if created from string.
-    // Safer to re-parse the maxDateStr string itself
-    let limitMonth = limitYTD.getMonth() + 1;
-    let limitDay = limitYTD.getDate();
-    // If no data, default to today
-    if(allCurrentYearData.length === 0) {
-        limitMonth = today.getMonth() + 1;
-        limitDay = today.getDate();
-    }
 
     const totalYtdCurr = allCurrentYearData.reduce((a,b)=>a+b.totale,0);
 
@@ -1110,8 +1119,9 @@ function renderOverviewKPI() {
         if(x.excludeStats) return false;
         const {y, m, d} = parseDate(x.date);
         if (y !== prevYearVal) return false;
-        if (m < limitMonth) return true;
-        if (m === limitMonth && d <= limitDay) return true;
+        // Logic for YTD limit based on currentMonth and maxDay (from anchor)
+        if (m < currentMonth) return true;
+        if (m === currentMonth && d <= maxDay) return true;
         return false;
     });
     const totalYtdPrev = dYtdPrev.reduce((a,b)=>a+b.totale,0);
@@ -1131,10 +1141,10 @@ function renderOverviewKPI() {
     ytdHtml = `<span style="color:${colorYtd}">${signYtd}${diffYtd.toFixed(1)}%</span>`;
     
     document.getElementById('ov-ytd').innerHTML = ytdHtml;
-    document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${limitDay}/${limitMonth})`;
+    document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${maxDay}/${currentMonth})`;
 
     // 6. Forecast
-    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
     if(daysCurrent > 0) { 
         document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
         document.getElementById('ov-forecast-sub').innerText = "proiezione";
@@ -1142,7 +1152,9 @@ function renderOverviewKPI() {
 
     // --- HIGHLIGHTS LOGIC ---
     const dailyTotals = {};
-    const todayStrHighlights = getStrDate(new Date());
+    // Use anchor date string to filter "today"
+    const todayStrHighlights = getStrDate(anchorDate);
+    
     dCurrent.forEach(d => {
         if (!dailyTotals[d.date]) dailyTotals[d.date] = 0;
         dailyTotals[d.date] += d.totale;
@@ -1155,6 +1167,7 @@ function renderOverviewKPI() {
         document.getElementById('hl-record-val').innerText = recordDay.totale;
         document.getElementById('hl-record-date').innerText = rd.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
 
+        // Only exclude today if there are other days
         let dailyArrFinished = dailyArr.filter(d => d.date !== todayStrHighlights);
         if(dailyArrFinished.length === 0) dailyArrFinished = dailyArr; 
 
@@ -1207,10 +1220,15 @@ function renderOverviewKPI() {
 window.renderOverviewCharts = () => {
     if(!dataIngressi || dataIngressi.length === 0 || !isChartReady()) return;
     const chartType = document.getElementById('ov-chart-type').value;
-    const today = new Date();
+    
+    // ANCHOR CHARTS TO DATA TOO
+    let anchorDate = new Date();
+    if(dataIngressi.length > 0) anchorDate = new Date(dataIngressi[0].date);
+
+    const today = anchorDate;
     const dates=[], l30=[], l30_prev=[];
     for(let i=29; i>=0; i--) {
-        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
+        const dt=new Date(today); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
         dates.push(`${dt.toLocaleDateString('it-IT',{weekday:'short'})} ${dt.getDate()}/${dt.getMonth()+1}`);
         const dtPrev = getDataConfronto(dt);
         const dtPrevStr = getStrDate(dtPrev);
@@ -1230,7 +1248,7 @@ window.renderOverviewCharts = () => {
     // 90 DAYS CHART
     const dates90=[], l90=[], l90_prev=[];
     for(let i=89; i>=0; i--) {
-        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
+        const dt=new Date(today); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
         dates90.push(`${dt.getDate()}/${dt.getMonth()+1}`);
         const dtPrev = getDataConfronto(dt);
         const dtPrevStr = getStrDate(dtPrev);
@@ -1969,22 +1987,23 @@ window.renderUtenze = () => {
 
     // --- RENDER MONTHLY TABLE ---
     const tBodyMonthly = document.getElementById('tbody-utenze-monthly');
-    tBodyMonthly.innerHTML = "";
-    const sortedMonths = Object.keys(monthlyAgg).sort().reverse();
-    sortedMonths.forEach(mStr => {
-        const d = monthlyAgg[mStr];
-        const [y, m] = mStr.split('-');
-        const dateObj = new Date(y, parseInt(m)-1, 1);
-        const monthLabel = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
-        const row = `<tr>
-            <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
-            <td style="font-weight:600; color:#a16207">${d.elec.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
-            <td style="font-weight:600; color:#1d4ed8">${d.water.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
-            <td style="font-weight:600; color:#b91c1c">${d.gas.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
-        </tr>`;
-        tBodyMonthly.innerHTML += row;
-    });
-
+    if(tBodyMonthly) {
+        tBodyMonthly.innerHTML = "";
+        const sortedMonths = Object.keys(monthlyAgg).sort().reverse();
+        sortedMonths.forEach(mStr => {
+            const d = monthlyAgg[mStr];
+            const [y, m] = mStr.split('-');
+            const dateObj = new Date(y, parseInt(m)-1, 1);
+            const monthLabel = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+            const row = `<tr>
+                <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
+                <td style="font-weight:600; color:#a16207">${d.elec.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+                <td style="font-weight:600; color:#1d4ed8">${d.water.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+                <td style="font-weight:600; color:#b91c1c">${d.gas.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+            </tr>`;
+            tBodyMonthly.innerHTML += row;
+        });
+    }
 
     // Helper for context strings
     const getMeteoStr = () => {
@@ -2014,10 +2033,12 @@ window.renderUtenze = () => {
             diffHtml = `<span style="color:${color}; font-weight:800">${sign}${diff.toFixed(1)}%</span> vs ${monthName} ${prevYear} ${dayLabel}`;
         }
 
-        document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
-        document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
-        document.getElementById(`u-kpi-${type}-sub`).innerHTML = diffHtml;
-        if(contextHtml) document.getElementById(`u-kpi-${type}-context`).innerHTML = contextHtml;
+        if(document.getElementById(`u-kpi-${type}-title`)) {
+            document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
+            document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
+            document.getElementById(`u-kpi-${type}-sub`).innerHTML = diffHtml;
+            if(contextHtml) document.getElementById(`u-kpi-${type}-context`).innerHTML = contextHtml;
+        }
     };
 
     updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh', getMeteoStr());
@@ -2068,15 +2089,17 @@ window.renderUtenze = () => {
     // 1. Estremi Elettrico
     const fmtDate = (dStr) => dStr !== '-' ? new Date(dStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}) : '-';
     
-    document.getElementById('u-hl-elec-max').innerText = maxElec.val > 0 ? maxElec.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
-    document.getElementById('u-hl-elec-max-date').innerText = fmtDate(maxElec.date);
-    
-    if(minElec.val !== Infinity) {
-        document.getElementById('u-hl-elec-min').innerText = minElec.val.toLocaleString('it-IT', {maximumFractionDigits:0});
-        document.getElementById('u-hl-elec-min-date').innerText = fmtDate(minElec.date);
-    } else {
-        document.getElementById('u-hl-elec-min').innerText = "-";
-        document.getElementById('u-hl-elec-min-date').innerText = "-";
+    if(document.getElementById('u-hl-elec-max')) {
+        document.getElementById('u-hl-elec-max').innerText = maxElec.val > 0 ? maxElec.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
+        document.getElementById('u-hl-elec-max-date').innerText = fmtDate(maxElec.date);
+        
+        if(minElec.val !== Infinity) {
+            document.getElementById('u-hl-elec-min').innerText = minElec.val.toLocaleString('it-IT', {maximumFractionDigits:0});
+            document.getElementById('u-hl-elec-min-date').innerText = fmtDate(minElec.date);
+        } else {
+            document.getElementById('u-hl-elec-min').innerText = "-";
+            document.getElementById('u-hl-elec-min-date').innerText = "-";
+        }
     }
 
     // 2. LAST 24H VALUES LOGIC
@@ -2103,24 +2126,106 @@ window.renderUtenze = () => {
     lastWater = findLatest('water');
     lastGas = findLatest('gas');
 
-    document.getElementById('u-last-elec').innerText = lastElec.val !== '-' ? lastElec.val + " kWh" : "-";
-    document.getElementById('u-last-elec-date').innerText = lastElec.date;
-    document.getElementById('u-last-water').innerText = lastWater.val !== '-' ? lastWater.val + " m³" : "-";
-    document.getElementById('u-last-water-date').innerText = lastWater.date;
-    document.getElementById('u-last-gas').innerText = lastGas.val !== '-' ? lastGas.val + " m³" : "-";
-    document.getElementById('u-last-gas-date').innerText = lastGas.date;
-
+    if(document.getElementById('u-last-elec')) {
+        document.getElementById('u-last-elec').innerText = lastElec.val !== '-' ? lastElec.val + " kWh" : "-";
+        document.getElementById('u-last-elec-date').innerText = lastElec.date;
+        document.getElementById('u-last-water').innerText = lastWater.val !== '-' ? lastWater.val + " m³" : "-";
+        document.getElementById('u-last-water-date').innerText = lastWater.date;
+        document.getElementById('u-last-gas').innerText = lastGas.val !== '-' ? lastGas.val + " m³" : "-";
+        document.getElementById('u-last-gas-date').innerText = lastGas.date;
+    }
 
     // 3. Estremi Gas
-    document.getElementById('u-hl-gas-max').innerText = maxGas.val > 0 ? maxGas.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
-    document.getElementById('u-hl-gas-max-date').innerText = fmtDate(maxGas.date);
+    if(document.getElementById('u-hl-gas-max')) {
+        document.getElementById('u-hl-gas-max').innerText = maxGas.val > 0 ? maxGas.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
+        document.getElementById('u-hl-gas-max-date').innerText = fmtDate(maxGas.date);
 
-    if(minGas.val !== Infinity) {
-        document.getElementById('u-hl-gas-min').innerText = minGas.val.toLocaleString('it-IT', {maximumFractionDigits:0});
-        document.getElementById('u-hl-gas-min-date').innerText = fmtDate(minGas.date);
-    } else {
-        document.getElementById('u-hl-gas-min').innerText = "-";
-        document.getElementById('u-hl-gas-min-date').innerText = "-";
+        if(minGas.val !== Infinity) {
+            document.getElementById('u-hl-gas-min').innerText = minGas.val.toLocaleString('it-IT', {maximumFractionDigits:0});
+            document.getElementById('u-hl-gas-min-date').innerText = fmtDate(minGas.date);
+        } else {
+            document.getElementById('u-hl-gas-min').innerText = "-";
+            document.getElementById('u-hl-gas-min-date').innerText = "-";
+        }
+    }
+
+    // --- RENDER UTENZE ARCHIVE TABLE (FIXED: WAS MISSING) ---
+    const tBodyArchive = document.getElementById('tbody-utenze');
+    if(tBodyArchive) {
+        tBodyArchive.innerHTML = "";
+        
+        // 1. Prepare Data with Deltas (Reusing enriched logic)
+        const enrichedData = allDatesAsc.map(date => {
+            const g = grouped[date];
+            const row = { date: date, raw: g, delta: { elec: 0, water: 0, gas: 0 } };
+            ['elec', 'water', 'gas'].forEach(key => {
+                row.delta[key] = (g[key] && deltas[date][key] !== null) ? deltas[date][key] : null;
+            });
+            return row;
+        });
+
+        // 2. Filter based on UI inputs
+        const start = document.getElementById('u-hist-start') ? document.getElementById('u-hist-start').value : null;
+        const end = document.getElementById('u-hist-end') ? document.getElementById('u-hist-end').value : null;
+        const sortOrder = document.getElementById('u-hist-sort') ? document.getElementById('u-hist-sort').value : 'desc';
+
+        let filtered = enrichedData.filter(r => {
+            if (start && r.date < start) return false;
+            if (end && r.date > end) return false;
+            return true;
+        });
+
+        // 3. Sort
+        filtered.sort((a,b) => sortOrder === 'desc' ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
+
+        if(filtered.length === 0) {
+            tBodyArchive.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b">Nessun dato nel periodo selezionato.</td></tr>';
+        } else {
+            // OPTIMIZATION: Limit rendering to first 200 rows to prevent freeze
+            const MAX_ROWS = 200;
+            const limitedList = filtered.slice(0, MAX_ROWS);
+            
+            if(filtered.length > MAX_ROWS) {
+                tBodyArchive.innerHTML += `<tr><td colspan="7" style="text-align:center; background:#fef9c3; color:#854d0e; font-weight:700; padding:10px">⚠️ Visualizzati solo i primi ${MAX_ROWS} risultati su ${filtered.length}. Usa i filtri per vedere altro.</td></tr>`;
+            }
+
+            limitedList.forEach(r => {
+                const d = r.raw;
+                const dt = r.date.split('-').reverse().join('/');
+                
+                // Format values with consumption
+                const fmtCell = (key, unit, color) => {
+                    if(!d[key]) return `<span style="color:#cbd5e1">-</span>`;
+                    const val = d[key].val.toLocaleString('it-IT', {maximumFractionDigits:1});
+                    const cons = r.delta[key] !== null ? r.delta[key].toLocaleString('it-IT', {maximumFractionDigits:1}) : '-';
+                    return `<div>${val}</div><div style="font-size:0.75rem; color:${color}; font-weight:700">(${cons} ${unit})</div>`;
+                };
+
+                // Detailed Elec Breakdown
+                let elecDetail = '-';
+                if(d.elec) {
+                    elecDetail = `<div style="font-size:0.8rem; color:#854d0e">F1: ${d.elec.a1||0}<br>F2: ${d.elec.a2||0}<br>F3: ${d.elec.a3||0}</div>`;
+                }
+
+                // Notes
+                const notes = d.notes.length ? d.notes.join("<br>") : "";
+
+                const row = `<tr>
+                    <td style="font-weight:700">${dt}</td>
+                    <td style="color:#a16207; font-weight:600">${fmtCell('elec', 'kWh', '#d97706')}</td>
+                    <td>${elecDetail}</td>
+                    <td style="color:#1e40af; font-weight:600">${fmtCell('water', 'm³', '#2563eb')}</td>
+                    <td style="color:#b91c1c; font-weight:600">${fmtCell('gas', 'm³', '#dc2626')}</td>
+                    <td style="font-size:0.85rem; color:#475569">${notes}</td>
+                    <td style="text-align:right">
+                       ${d.elec ? `<button class="btn btn-icon" style="color:var(--primary);background:transparent" onclick="editUtenze('${d.elec.id}')">✏️</button>` : ''} 
+                       ${d.water ? `<button class="btn btn-icon" style="color:var(--primary);background:transparent" onclick="editUtenze('${d.water.id}')">✏️</button>` : ''}
+                       ${d.gas ? `<button class="btn btn-icon" style="color:var(--primary);background:transparent" onclick="editUtenze('${d.gas.id}')">✏️</button>` : ''}
+                    </td>
+                </tr>`;
+                tBodyArchive.innerHTML += row;
+            });
+        }
     }
 
     // === CHART GENERATION (NOW SAFE) ===
@@ -2376,8 +2481,17 @@ window.renderIngressiArchive = () => {
     const t=document.getElementById('tbody-ingressi'); t.innerHTML="";
     if(f.length === 0) { t.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px;">Nessun dato trovato.</td></tr>'; return; }
     const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)});
+    
+    // OPTIMIZATION: Render max 200 rows
+    const MAX_ROWS = 200;
+    const limitedKeys = [...g.keys()].slice(0, MAX_ROWS);
     const rowsBuffer = [];
-    [...g.keys()].forEach(k=>{
+    
+    if([...g.keys()].length > MAX_ROWS) {
+        rowsBuffer.push(`<tr><td colspan="11" style="text-align:center; background:#fef9c3; color:#854d0e; font-weight:700; padding:10px">⚠️ Visualizzati solo i primi ${MAX_ROWS} giorni. Usa i filtri o scarica l'Excel per vedere tutto.</td></tr>`);
+    }
+
+    limitedKeys.forEach(k=>{
         const e=g.get(k);
         const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`;
         e.forEach((d,i)=>{
@@ -2390,10 +2504,10 @@ window.renderIngressiArchive = () => {
             rowsBuffer.push(`<tr style="${b}; ${rowStyle}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b>${badge}<br><small style="color:#64748b">${d.meteo}</small>${isExcluded?'<br><b style="color:#ef4444;font-size:0.65rem">ESCLUSO MEDIA</b>':''}</td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right; min-width:110px"><button class="btn btn-icon" style="color:#64748b;background:transparent;border:1px solid #e2e8f0;margin-right:5px;width:30px;height:30px" onclick="toggleExcludeStats('${d.id}', ${isExcluded})">${excludeIcon}</button><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`);
         });
     });
-    t.innerHTML = rowsBuffer.join('');
+    t.innerHTML += rowsBuffer.join('');
 }
-window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')refreshCurrentView(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
-window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
+window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')debouncedRefresh(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
+window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); debouncedRefresh(); };
 function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
 setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
 const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('v-date').value=today; document.getElementById('d-date').value=today; document.getElementById('u-date').value=today;
