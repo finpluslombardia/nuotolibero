@@ -787,12 +787,12 @@ onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen')
 
 function startListening() {
     try {
-        // IMPORTANT: INCREASED LIMIT TO 15000 TO ENSURE YEAR-OVER-YEAR DATA IS LOADED
+        // IMPORTANT: LIMIT 10000 (Maximum allowed)
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(10000)), (snap) => { 
             dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); 
             populateStatFilters(); 
             refreshCurrentView();
-            if(dataUtenze.length > 0) renderUtenze(); // Re-render Utenze if ingressi arrive later
+            if(dataUtenze.length > 0) renderUtenze(); 
         });
         
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { 
@@ -959,22 +959,20 @@ function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])
 
 window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 
-// FIXED FUNCTION FOR ROBUST DATE COMPARISON
+// FIXED FUNCTION FOR ROBUST DATE COMPARISON (INTEGER BASED)
 function renderOverviewKPI() {
     if(!dataIngressi || dataIngressi.length === 0) return;
     const today = new Date();
-    const todayStr = getStrDate(today); 
-    // FIX: Manual local time string construction for currentMonthStr to avoid UTC/Timezone shift issues on 1st of month
+    // Manual local time string to avoid UTC/Timezone shift
     const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
     
-    const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
-    const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
-    const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
-    const currYear = today.getFullYear();
-    const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
-    const ym_year = ym.getFullYear();
-    
+    // Parse helper
+    const parseDate = (dateStr) => {
+        if(!dateStr) return {y:0,m:0,d:0};
+        const parts = dateStr.split('-');
+        return { y: parseInt(parts[0]), m: parseInt(parts[1]), d: parseInt(parts[2]) };
+    };
+
     // 1. Filtro dati correnti (Mese)
     const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats);
     const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
@@ -982,19 +980,22 @@ function renderOverviewKPI() {
     const daysCurrent = uniqueDays.size;
 
     // DETERMINAZIONE GIORNO MASSIMO (Progressive Month Day)
-    // Usiamo il giorno di oggi come base, ma se ci sono dati futuri caricati, estendiamo
     let maxDay = today.getDate();
     if (dCurrent.length > 0) {
-        const days = dCurrent.map(x => parseInt(x.date.split('-')[2])); // Parse int directly from string
+        const days = dCurrent.map(x => parseDate(x.date).d); 
         const maxDataDay = Math.max(...days);
         if (maxDataDay > maxDay) maxDay = maxDataDay;
     }
 
     // 2. YoY Calculation (Mese Corrente vs Stesso Mese Anno Scorso)
-    // FIX: Use parseInt on split string to avoid timezone shifts on 'new Date()'
+    const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+    const targetYoyYear = ym.getFullYear();
+    const targetYoyMonth = ym.getMonth() + 1;
+
     const dYoy = dataIngressi.filter(x => {
-        const dayNum = parseInt(x.date.split('-')[2]);
-        return x.date.startsWith(yoyStr) && !x.excludeStats && dayNum <= maxDay;
+        if(x.excludeStats) return false;
+        const {y, m, d} = parseDate(x.date);
+        return y === targetYoyYear && m === targetYoyMonth && d <= maxDay;
     });
     const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
 
@@ -1013,7 +1014,7 @@ function renderOverviewKPI() {
     
     const colorYoy = diffYoy === 0 ? "#64748b" : (diffYoy > 0 ? "#16a34a" : "#dc2626"); 
     const signYoy = diffYoy > 0 ? "+" : "";
-    totalYoyDiffHtml = `<span style="color:${colorYoy}; font-weight:700">${signYoy}${diffYoy.toFixed(1)}%</span> <span style="font-size:0.75rem; color:#64748b">vs ${ym_year}</span>`;
+    totalYoyDiffHtml = `<span style="color:${colorYoy}; font-weight:700">${signYoy}${diffYoy.toFixed(1)}%</span> <span style="font-size:0.75rem; color:#64748b">vs ${targetYoyYear}</span>`;
     
     document.getElementById('ov-total-sub').innerHTML = totalYoyDiffHtml;
 
@@ -1021,8 +1022,12 @@ function renderOverviewKPI() {
     const avgCurrent = daysCurrent > 0 ? (totalCurrent/daysCurrent) : 0;
     document.getElementById('ov-avg').innerText = avgCurrent.toFixed(0);
     
-    // Avg Comparison logic (Vs Media INTERO Mese Anno Precedente)
-    const dYoyFullMonth = dataIngressi.filter(x => x.date.startsWith(yoyStr) && !x.excludeStats);
+    // Avg Comparison logic
+    const dYoyFullMonth = dataIngressi.filter(x => {
+        if(x.excludeStats) return false;
+        const {y, m} = parseDate(x.date);
+        return y === targetYoyYear && m === targetYoyMonth;
+    });
     const uniqueDaysYoyFull = new Set(dYoyFullMonth.map(x=>x.date)).size;
     const avgYoy = uniqueDaysYoyFull > 0 ? (dYoyFullMonth.reduce((a,b)=>a+b.totale,0) / uniqueDaysYoyFull) : 0;
 
@@ -1030,15 +1035,20 @@ function renderOverviewKPI() {
     const diffAvg = avgCurrent - avgYoy;
     const colorAvg = diffAvg === 0 ? '#64748b' : (diffAvg > 0 ? '#10b981' : '#ef4444');
     const iconAvg = diffAvg > 0 ? '⬆' : (diffAvg < 0 ? '⬇' : '=');
-    avgTrendHtml = `<span style="color:${colorAvg}; font-weight:700">${iconAvg} vs ${avgYoy.toFixed(0)}</span> <span style="font-size:0.7rem; color:#64748b">(${ym_year})</span>`;
+    avgTrendHtml = `<span style="color:${colorAvg}; font-weight:700">${iconAvg} vs ${avgYoy.toFixed(0)}</span> <span style="font-size:0.7rem; color:#64748b">(${targetYoyYear})</span>`;
     
     document.getElementById('ov-avg-trend').innerHTML = avgTrendHtml;
     
     // 3. Vs Mese Prec (MoM) partial comparison
-    // FIX: Also applied robust date parsing here
+    const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const targetMomYear = pm.getFullYear();
+    const targetMomMonth = pm.getMonth() + 1;
+    const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
+
     const dPrevPartial = dataIngressi.filter(x => {
-        const dayNum = parseInt(x.date.split('-')[2]);
-        return x.date.startsWith(prevMonthStr) && !x.excludeStats && dayNum <= maxDay;
+        if(x.excludeStats) return false;
+        const {y, m, d} = parseDate(x.date);
+        return y === targetMomYear && m === targetMomMonth && d <= maxDay;
     });
     const totalPrevPartial = dPrevPartial.reduce((a,b)=>a+b.totale,0);
     
@@ -1059,31 +1069,50 @@ function renderOverviewKPI() {
     document.getElementById('ov-mom').innerHTML = momHtml;
     document.getElementById('ov-mom-label').innerText = `vs ${pm_month_name} (al ${maxDay})`;
 
-    // 4. YoY Box (Uses same logic as top box but different display)
+    // 4. YoY Box
     let yoyBoxHtml = "";
     const colorYoyBox = diffYoy === 0 ? "#64748b" : (diffYoy > 0 ? "#16a34a" : "#dc2626");
     const signYoyBox = diffYoy > 0 ? "+" : "";
     yoyBoxHtml = `<span style="color:${colorYoyBox}">${signYoyBox}${diffYoy.toFixed(1)}%</span>`;
 
     document.getElementById('ov-yoy').innerHTML = yoyBoxHtml;
-    document.getElementById('ov-yoy-label').innerText = `vs ${ym_year} (al ${maxDay})`;
+    document.getElementById('ov-yoy-label').innerText = `vs ${targetYoyYear} (al ${maxDay})`;
 
     // 5. YTD Trend (Anno vs Anno Prec)
-    const allCurrentYearData = dataIngressi.filter(x => new Date(x.date).getFullYear() === currYear && !x.excludeStats);
+    const currYear = today.getFullYear();
+    const prevYearVal = currYear - 1;
+    
+    const allCurrentYearData = dataIngressi.filter(x => {
+        const {y} = parseDate(x.date);
+        return y === currYear && !x.excludeStats;
+    });
+
     let limitYTD = new Date();
     if(allCurrentYearData.length > 0) {
         const maxDateStr = allCurrentYearData.reduce((max, p) => p.date > max ? p.date : max, allCurrentYearData[0].date);
         limitYTD = new Date(maxDateStr);
     }
+    
+    // Parse limitYTD manually to get Month and Day limit
+    // Note: limitYTD is a Date object, usually local time if created from string.
+    // Safer to re-parse the maxDateStr string itself
+    let limitMonth = limitYTD.getMonth() + 1;
+    let limitDay = limitYTD.getDate();
+    // If no data, default to today
+    if(allCurrentYearData.length === 0) {
+        limitMonth = today.getMonth() + 1;
+        limitDay = today.getDate();
+    }
 
     const totalYtdCurr = allCurrentYearData.reduce((a,b)=>a+b.totale,0);
-    const prevYearVal = currYear - 1;
-    const limitDatePrev = new Date(limitYTD);
-    limitDatePrev.setFullYear(prevYearVal); 
 
     const dYtdPrev = dataIngressi.filter(x => {
-        const dt = new Date(x.date);
-        return dt.getFullYear() === prevYearVal && dt <= limitDatePrev && !x.excludeStats;
+        if(x.excludeStats) return false;
+        const {y, m, d} = parseDate(x.date);
+        if (y !== prevYearVal) return false;
+        if (m < limitMonth) return true;
+        if (m === limitMonth && d <= limitDay) return true;
+        return false;
     });
     const totalYtdPrev = dYtdPrev.reduce((a,b)=>a+b.totale,0);
 
@@ -1102,7 +1131,7 @@ function renderOverviewKPI() {
     ytdHtml = `<span style="color:${colorYtd}">${signYtd}${diffYtd.toFixed(1)}%</span>`;
     
     document.getElementById('ov-ytd').innerHTML = ytdHtml;
-    document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${limitYTD.getDate()}/${limitYTD.getMonth()+1})`;
+    document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${limitDay}/${limitMonth})`;
 
     // 6. Forecast
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
