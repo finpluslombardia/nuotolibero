@@ -961,6 +961,7 @@ window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 function renderOverviewKPI() {
     if(!dataIngressi || dataIngressi.length === 0) return;
     const today = new Date();
+    const todayStr = getStrDate(today); 
     const currentMonthStr = today.toISOString().slice(0, 7);
     const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
@@ -976,19 +977,18 @@ function renderOverviewKPI() {
     const uniqueDays = new Set(dCurrent.map(x=>x.date));
     const daysCurrent = uniqueDays.size;
 
-    // DETERMINAZIONE GIORNO MASSIMO (Progressive Month Day) - FIXED WITH STRING PARSING
-    // If there are future data in the current month, maxDay advances to align comparison
+    // DETERMINAZIONE GIORNO MASSIMO (Progressive Month Day)
+    // Se ci sono dati futuri nel mese corrente, maxDay avanza per allineare il confronto
     let maxDay = today.getDate();
     if (dCurrent.length > 0) {
-        const days = dCurrent.map(x => parseInt(x.date.split('-')[2])); // Safe parsing
+        const days = dCurrent.map(x => new Date(x.date).getDate());
         const maxDataDay = Math.max(...days);
         if (maxDataDay > maxDay) maxDay = maxDataDay;
     }
 
     // 2. YoY Calculation (Mese Corrente vs Stesso Mese Anno Scorso)
     const dYoy = dataIngressi.filter(x => {
-        const day = parseInt(x.date.split('-')[2]);
-        return x.date.startsWith(yoyStr) && !x.excludeStats && day <= maxDay;
+        return x.date.startsWith(yoyStr) && !x.excludeStats && new Date(x.date).getDate() <= maxDay;
     });
     const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
 
@@ -1032,8 +1032,7 @@ function renderOverviewKPI() {
     
     // 3. Vs Mese Prec (MoM) partial comparison
     const dPrevPartial = dataIngressi.filter(x => {
-        const day = parseInt(x.date.split('-')[2]);
-        return x.date.startsWith(prevMonthStr) && !x.excludeStats && day <= maxDay;
+        return x.date.startsWith(prevMonthStr) && !x.excludeStats && new Date(x.date).getDate() <= maxDay;
     });
     const totalPrevPartial = dPrevPartial.reduce((a,b)=>a+b.totale,0);
     
@@ -1056,7 +1055,8 @@ function renderOverviewKPI() {
 
     // 4. YoY (Month vs Prev Year Month)
     let yoyBoxHtml = "";
-    // Reuse diffYoy calculated for the first box
+    // Reuse diffYoy calculated for the first box, but formatted differently if needed
+    // Actually exact same logic applies
     
     const colorYoyBox = diffYoy === 0 ? "#64748b" : (diffYoy > 0 ? "#16a34a" : "#dc2626");
     const signYoyBox = diffYoy > 0 ? "+" : "";
@@ -1075,25 +1075,17 @@ function renderOverviewKPI() {
         const maxDateStr = allCurrentYearData.reduce((max, p) => p.date > max ? p.date : max, allCurrentYearData[0].date);
         limitYTD = new Date(maxDateStr);
     }
-    
-    // YTD Max Day of Year (DDD) calculation might be overkill, simpler is string comparison for YYYY-MM-DD
-    // But since years differ, we need to compare MM-DD.
-    const limitMonth = limitYTD.getMonth(); 
-    const limitDayOfMonth = limitYTD.getDate();
 
     const totalYtdCurr = allCurrentYearData.reduce((a,b)=>a+b.totale,0);
 
     // Filtra Anno Precedente (YTD allineato)
     const prevYearVal = currYear - 1;
-    
+    const limitDatePrev = new Date(limitYTD);
+    limitDatePrev.setFullYear(prevYearVal); // Stesso giorno anno prima
+
     const dYtdPrev = dataIngressi.filter(x => {
         const dt = new Date(x.date);
-        if (dt.getFullYear() !== prevYearVal || x.excludeStats) return false;
-        
-        // Check if date is before or equal to limit (MM-DD)
-        if (dt.getMonth() < limitMonth) return true;
-        if (dt.getMonth() === limitMonth && dt.getDate() <= limitDayOfMonth) return true;
-        return false;
+        return dt.getFullYear() === prevYearVal && dt <= limitDatePrev && !x.excludeStats;
     });
     const totalYtdPrev = dYtdPrev.reduce((a,b)=>a+b.totale,0);
 
@@ -1191,3 +1183,1203 @@ function renderOverviewKPI() {
         document.getElementById('hl-sun-pct').innerText = "-%";
     }
 }
+
+window.renderOverviewCharts = () => {
+    if(!dataIngressi || dataIngressi.length === 0 || !isChartReady()) return;
+    const chartType = document.getElementById('ov-chart-type').value;
+    const today = new Date();
+    const dates=[], l30=[], l30_prev=[];
+    for(let i=29; i>=0; i--) {
+        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
+        dates.push(`${dt.toLocaleDateString('it-IT',{weekday:'short'})} ${dt.getDate()}/${dt.getMonth()+1}`);
+        const dtPrev = getDataConfronto(dt);
+        const dtPrevStr = getStrDate(dtPrev);
+        const valOggi = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0);
+        l30.push({ x: dates[dates.length-1], y: valOggi, refDate: dtPrevStr });
+        l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
+    }
+    
+    const bgMain = chartType === 'bar' ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
+    const bgComp = chartType === 'bar' ? '#cbd5e1' : 'rgba(148, 163, 184, 0.05)';
+
+    renderDynamicChart('chartRecent30', dates, [
+        {label:'Ultimi 30gg', data:l30, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},
+        {label:'Anno Prec.', data:l30_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}
+    ], chartType);
+    
+    // 90 DAYS CHART
+    const dates90=[], l90=[], l90_prev=[];
+    for(let i=89; i>=0; i--) {
+        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
+        dates90.push(`${dt.getDate()}/${dt.getMonth()+1}`);
+        const dtPrev = getDataConfronto(dt);
+        const dtPrevStr = getStrDate(dtPrev);
+        const valOggi = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0);
+        l90.push({ x: dates90[dates90.length-1], y: valOggi, refDate: dtPrevStr });
+        l90_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
+    }
+    renderDynamicChart('chartRecent90', dates90, [
+        {label:'Ultimi 90gg', data:l90, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},
+        {label:'Anno Prec.', data:l90_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}
+    ], chartType);
+
+
+    const m12=[], m12_prev=[], m_labels=[];
+    for(let i=11; i>=0; i--) {
+        const d=new Date(today.getFullYear(), today.getMonth()-i, 1); m_labels.push(d.toLocaleString('it-IT',{month:'short'}));
+        m12.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===d.getFullYear() && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
+        m12_prev.push(dataIngressi.filter(x=>{const xd=new Date(x.date); return xd.getMonth()===d.getMonth() && xd.getFullYear()===(d.getFullYear()-1) && !x.excludeStats}).reduce((a,b)=>a+b.totale,0));
+    }
+    renderDynamicChart('chartRecent12M', m_labels, [{label:'Ultimi 12M', data:m12, borderColor:'#2563eb', backgroundColor:bgMain, fill:true},{label:'12M Prec.', data:m12_prev, borderColor:'#94a3b8', backgroundColor:bgComp, borderDash:[5,5], fill:false}], chartType);
+}
+
+// HELPERS FOR MULTI COMPARE COLORS
+const getCompColor = (idx) => {
+    const colors = ['#94a3b8', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+    return colors[idx % colors.length];
+};
+
+const getFasciaColor = (f) => {
+    const map = {
+        "Mattina": "#60a5fa", "Mattina intera": "#3b82f6", "Pranzo": "#f59e0b",
+        "Sera": "#1e40af", "Sabato pom": "#8b5cf6", "Domenica": "#ec4899",
+        "Festivo": "#ef4444", "Unico": "#10b981",
+        "Estiva - Mattina": "#fcd34d", "Estiva - Pomeriggio": "#f97316", "Estiva - Unico": "#facc15"
+    };
+    return map[f] || "#94a3b8";
+};
+
+window.renderStats = () => {
+    if(!dataIngressi.length) return;
+    const mode = document.getElementById('stat-mode').value;
+    
+    // GET SELECTED COMPARISONS
+    const compInputs = document.querySelectorAll('#ms-compare-list input:checked');
+    const selectedComps = Array.from(compInputs).map(i => i.value);
+
+    const poolFilter = document.getElementById('stat-pool-filter').value;
+    const dayTypeFilter = document.getElementById('day-type-filter').value;
+    const chartType = document.getElementById('stat-chart-type').value;
+
+    let startDate, endDate, yearMain;
+    if(mode === 'year') {
+        yearMain = parseInt(document.getElementById('stat-year').value) || new Date().getFullYear(); // Safe Default
+        startDate = new Date(yearMain, 0, 1);
+        endDate = new Date(yearMain, 11, 31);
+    } else {
+        const sVal = document.getElementById('stat-date-start').value;
+        const eVal = document.getElementById('stat-date-end').value;
+        if(!sVal || !eVal) return;
+        startDate = new Date(sVal);
+        endDate = new Date(eVal);
+        yearMain = startDate.getFullYear(); 
+    }
+
+    const filteredSource = dataIngressi.filter(d => {
+        if(d.excludeStats) return false;
+        
+        const isOutdoor = (d.fascia && d.fascia.includes('Estiva'));
+        if(poolFilter === 'indoor' && isOutdoor) return false;
+        if(poolFilter === 'outdoor' && !isOutdoor) return false;
+        if(dayTypeFilter === 'standard' && d.type !== 'standard') return false;
+        if(dayTypeFilter === 'special' && d.type === 'standard') return false;
+        return true;
+    });
+
+    const dataMap = {};
+    filteredSource.forEach(d => {
+        if(!dataMap[d.date]) dataMap[d.date] = [];
+        dataMap[d.date].push(d);
+    });
+
+    // BUILD MAIN DATASET
+    let fMain = [];
+    for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
+        const k = getStrDate(d);
+        if(dataMap[k]) fMain = fMain.concat(dataMap[k]);
+    }
+    
+    document.getElementById('deep-total').innerText = fMain.reduce((a,b)=>a+b.totale,0).toLocaleString();
+    if(!isChartReady()) return;
+
+    // COLOR LOGIC
+    const isBar = chartType === 'bar';
+    const bgMain = isBar ? '#2563eb' : 'rgba(37, 99, 235, 0.1)';
+
+    // --- CHART YOY ---
+    let labels = [];
+    let mainData = [];
+    
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentDay = today.getDate();
+    const isCurrentYear = (yearMain === today.getFullYear());
+
+    if(mode === 'year') {
+        labels = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+        mainData = new Array(12).fill(0);
+        fMain.forEach(d => { mainData[new Date(d.date).getMonth()] += d.totale; });
+        document.getElementById('yoy-title').innerText = `Andamento Stagionale (${yearMain})`;
+    } else {
+        const days = [];
+        for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) {
+            days.push(new Date(d));
+            labels.push(d.toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}));
+        }
+        days.forEach(d => {
+            const k = getStrDate(d);
+            const val = dataMap[k] ? dataMap[k].reduce((a,b)=>a+b.totale, 0) : 0;
+            mainData.push(val);
+        });
+        document.getElementById('yoy-title').innerText = `Andamento Periodo (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`;
+    }
+
+    const datasets = [{ label: mode==='year' ? `Anno ${yearMain}` : 'Periodo Selezionato', data: mainData, borderColor: '#2563eb', backgroundColor: bgMain, tension: 0.4, fill: true }];
+
+    // LOOP THROUGH COMPARISONS
+    selectedComps.forEach((compVal, idx) => {
+        let compData = [];
+        let compLabel = compVal === 'avg' ? 'Media Storica' : `Anno ${compVal}`;
+        let col = getCompColor(idx);
+        let bgCol = isBar ? col : 'transparent'; 
+
+        if(mode === 'year') {
+            for(let m=0; m<12; m++) {
+                let sum=0, count=0;
+                const limitDay = (isCurrentYear && m === currentMonth) ? currentDay : 32;
+
+                if(compVal === 'avg') {
+                    const allYears = [...new Set(filteredSource.map(d=>new Date(d.date).getFullYear()))].filter(y => y !== yearMain);
+                    allYears.forEach(y => {
+                        const val = filteredSource.filter(d => {
+                            const dd = new Date(d.date);
+                            return dd.getFullYear() === y && dd.getMonth() === m && dd.getDate() <= limitDay;
+                        }).reduce((a,b)=>a+b.totale,0);
+                        if(val > 0) { sum += val; count++; }
+                    });
+                } else {
+                    const y = parseInt(compVal);
+                    sum = filteredSource.filter(d => {
+                        const dd = new Date(d.date);
+                        return dd.getFullYear() === y && dd.getMonth() === m && dd.getDate() <= limitDay;
+                    }).reduce((a,b)=>a+b.totale,0);
+                    count = 1;
+                }
+                compData.push(count>0 ? sum/count : 0);
+            }
+        } else {
+            // CUSTOM RANGE LOGIC
+            const days = [];
+            for(let d=new Date(startDate); d<=endDate; d.setDate(d.getDate()+1)) days.push(new Date(d));
+
+            // Build Hist Map
+            const histMap = {}; 
+            filteredSource.forEach(d => {
+                const dDate = new Date(d.date);
+                if(dDate.getFullYear() === yearMain) return; 
+                const k = `${dDate.getMonth()}-${dDate.getDate()}`;
+                if(!histMap[k]) histMap[k] = [];
+                histMap[k].push(d);
+            });
+
+            days.forEach(d => {
+                const month = d.getMonth();
+                const day = d.getDate();
+                const k = `${month}-${day}`;
+              
+                if(compVal === 'avg') {
+                    let sum = 0, count = 0;
+                    if(histMap[k]) {
+                        const yearsInDay = [...new Set(histMap[k].map(x=>new Date(x.date).getFullYear()))];
+                        yearsInDay.forEach(y => {
+                            const val = histMap[k].filter(x => new Date(x.date).getFullYear() === y).reduce((a,b)=>a+b.totale,0);
+                            sum += val; count++;
+                        });
+                    }
+                    compData.push(count>0 ? sum/count : 0);
+                } else {
+                    const y = parseInt(compVal);
+                    const val = filteredSource.filter(x => {
+                        const xd = new Date(x.date);
+                        return xd.getFullYear() === y && xd.getMonth() === month && xd.getDate() === day;
+                    }).reduce((a,b)=>a+b.totale, 0);
+                    compData.push(val);
+                }
+            });
+        }
+
+        datasets.push({
+            label: compLabel,
+            data: compData,
+            borderColor: col,
+            backgroundColor: bgCol,
+            borderDash: isBar ? [] : [5,5],
+            fill: false, // Ensure no fill for comparison lines
+            tension: 0.4
+        });
+    });
+
+    renderDynamicChart('chartYoY', labels, datasets, chartType);
+
+
+    // --- WEEKLY CHART ---
+    const weekLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+    const getJsDay = (i) => (i + 1) % 7;
+    let weekDatasets = [];
+    let isStacked = false;
+
+    if(chartType === 'bar') {
+        isStacked = true; 
+        const uniqueFasce = [...new Set(fMain.map(d => d.fascia))];
+        weekDatasets = uniqueFasce.map(fascia => {
+            const data = weekLabels.map((_, i) => {
+                let subset = fMain.filter(d => new Date(d.date).getDay() === getJsDay(i) && d.fascia === fascia);
+                return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
+            });
+            return {
+                label: fascia,
+                data: data,
+                backgroundColor: getFasciaColor(fascia),
+                stack: 'main' 
+            };
+        });
+
+        // Add Comparisons as side-by-side bars
+        selectedComps.forEach((compVal, idx) => {
+            let compSet = [];
+            if(compVal === 'avg') {
+                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() !== yearMain);
+            } else {
+                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() === parseInt(compVal));
+            }
+            const compDataWeekly = weekLabels.map((_, i) => {
+                let subset = compSet.filter(d => new Date(d.date).getDay() === getJsDay(i));
+                return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
+            });
+           
+            weekDatasets.push({
+                label: (compVal === 'avg' ? 'Media' : compVal) + ' (Tot)',
+                data: compDataWeekly,
+                backgroundColor: getCompColor(idx),
+                stack: 'comp'+idx
+            });
+        });
+
+    } else {
+        const calcWeekly = (dataset) => {
+            return weekLabels.map((_, i) => {
+                let subset = dataset.filter(d => new Date(d.date).getDay() === getJsDay(i));
+                return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
+            });
+        };
+        weekDatasets = [{ label: `Media Selezionata`, data: calcWeekly(fMain), borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true }];
+        
+        selectedComps.forEach((compVal, idx) => {
+            let compSet = [];
+            if(compVal === 'avg') {
+                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() !== yearMain);
+            } else {
+                 compSet = filteredSource.filter(d => new Date(d.date).getFullYear() === parseInt(compVal));
+            }
+            weekDatasets.push({
+                label: compVal === 'avg' ? 'Media' : compVal,
+                data: calcWeekly(compSet),
+                borderColor: getCompColor(idx),
+                borderDash: [5,5],
+                fill: false
+            });
+        });
+    }
+    
+    renderDynamicChart('chartWeek', weekLabels, weekDatasets, chartType, isStacked);
+
+    // ... Pie & MultiBar ...
+    let t = { 'Intero':0, 'Ridotto':0, 'Abb. Per.':0, 'Abb. 11':0, 'Gratis':0 };
+    fMain.forEach(d => { t['Intero'] += d.int||0; t['Ridotto'] += d.rid||0; t['Abb. Per.'] += d.abb_int||0; t['Abb. 11'] += d.abb_rid||0; t['Gratis'] += d.grat||0; });
+    renderPie('chartPie', Object.keys(t), Object.values(t));
+
+    const buildMultiSeries = (extractor) => {
+        let allLabels = new Set(); fMain.forEach(d => allLabels.add(extractor(d).key));
+        let sortedL = Array.from(allLabels).sort();
+        let dp = sortedL.map(l => {
+            let subset = fMain.filter(d => extractor(d).key === l);
+            return subset.reduce((a,b)=>a+extractor(b).val,0);
+        });
+        return { labels: sortedL, datasets: [{ label: `Totale`, data: dp, backgroundColor: '#2563eb' }] };
+    };
+    const meteoData = buildMultiSeries(d => ({key: d.meteo, val: d.totale}));
+    renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
+    const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}));
+    renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
+};
+
+function renderVasca() { 
+    const searchDate = document.getElementById('v-search-date') ? document.getElementById('v-search-date').value : null;
+    const searchType = document.getElementById('v-search-type').value;
+    const searchAlert = document.getElementById('v-search-alert').value;
+
+    const t=document.getElementById('tbody-vasca'); t.innerHTML=""; 
+    
+    let list = [...dataVasca];
+    if(searchDate) list = list.filter(d => d.date === searchDate);
+    
+    // Filter Type
+    if (searchType !== 'all') {
+        list = list.filter(d => (d.type || 'interna') === searchType);
+    }
+
+    // Filter Anomalies
+    if (searchAlert === 'alert') {
+        list = list.filter(d => {
+            const ph = parseFloat(d.ph);
+            const cl = parseFloat(d.cll);
+            const phBad = (ph < 6.5 || ph > 7.5);
+            const clBad = (cl < 0.8 || cl > 1.7);
+            return phBad || clBad;
+        });
+    }
+
+    // Sort globale per raggruppamento corretto
+    list.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
+
+    if(list.length === 0) {
+        t.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:#64748b">Nessuna registrazione trovata.</td></tr>';
+        return;
+    }
+
+    // Raggruppamento per Mese
+    const groups = {};
+    list.forEach(d => {
+        const key = d.date.substring(0, 7); // YYYY-MM
+        if(!groups[key]) groups[key] = [];
+        groups[key].push(d);
+    });
+
+    const sortedMonths = Object.keys(groups).sort().reverse();
+
+    sortedMonths.forEach((mKey, mIndex) => {
+        // Header Mese
+        const [y, m] = mKey.split('-');
+        const dateObj = new Date(y, m - 1, 1);
+        const monthName = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+        const groupId = 'vasca-g-' + mKey;
+        const count = groups[mKey].length;
+        
+        // Auto-expand if searching or if it's the very first group (current/latest month)
+        const isExpanded = searchDate ? true : (mIndex === 0); 
+        const displayStyle = isExpanded ? 'table-row' : 'none';
+        const arrow = isExpanded ? '▼' : '▶';
+        const bgHeader = mIndex === 0 ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.5)';
+
+        t.innerHTML += `
+            <tr style="background:${bgHeader}; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.6); transition:background 0.2s" onclick="toggleVascaGroup('${groupId}', this)" onmouseover="this.style.background='rgba(37,99,235,0.2)'" onmouseout="this.style.background='${bgHeader}'">
+                <td colspan="10" style="font-weight:800; color:var(--text-main); padding:15px; font-size:0.95rem">
+                    <span class="group-arrow" style="display:inline-block; width:20px; color:var(--primary)">${arrow}</span> 
+                    ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} 
+                    <span style="font-weight:500; font-size:0.8rem; color:var(--text-muted); margin-left:10px; background:rgba(255,255,255,0.6); padding:2px 8px; border-radius:10px">${count} reg.</span>
+                </td>
+            </tr>
+        `;
+
+        // Raggruppamento per Giorno all'interno del Mese per rowspan
+        const dayGroups = new Map();
+        groups[mKey].forEach(d => {
+            if(!dayGroups.has(d.date)) dayGroups.set(d.date, []);
+            dayGroups.get(d.date).push(d);
+        });
+
+        // Itero i giorni del mese
+        [...dayGroups.keys()].forEach(dKey => {
+            const entries = dayGroups.get(dKey);
+            // Sort per ora decrescente
+            entries.sort((a,b) => b.time.localeCompare(a.time));
+            
+            const dateFmt = dKey.split('-').reverse().join('/');
+            const dh = `<div style="font-weight:800;color:#1e293b">${dateFmt}</div>`;
+
+            entries.forEach((d, i) => {
+                const isLast = i === entries.length - 1;
+                const borderStyle = isLast ? "border-bottom:2px solid rgba(0,0,0,0.1)" : "border-bottom:1px solid rgba(0,0,0,0.05)";
+                
+                const phVal = parseFloat(d.ph); const phAlert = (phVal < 6.5 || phVal > 7.5);
+                const phStyle = phAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : 'font-weight:600';
+                const clVal = parseFloat(d.cll); const clAlert = (clVal < 0.8 || clVal > 1.7);
+                const clStyle = clAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : '';
+                
+                const typeLabel = d.type === 'esterna' ? '<span class="badge badge-summer">☀️ Est.</span>' : '<span class="badge badge-std">🏠 Int.</span>';
+
+                // Costruzione riga
+                let rowHtml = `<tr class="group-item ${groupId}" style="display:${displayStyle}; ${borderStyle}; background:rgba(255,255,255,0.25)">`;
+                
+                // Cella Data con Rowspan (solo alla prima occorrenza)
+                if (i === 0) {
+                    rowHtml += `<td rowspan="${entries.length}" style="vertical-align:middle; background:rgba(255,255,255,0.4); min-width:90px">${dh}</td>`;
+                }
+
+                rowHtml += `
+                    <td>
+                        <div style="font-weight:700;color:#2563eb">${d.time}</div>
+                        <div style="margin-top:2px; font-size:0.75rem">${typeLabel}</div>
+                    </td>
+                    <td>${d.bag}</td>
+                    <td>${d.ta}°</td>
+                    <td>${d.th}°</td>
+                    <td style="${phStyle}">${d.ph}</td>
+                    <td style="${clStyle}">${d.cll}</td>
+                    <td>${d.clc}</td>
+                    <td style="font-weight:700">${d.clt}</td> 
+                    <td style="text-align:right">
+                        <button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button>
+                        <button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button>
+                    </td>
+                </tr>`;
+                
+                t.innerHTML += rowHtml;
+            });
+        });
+    });
+}
+
+window.toggleVascaGroup = (groupId, headerTr) => {
+    const rows = document.querySelectorAll(`.${groupId}`);
+    const arrow = headerTr.querySelector('.group-arrow');
+    const isHidden = rows[0].style.display === 'none';
+    rows.forEach(r => r.style.display = isHidden ? 'table-row' : 'none');
+    arrow.innerText = isHidden ? '▼' : '▶';
+};
+
+window.resetVascaFilter = () => {
+    const inp = document.getElementById('v-search-date');
+    if(inp) inp.value = "";
+    document.getElementById('v-search-type').value = "all";
+    document.getElementById('v-search-alert').value = "all";
+    renderVasca();
+};
+
+window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
+window.renderDae = () => {
+    const searchDate = document.getElementById('d-search-date') ? document.getElementById('d-search-date').value : null;
+    const t = document.getElementById('tbody-dae');
+    t.innerHTML = "";
+
+    let list = [...dataDae];
+    
+    // Filter
+    if (searchDate) {
+        list = list.filter(d => d.date === searchDate);
+    }
+
+    // Sort Descending
+    list.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
+
+    if(list.length === 0) {
+        t.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#64748b">Nessun controllo trovato.</td></tr>';
+        return;
+    }
+
+    // Grouping
+    const groups = {};
+    list.forEach(d => {
+        const key = d.date.substring(0, 7); // YYYY-MM
+        if(!groups[key]) groups[key] = [];
+        groups[key].push(d);
+    });
+
+    const sortedKeys = Object.keys(groups).sort().reverse();
+
+    sortedKeys.forEach((key, index) => {
+        const [y, m] = key.split('-');
+        const dateObj = new Date(y, m - 1, 1);
+        const monthName = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+        const groupId = 'dae-g-' + key;
+        const count = groups[key].length;
+        
+        // Auto-expand if searching or if it's the very first group (current/latest month)
+        const isExpanded = searchDate ? true : (index === 0); 
+        const displayStyle = isExpanded ? 'table-row' : 'none';
+        const arrow = isExpanded ? '▼' : '▶';
+        const bgHeader = index === 0 ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.5)';
+
+        t.innerHTML += `
+            <tr style="background:${bgHeader}; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.6); transition:background 0.2s" onclick="toggleDaeGroup('${groupId}', this)" onmouseover="this.style.background='rgba(37,99,235,0.2)'" onmouseout="this.style.background='${bgHeader}'">
+                <td colspan="6" style="font-weight:800; color:var(--text-main); padding:15px; font-size:0.95rem">
+                    <span class="group-arrow" style="display:inline-block; width:20px; color:var(--primary)">${arrow}</span> 
+                    ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} 
+                    <span style="font-weight:500; font-size:0.8rem; color:var(--text-muted); margin-left:10px; background:rgba(255,255,255,0.6); padding:2px 8px; border-radius:10px">${count} reg.</span>
+                </td>
+            </tr>
+        `;
+
+        groups[key].forEach(d => {
+            const b = d.status === 'OK' ? '<span class="badge badge-ok">✅ OK</span>' : '<span class="badge badge-ko">❌ GUASTO</span>';
+            const dateFmt = d.date.split('-').reverse().join('/');
+            
+            t.innerHTML += `
+                <tr class="group-item ${groupId}" style="display:${displayStyle}; background:rgba(255,255,255,0.25)">
+                    <td style="font-weight:700; padding-left:40px; border-left:4px solid transparent">${dateFmt}</td>
+                    <td style="color:#2563eb; font-weight:600">${d.time || '-'}</td>
+                    <td>${b}</td>
+                    <td>${d.ass}</td>
+                    <td>${d.op}</td>
+                    <td style="text-align:right">
+                        <button class="btn btn-icon" style="color:#ef4444; background:transparent" onclick="delDoc('dae_log','${d.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    });
+};
+
+window.toggleDaeGroup = (groupId, headerTr) => {
+    const rows = document.querySelectorAll(`.${groupId}`);
+    const arrow = headerTr.querySelector('.group-arrow');
+    // Check current state based on first row
+    const isHidden = rows[0].style.display === 'none';
+    
+    rows.forEach(r => {
+        r.style.display = isHidden ? 'table-row' : 'none';
+    });
+    arrow.innerText = isHidden ? '▼' : '▶';
+};
+
+window.resetDaeFilter = () => {
+    const inp = document.getElementById('d-search-date');
+    if(inp) inp.value = "";
+    renderDae();
+};
+
+// UTENZE
+window.toggleUtenzeMode = () => {
+    const type = document.getElementById('u-type').value;
+    const isSingle = type !== '⚡ Elettricità';
+    document.getElementById('u-single-input').classList.toggle('hidden', !isSingle);
+    const isElec = type === '⚡ Elettricità';
+    document.getElementById('u-elec-input').style.display = isElec ? 'contents' : 'none';
+    document.getElementById('u-extra-elec-meteo').classList.toggle('hidden', !isElec);
+    const isGas = type === '🔥 Gas Metano';
+    document.getElementById('u-extra-gas').classList.toggle('hidden', !isGas);
+};
+window.toggleUtenzeMode();
+window.saveUtenze = async () => {
+    const d = document.getElementById('u-date').value; const type = document.getElementById('u-type').value; const note = document.getElementById('u-note').value;
+    let p = { date: d, type, note };
+    if(type === '⚡ Elettricità') {
+        const a1 = parseFloat(document.getElementById('u-a1').value)||0;
+        const a2 = parseFloat(document.getElementById('u-a2').value)||0;
+        const a3 = parseFloat(document.getElementById('u-a3').value)||0;
+        p.a1 = a1; p.a2 = a2; p.a3 = a3; p.val = a1+a2+a3;
+        p.meteo = document.getElementById('u-meteo').value;
+    } else {
+        p.val = parseFloat(document.getElementById('u-val').value);
+        if(type === '🔥 Gas Metano') { p.temp = parseFloat(document.getElementById('u-temp').value) || null; }
+    }
+    if(!d || (type!=='⚡ Elettricità' && isNaN(p.val))) return showToast("Dati mancanti", "error");
+    try {
+        if(editIdUtenze) {
+            await updateDoc(doc(db, "utenze_log", editIdUtenze), p); showToast("Modifica salvata!"); cancelEditUtenze();
+        } else {
+            await addDoc(collection(db, "utenze_log"), p); showToast("Salvato"); document.querySelectorAll('#cb-utenze input:not([type=date])').forEach(i=>i.value='');
+        }
+    } catch(e){ showToast(e.message, "error"); }
+};
+
+window.editUtenze = (id) => {
+    const d = dataUtenze.find(x => x.id === id); if(!d) return; editIdUtenze = id;
+    document.getElementById('u-date').value = d.date; document.getElementById('u-type').value = d.type; document.getElementById('u-note').value = d.note || '';
+    toggleUtenzeMode();
+    if(d.type === '⚡ Elettricità') {
+        document.getElementById('u-a1').value = d.a1; document.getElementById('u-a2').value = d.a2; document.getElementById('u-a3').value = d.a3; document.getElementById('u-meteo').value = d.meteo || '☀️ Sole';
+    } else {
+        document.getElementById('u-val').value = d.val;
+        if(d.type === '🔥 Gas Metano') { document.getElementById('u-temp').value = d.temp || ''; }
+    }
+    document.getElementById('title-utenze').innerText = "Modifica Utenza"; document.getElementById('btn-save-utenze').innerText = "AGGIORNA"; document.getElementById('btn-save-utenze').style.background = "#f59e0b"; document.getElementById('cb-utenze').classList.add('editing'); document.getElementById('cancel-utenze').classList.remove('hidden'); window.scrollTo({top:0, behavior:'smooth'});
+};
+window.cancelEditUtenze = () => {
+    editIdUtenze = null; document.getElementById('title-utenze').innerText = "Registrazione Letture Utenze"; document.getElementById('btn-save-utenze').innerText = "SALVA"; document.getElementById('btn-save-utenze').style.background = ""; document.getElementById('cb-utenze').classList.remove('editing'); document.getElementById('cancel-utenze').classList.add('hidden'); document.querySelectorAll('#cb-utenze input:not([type=date])').forEach(i=>i.value=''); toggleUtenzeMode();
+};
+
+window.switchSubViewUtenze=(s)=>{
+    ['overview','charts','archive'].forEach(v=>{ document.getElementById('sub-u-'+v).classList.add('hidden'); document.getElementById('btn-sub-u-'+v).classList.remove('btn-primary'); });
+    document.getElementById('sub-u-'+s).classList.remove('hidden'); document.getElementById('btn-sub-u-'+s).classList.add('btn-primary');
+    renderUtenze();
+};
+
+// NEW FUNCTION: Toggle Custom Inputs for Utenze Charts
+window.toggleUtenzeChartMode = () => {
+    const val = document.getElementById('u-range').value;
+    const c = document.getElementById('u-chart-custom-inputs');
+    if(val === 'custom') {
+        c.classList.remove('hidden');
+        c.style.display = 'flex';
+        // Defaults
+        if(!document.getElementById('u-chart-start').value) {
+            const now = new Date();
+            document.getElementById('u-chart-end').value = now.toISOString().split('T')[0];
+            now.setDate(now.getDate()-30);
+            document.getElementById('u-chart-start').value = now.toISOString().split('T')[0];
+        }
+    } else {
+        c.classList.add('hidden');
+        c.style.display = 'none';
+        renderUtenze();
+    }
+};
+
+window.renderUtenze = () => {
+    if(!isChartReady()) return;
+    const viewMode = document.getElementById('u-view-mode').value; const isDelta = viewMode === 'delta'; const chartType = isDelta ? 'bar' : 'line';
+    
+    // UPDATED LOGIC: Custom Range support
+    const rangeVal = document.getElementById('u-range').value;
+    let limitStr = null;
+    let customStart = null;
+    let customEnd = null;
+
+    if (rangeVal === 'custom') {
+        customStart = document.getElementById('u-chart-start').value;
+        customEnd = document.getElementById('u-chart-end').value;
+    } else {
+        const rangeDays = parseInt(rangeVal); 
+        const limitDate = new Date(); 
+        limitDate.setDate(limitDate.getDate() - rangeDays); 
+        limitStr = limitDate.toISOString().split('T')[0];
+    }
+
+    const showHistory = document.getElementById('u-compare-year').checked;
+    const grouped = {};
+    dataUtenze.forEach(d => {
+        if(!grouped[d.date]) grouped[d.date] = { date: d.date, elec: null, water: null, gas: null, notes: [] };
+        if(d.type === '⚡ Elettricità') grouped[d.date].elec = d;
+        if(d.type === '💧 Acqua') grouped[d.date].water = d;
+        if(d.type === '🔥 Gas Metano') grouped[d.date].gas = d;
+        if(d.note) grouped[d.date].notes.push(d.note);
+    });
+    const allDatesAsc = Object.keys(grouped).sort();
+    let prevVals = { elec: null, water: null, gas: null }; const deltas = {};
+    allDatesAsc.forEach(date => {
+        deltas[date] = { elec: null, water: null, gas: null }; const g = grouped[date];
+        const calcDelta = (key, valObj) => {
+            if(valObj) {
+                if(prevVals[key] !== null) { let d = valObj.val - prevVals[key]; if(d < 0) d = 0; deltas[date][key] = d; } else { deltas[date][key] = 0; } prevVals[key] = valObj.val;
+            }
+        };
+        calcDelta('elec', g.elec); calcDelta('water', g.water); calcDelta('gas', g.gas);
+    });
+
+    // --- KPI LOGIC ---
+    let kpiDateObj = new Date(); 
+    const selectedMonthVal = document.getElementById('u-kpi-month-selector').value; 
+
+    if (selectedMonthVal) {
+        kpiDateObj = new Date(selectedMonthVal + "-01");
+    } else if (allDatesAsc.length > 0) {
+        // Use string slicing for safer default date (avoids timezone shifts)
+        const lastDate = allDatesAsc[allDatesAsc.length - 1];
+        document.getElementById('u-kpi-month-selector').value = lastDate.slice(0, 7);
+        kpiDateObj = new Date(lastDate);
+    }
+
+    const thisMonth = kpiDateObj.getMonth();
+    const thisYear = kpiDateObj.getFullYear();
+    const prevYear = thisYear - 1;
+    const monthName = kpiDateObj.toLocaleString('it-IT', { month: 'long' });
+    
+    // Determine the "Max Day" for comparison
+    const realToday = new Date();
+    const isCurrentRealMonth = (thisYear === realToday.getFullYear() && thisMonth === realToday.getMonth());
+    const maxDay = isCurrentRealMonth ? realToday.getDate() : 32; 
+
+    let sumElec = { curr: 0, prev: 0, currMeteo: {sun:0, tot:0}, prevMeteo: {sun:0, tot:0} };
+    let sumWater = { curr: 0, prev: 0, currBag: {sum:0, count:0}, prevBag: {sum:0, count:0} };
+    let sumGas = { curr: 0, prev: 0, currTemp: [], prevTemp: [] };
+
+    // --- AGGREGATION FOR MONTHLY TABLE & KPI ---
+    const monthlyAgg = {}; // YYYY-MM -> {elec:0, water:0, gas:0}
+
+    Object.keys(deltas).forEach(dateStr => {
+        const d = new Date(dateStr);
+        const yyyymm = dateStr.slice(0, 7);
+        if(!monthlyAgg[yyyymm]) monthlyAgg[yyyymm] = {elec:0, water:0, gas:0};
+        
+        const dVals = deltas[dateStr];
+        monthlyAgg[yyyymm].elec += dVals.elec || 0;
+        monthlyAgg[yyyymm].water += dVals.water || 0;
+        monthlyAgg[yyyymm].gas += dVals.gas || 0;
+
+        if(d.getDate() <= maxDay) {
+            if(d.getMonth() === thisMonth) {
+                const gData = grouped[dateStr];
+                
+                if(d.getFullYear() === thisYear) {
+                    sumElec.curr += deltas[dateStr].elec || 0;
+                    sumWater.curr += deltas[dateStr].water || 0;
+                    sumGas.curr += deltas[dateStr].gas || 0;
+                    
+                    // Context Data Current
+                    if(gData.elec && gData.elec.meteo) {
+                        sumElec.currMeteo.tot++;
+                        if(gData.elec.meteo.includes('Sole')) sumElec.currMeteo.sun++;
+                    }
+                    if(gData.gas && gData.gas.temp) sumGas.currTemp.push(gData.gas.temp);
+                    
+                    // Bagnanti Data Integration
+                    const dayBag = dataIngressi.find(x => x.date === dateStr);
+                    if(dayBag) { sumWater.currBag.sum += dayBag.totale || 0; sumWater.currBag.count++; }
+
+                } else if(d.getFullYear() === prevYear) {
+                    sumElec.prev += deltas[dateStr].elec || 0;
+                    sumWater.prev += deltas[dateStr].water || 0;
+                    sumGas.prev += deltas[dateStr].gas || 0;
+
+                    // Context Data Prev
+                    if(gData.elec && gData.elec.meteo) {
+                        sumElec.prevMeteo.tot++;
+                        if(gData.elec.meteo.includes('Sole')) sumElec.prevMeteo.sun++;
+                    }
+                    if(gData.gas && gData.gas.temp) sumGas.prevTemp.push(gData.gas.temp);
+                    
+                    // Bagnanti Data Integration Prev
+                    const dayBag = dataIngressi.find(x => x.date === dateStr);
+                    if(dayBag) { sumWater.prevBag.sum += dayBag.totale || 0; sumWater.prevBag.count++; }
+                }
+            }
+        }
+    });
+
+    // --- RENDER MONTHLY TABLE ---
+    const tBodyMonthly = document.getElementById('tbody-utenze-monthly');
+    tBodyMonthly.innerHTML = "";
+    const sortedMonths = Object.keys(monthlyAgg).sort().reverse();
+    sortedMonths.forEach(mStr => {
+        const d = monthlyAgg[mStr];
+        const [y, m] = mStr.split('-');
+        const dateObj = new Date(y, parseInt(m)-1, 1);
+        const monthLabel = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+        const row = `<tr>
+            <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
+            <td style="font-weight:600; color:#a16207">${d.elec.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+            <td style="font-weight:600; color:#1d4ed8">${d.water.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+            <td style="font-weight:600; color:#b91c1c">${d.gas.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+        </tr>`;
+        tBodyMonthly.innerHTML += row;
+    });
+
+
+    // Helper for context strings
+    const getMeteoStr = () => {
+        const c = sumElec.currMeteo.sun;
+        const p = sumElec.prevMeteo.sun;
+        return `Giorni Sole: <b>${c}</b> (vs ${p})`;
+    };
+    const getTempStr = () => {
+        const avg = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : '-';
+        return `Temp Media: <b>${avg(sumGas.currTemp)}°C</b> (vs ${avg(sumGas.prevTemp)}°C)`;
+    };
+    const getBagStr = () => {
+        const avgC = sumWater.currBag.count ? (sumWater.currBag.sum / sumWater.currBag.count).toFixed(0) : 0;
+        const avgP = sumWater.prevBag.count ? (sumWater.prevBag.sum / sumWater.prevBag.count).toFixed(0) : 0;
+        return `Media Bagnanti: <b>${avgC}</b> (vs ${avgP})`;
+    };
+
+    const updateKpi = (type, valCurr, valPrev, unit, contextHtml) => {
+        let diff = 0;
+        let diffHtml = '<span style="color:#94a3b8; font-size:0.8rem">Dati insufficienti</span>';
+        
+        if (valPrev > 0) {
+            diff = ((valCurr - valPrev) / valPrev) * 100;
+            const color = diff > 0 ? '#ef4444' : '#10b981'; 
+            const sign = diff > 0 ? '+' : '';
+            const dayLabel = isCurrentRealMonth ? `(al ${maxDay})` : '';
+            diffHtml = `<span style="color:${color}; font-weight:800">${sign}${diff.toFixed(1)}%</span> vs ${monthName} ${prevYear} ${dayLabel}`;
+        }
+
+        document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
+        document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
+        document.getElementById(`u-kpi-${type}-sub`).innerHTML = diffHtml;
+        if(contextHtml) document.getElementById(`u-kpi-${type}-context`).innerHTML = contextHtml;
+    };
+
+    updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh', getMeteoStr());
+    updateKpi('water', sumWater.curr, sumWater.prev, 'm³', getBagStr());
+    updateKpi('gas', sumGas.curr, sumGas.prev, 'm³', getTempStr());
+
+    // --- NEW UTENZE HIGHLIGHTS LOGIC ---
+    let maxElec = { val: 0, date: '-' };
+    let minElec = { val: Infinity, date: '-' };
+    let maxGas = { val: 0, date: '-' };
+    let minGas = { val: Infinity, date: '-' };
+    let totalWaterM3 = 0;
+    let totalSwimmers = 0;
+
+    // Re-iterate strictly for the selected month to gather specific insight data
+    const startOfMonth = new Date(thisYear, thisMonth, 1);
+    const endOfMonth = new Date(thisYear, thisMonth + 1, 0);
+
+    for (let d = new Date(startOfMonth); d <= endOfMonth; d.setDate(d.getDate() + 1)) {
+        if (d > realToday) break; // Don't count future days
+        const dStr = getStrDate(d);
+        
+        // Utenze Data
+        if (deltas[dStr]) {
+            // Elec Peak & Min
+            const eVal = deltas[dStr].elec;
+            if (eVal !== null) {
+                if (eVal > maxElec.val) { maxElec.val = eVal; maxElec.date = dStr; }
+                if (eVal < minElec.val) { minElec.val = eVal; minElec.date = dStr; }
+            }
+            
+            // Gas Peak & Min
+            const gVal = deltas[dStr].gas;
+            if (gVal !== null) {
+                if (gVal > maxGas.val) { maxGas.val = gVal; maxGas.date = dStr; }
+                if (gVal < minGas.val) { minGas.val = gVal; minGas.date = dStr; }
+            }
+            
+            // Water Sum for efficiency
+            totalWaterM3 += deltas[dStr].water || 0;
+        }
+
+        // Ingressi Data (for efficiency calculation)
+        const dayBag = dataIngressi.find(x => x.date === dStr);
+        if (dayBag) totalSwimmers += dayBag.totale || 0;
+    }
+
+    // 1. Estremi Elettrico
+    const fmtDate = (dStr) => dStr !== '-' ? new Date(dStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}) : '-';
+    
+    document.getElementById('u-hl-elec-max').innerText = maxElec.val > 0 ? maxElec.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
+    document.getElementById('u-hl-elec-max-date').innerText = fmtDate(maxElec.date);
+    
+    if(minElec.val !== Infinity) {
+        document.getElementById('u-hl-elec-min').innerText = minElec.val.toLocaleString('it-IT', {maximumFractionDigits:0});
+        document.getElementById('u-hl-elec-min-date').innerText = fmtDate(minElec.date);
+    } else {
+        document.getElementById('u-hl-elec-min').innerText = "-";
+        document.getElementById('u-hl-elec-min-date').innerText = "-";
+    }
+
+    // 2. LAST 24H VALUES LOGIC
+    let lastElec = { val: '-', date: '-' };
+    let lastWater = { val: '-', date: '-' };
+    let lastGas = { val: '-', date: '-' };
+
+    // Find latest non-null delta for each utility
+    // We iterate backwards through all dates
+    const findLatest = (typeKey) => {
+        const allDatesRev = [...allDatesAsc].reverse();
+        for(const dStr of allDatesRev) {
+            if(deltas[dStr] && deltas[dStr][typeKey] !== null) {
+                return { 
+                    val: deltas[dStr][typeKey].toLocaleString('it-IT', {maximumFractionDigits:1}), 
+                    date: new Date(dStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})
+                };
+            }
+        }
+        return { val: '-', date: '-' };
+    };
+
+    lastElec = findLatest('elec');
+    lastWater = findLatest('water');
+    lastGas = findLatest('gas');
+
+    document.getElementById('u-last-elec').innerText = lastElec.val !== '-' ? lastElec.val + " kWh" : "-";
+    document.getElementById('u-last-elec-date').innerText = lastElec.date;
+    document.getElementById('u-last-water').innerText = lastWater.val !== '-' ? lastWater.val + " m³" : "-";
+    document.getElementById('u-last-water-date').innerText = lastWater.date;
+    document.getElementById('u-last-gas').innerText = lastGas.val !== '-' ? lastGas.val + " m³" : "-";
+    document.getElementById('u-last-gas-date').innerText = lastGas.date;
+
+
+    // 3. Estremi Gas
+    document.getElementById('u-hl-gas-max').innerText = maxGas.val > 0 ? maxGas.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
+    document.getElementById('u-hl-gas-max-date').innerText = fmtDate(maxGas.date);
+
+    if(minGas.val !== Infinity) {
+        document.getElementById('u-hl-gas-min').innerText = minGas.val.toLocaleString('it-IT', {maximumFractionDigits:0});
+        document.getElementById('u-hl-gas-min-date').innerText = fmtDate(minGas.date);
+    } else {
+        document.getElementById('u-hl-gas-min').innerText = "-";
+        document.getElementById('u-hl-gas-min-date').innerText = "-";
+    }
+
+    // === CHART GENERATION (NOW SAFE) ===
+    if (!isChartReady()) return;
+
+    // Chart Logic UPDATED with dual axis support
+    function prepareChartData(type) {
+        // FILTER DATES LOGIC: Either by limitStr OR by customRange
+        let filteredDates = [];
+        if (limitStr) {
+             filteredDates = allDatesAsc.filter(d => d >= limitStr);
+        } else if (customStart && customEnd) {
+             filteredDates = allDatesAsc.filter(d => d >= customStart && d <= customEnd);
+        } else if (customStart) {
+             filteredDates = allDatesAsc.filter(d => d >= customStart);
+        } else {
+             // Fallback
+             filteredDates = allDatesAsc;
+        }
+
+        const labels = [], dataTotal = [], dataDelta = [], dataSecondary = [], dataHistoryTotal = [], dataHistoryDelta = [];
+        const typeKey = type === '⚡ Elettricità' ? 'elec' : (type === '💧 Acqua' ? 'water' : 'gas');
+        
+        filteredDates.forEach((dateStr) => {
+            const curr = grouped[dateStr];
+            const dateObj = new Date(dateStr);
+            const label = dateObj.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+            labels.push(label);
+            
+            let val = 0; let extra = "";
+            let secVal = null; // Secondary value (Temp or Meteo Score)
+
+            if(typeKey === 'elec' && curr.elec) { 
+                val = curr.elec.val; 
+                extra = `Meteo: ${curr.elec.meteo||'N/D'}`;
+                // Meteo Score Mapping (1-100 scale for plotting)
+                const m = curr.elec.meteo || '';
+                if(m.includes('Sole')) secVal = 100;
+                else if(m.includes('Variabile')) secVal = 60;
+                else if(m.includes('Nuvoloso')) secVal = 30;
+                else if(m.includes('Pioggia')) secVal = 10;
+            }
+            if(typeKey === 'water' && curr.water) { val = curr.water.val; }
+            if(typeKey === 'gas' && curr.gas) { 
+                val = curr.gas.val; 
+                extra = curr.gas.temp ? `Temp: ${curr.gas.temp}°C` : ''; 
+                secVal = curr.gas.temp; // Direct temp value
+            }
+
+            dataTotal.push({ x: label, y: val, extraInfo: extra, rawDate: dateStr });
+            const dVal = deltas[dateStr] ? deltas[dateStr][typeKey] : 0;
+            dataDelta.push({ x: label, y: dVal, extraInfo: extra, rawDate: dateStr });
+            
+            // Push secondary data point
+            dataSecondary.push({ x: label, y: secVal }); // y can be null
+
+            if(showHistory) {
+                const dObj = new Date(dateStr); dObj.setFullYear(dObj.getFullYear() - 1); const prevYearStr = dObj.toISOString().split('T')[0];
+                let hVal = null;
+                if(grouped[prevYearStr]) {
+                      if(typeKey==='elec' && grouped[prevYearStr].elec) hVal = grouped[prevYearStr].elec.val;
+                      if(typeKey==='water' && grouped[prevYearStr].water) hVal = grouped[prevYearStr].water.val;
+                      if(typeKey==='gas' && grouped[prevYearStr].gas) hVal = grouped[prevYearStr].gas.val;
+                }
+                dataHistoryTotal.push(hVal !== null ? { x: label, y: hVal, refDate: prevYearStr } : null);
+                let hDelta = null;
+                if(deltas[prevYearStr] && deltas[prevYearStr][typeKey] !== null) { hDelta = deltas[prevYearStr][typeKey]; }
+                dataHistoryDelta.push(hDelta !== null ? { x: label, y: hDelta, refDate: prevYearStr } : null);
+            }
+        });
+        return { labels, dataTotal, dataDelta, dataSecondary, dataHistoryTotal, dataHistoryDelta };
+    }
+
+    const elecData = prepareChartData('⚡ Elettricità'); const waterData = prepareChartData('💧 Acqua'); const gasData = prepareChartData('🔥 Gas Metano');
+    
+    function makeDatasets(mainData, historyData, colorMain, colorHist, secondaryLabel) {
+        const ds = [{ 
+            label: isDelta ? 'Consumo' : 'Lettura', 
+            data: isDelta ? mainData.dataDelta : mainData.dataTotal, 
+            borderColor: colorMain, 
+            backgroundColor: colorMain, 
+            fill: false, 
+            tension: 0.3, 
+            order: 2, // Main data behind secondary line
+            type: isDelta ? 'bar' : 'line',
+            yAxisID: 'y'
+        }];
+        
+        // Add Secondary Dataset (Line) if label provided and data exists
+        if(secondaryLabel && mainData.dataSecondary.some(d => d.y !== null)) {
+            ds.push({
+                label: secondaryLabel,
+                data: mainData.dataSecondary,
+                borderColor: '#1e293b', // Dark color for overlay
+                backgroundColor: '#1e293b',
+                borderDash: [2, 2],
+                borderWidth: 2,
+                pointRadius: 2,
+                type: 'line',
+                fill: false,
+                tension: 0.4,
+                yAxisID: 'y1', // Key change for dual axis
+                order: 1 // On top
+            });
+        }
+
+        if(showHistory) {
+            ds.push({ 
+                label: isDelta ? 'Anno Prec.' : 'Lettura Anno Prec.', 
+                data: isDelta ? historyData.dataHistoryDelta : historyData.dataHistoryTotal, 
+                borderColor: colorHist, 
+                backgroundColor: isDelta ? colorHist : 'transparent', 
+                borderDash: isDelta ? [] : [4,4], 
+                borderWidth: isDelta ? 0 : 2, 
+                pointRadius: isDelta ? 0 : 2, 
+                type: isDelta ? 'bar' : 'line', 
+                order: 3, 
+                fill: false, 
+                tension: 0.3,
+                yAxisID: 'y'
+            });
+        }
+        return ds;
+    }
+
+    // Only render charts if their container is visible
+    if (!document.getElementById('sub-u-charts').classList.contains('hidden')) {
+        renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#fde047', 'Indice Meteo (10=Pioggia, 100=Sole)'), chartType);
+        renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd', null), chartType); // No secondary for water
+        renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5', 'Temp. Esterna (°C)'), chartType);
+    }
+};
+
+window.resetUtenzeHistory = () => {
+    document.getElementById('u-hist-start').value = "";
+    document.getElementById('u-hist-end').value = "";
+    document.getElementById('u-hist-sort').value = "desc";
+    renderUtenze();
+};
+
+window.downloadUtenzeCSV = () => {
+    if(!dataUtenze.length) return showToast("Nessun dato da esportare", "error");
+
+    // 1. Preparazione Dati (Simile a renderUtenze per avere i delta corretti)
+    const grouped = {};
+    dataUtenze.forEach(d => {
+        if(!grouped[d.date]) grouped[d.date] = { date: d.date, elec: null, water: null, gas: null, notes: [] };
+        if(d.type === '⚡ Elettricità') grouped[d.date].elec = d;
+        if(d.type === '💧 Acqua') grouped[d.date].water = d;
+        if(d.type === '🔥 Gas Metano') grouped[d.date].gas = d;
+        if(d.note) grouped[d.date].notes.push(d.note);
+    });
+
+    const allDatesAsc = Object.keys(grouped).sort();
+    let prevVals = { elec: null, water: null, gas: null };
+    
+    // Arricchiamo l'oggetto grouped con i delta
+    const enrichedData = allDatesAsc.map(date => {
+        const g = grouped[date];
+        const row = { date: date, raw: g, delta: { elec: 0, water: 0, gas: 0 } };
+        
+        ['elec', 'water', 'gas'].forEach(key => {
+            if(g[key]) {
+                if(prevVals[key] !== null) {
+                    let d = g[key].val - prevVals[key];
+                    row.delta[key] = d < 0 ? 0 : d;
+                }
+                prevVals[key] = g[key].val;
+            } else {
+                row.delta[key] = null; // Nessuna lettura quel giorno
+            }
+        });
+        return row;
+    });
+
+    // 2. Filtro Date (Rispetta i filtri attivi nell'UI)
+    const start = document.getElementById('u-hist-start').value;
+    const end = document.getElementById('u-hist-end').value;
+    
+    const filtered = enrichedData.filter(r => {
+        if (start && r.date < start) return false;
+        if (end && r.date > end) return false;
+        return true;
+    });
+
+    if(!filtered.length) return showToast("Nessun dato nel periodo selezionato", "error");
+
+    // 3. Generazione CSV
+    // Header
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Data;Elettricita_Lettura;Elettricita_Consumo;F1;F2;F3;Meteo;Acqua_Lettura;Acqua_Consumo;Gas_Lettura;Gas_Consumo;Gas_Temp;Note\n";
+
+    // Rows
+    filtered.forEach(r => {
+        const d = r.raw;
+        const dt = r.date.split('-').reverse().join('/'); // DD/MM/YYYY
+        
+        // Elec Fields
+        const elVal = d.elec ? d.elec.val.toString().replace('.', ',') : "";
+        const elCons = r.delta.elec !== null ? r.delta.elec.toFixed(1).replace('.', ',') : "";
+        const f1 = d.elec ? (d.elec.a1||0).toString().replace('.', ',') : "";
+        const f2 = d.elec ? (d.elec.a2||0).toString().replace('.', ',') : "";
+        const f3 = d.elec ? (d.elec.a3||0).toString().replace('.', ',') : "";
+        const meteo = d.elec ? (d.elec.meteo || "") : "";
+
+        // Water Fields
+        const waVal = d.water ? d.water.val.toString().replace('.', ',') : "";
+        const waCons = r.delta.water !== null ? r.delta.water.toFixed(1).replace('.', ',') : "";
+
+        // Gas Fields
+        const gaVal = d.gas ? d.gas.val.toString().replace('.', ',') : "";
+        const gaCons = r.delta.gas !== null ? r.delta.gas.toFixed(1).replace('.', ',') : "";
+        const gaTemp = (d.gas && d.gas.temp) ? d.gas.temp.toString().replace('.', ',') : "";
+
+        // Note
+        const notes = d.notes.join(" | ").replace(/;/g, ","); // Escape semicolons
+
+        csvContent += `${dt};${elVal};${elCons};${f1};${f2};${f3};${meteo};${waVal};${waCons};${gaVal};${gaCons};${gaTemp};${notes}\n`;
+    });
+
+    // 4. Download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `utenze_export_${start||'inizio'}_${end||'fine'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+window.saveIngressi = async () => {
+    const d = document.getElementById('i-date').value; if(!d) return showToast("Data mancante","error");
+    // Removed all zero checks here
+    const p = { date:d, type:document.getElementById('i-type').value, fascia:document.getElementById('i-fascia').value, meteo:document.getElementById('i-meteo').value, excludeStats: document.getElementById('i-exclude').checked, int:parseInt(document.getElementById('q-intero').value)||0, rid:parseInt(document.getElementById('q-ridotto').value)||0, grat:parseInt(document.getElementById('q-gratuito').value)||0, abb_int:parseInt(document.getElementById('q-abb-int').value)||0, abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0 };
+    p.totale = p.int + p.rid + p.grat + p.abb_int + p.abb_rid;
+    
+    try {
+        if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), p); showToast("Aggiornato"); cancelEditIngressi(); } else { await addDoc(collection(db,"sessioni"), p); showToast("Salvato"); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; }
+    } catch(e){ showToast(e.message,"error"); }
+};
+window.editIngressi = (id) => { const d = dataIngressi.find(x=>x.id===id); if(!d) return; editIdIngressi = id; document.getElementById('i-date').value=d.date; document.getElementById('i-type').value=d.type||'standard'; document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo; document.getElementById('i-exclude').checked = d.excludeStats || false; document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid; document.getElementById('q-gratuito').value=d.grat; document.getElementById('q-abb-int').value=d.abb_int; document.getElementById('q-abb-rid').value=d.abb_rid; document.getElementById('title-ingressi').innerText="Modifica Ingressi"; document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; document.getElementById('btn-save-ingressi').style.background="#f59e0b"; document.getElementById('cancel-ingressi').classList.remove('hidden'); document.getElementById('cb-ingressi').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; };
+window.saveVasca = async () => { const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value; if(!date || !time) return showToast("Data/Ora mancanti","error"); const payload = { date, time, type:document.getElementById('v-type').value, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value }; try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); } };
+window.editVasca = (id) => { const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id; document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time; document.getElementById('v-type').value=d.type||'interna'; document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta; document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph; document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc; document.getElementById('v-clt').value=d.clt; document.getElementById('title-vasca').innerText="Modifica Valori"; document.getElementById('btn-save-vasca').innerText="AGGIORNA"; document.getElementById('btn-save-vasca').style.background="#f59e0b"; document.getElementById('cancel-vasca').classList.remove('hidden'); document.getElementById('cb-vasca').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('title-vasca').innerText="Registrazione Valori"; document.getElementById('btn-save-vasca').innerText="SALVA"; document.getElementById('btn-save-vasca').style.background=""; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
+window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
+window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
+window.toggleExcludeStats = async (id, currentVal) => { try { await updateDoc(doc(db, "sessioni", id), { excludeStats: !currentVal }); showToast(!currentVal ? "Giorno escluso dalla media" : "Giorno reincluso nella media"); } catch(e) { showToast(e.message, "error"); } };
+window.renderIngressiArchive = () => {
+    const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const sort = document.getElementById('arch-sort').value;
+    const f = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; });
+    f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return sort==='desc'?db-da:da-db});
+    const t=document.getElementById('tbody-ingressi'); t.innerHTML="";
+    if(f.length === 0) { t.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px;">Nessun dato trovato.</td></tr>'; return; }
+    const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)});
+    const rowsBuffer = [];
+    [...g.keys()].forEach(k=>{
+        const e=g.get(k);
+        const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`;
+        e.forEach((d,i)=>{
+            const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)";
+            let badge = d.type === 'festivo' ? '<span class="badge badge-ko" style="margin-left:5px">🔴 Festivo</span>' : d.type === 'evento' ? '<span class="badge badge-evt" style="margin-left:5px">🏆 Evento</span>' : d.type === 'extra' ? '<span class="badge badge-summer" style="margin-left:5px">⚠️ Extra</span>' : '';
+            if (d.type === 'maltempo') badge = '<span class="badge" style="background:#475569; color:white; margin-left:5px">⛈️ Maltempo</span>';
+            const isExcluded = d.excludeStats === true;
+            const rowStyle = isExcluded ? "opacity:0.5; background: repeating-linear-gradient(45deg,rgba(0,0,0,0.02),rgba(0,0,0,0.02) 10px,rgba(0,0,0,0.06) 10px,rgba(0,0,0,0.06) 20px);" : "";
+            const excludeIcon = isExcluded ? "✅" : "🚫";
+            rowsBuffer.push(`<tr style="${b}; ${rowStyle}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b>${badge}<br><small style="color:#64748b">${d.meteo}</small>${isExcluded?'<br><b style="color:#ef4444;font-size:0.65rem">ESCLUSO MEDIA</b>':''}</td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right; min-width:110px"><button class="btn btn-icon" style="color:#64748b;background:transparent;border:1px solid #e2e8f0;margin-right:5px;width:30px;height:30px" onclick="toggleExcludeStats('${d.id}', ${isExcluded})">${excludeIcon}</button><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`);
+        });
+    });
+    t.innerHTML = rowsBuffer.join('');
+}
+window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')refreshCurrentView(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
+window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); refreshCurrentView(); };
+function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
+setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
+const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('v-date').value=today; document.getElementById('d-date').value=today; document.getElementById('u-date').value=today;
+window.downloadCSV = () => { const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const filtered = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; }); if(!filtered.length) return showToast("Nessun dato da scaricare", "error"); let csvContent = "data:text/csv;charset=utf-8,Data;Tipo;Fascia;Meteo;EsclusoMedia;Intero;Ridotto;Abbonamenti;Gratuiti;Totale\n"; filtered.forEach(row => { csvContent += `${row.date};${row.type||'standard'};${row.fascia};${row.meteo};${row.excludeStats?'SI':'NO'};${row.int};${row.rid};${row.abb_int + row.abb_rid};${row.grat};${row.totale}\n`; }); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "archivio_ingressi.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
+window.resetArchiveFilters = () => { document.getElementById('arch-date-start').value=""; document.getElementById('arch-date-end').value=""; document.getElementById('arch-filter-fascia').value="all"; document.getElementById('arch-filter-meteo').value="all"; renderIngressiArchive(); };
+</script>
+
+</body>
+</html>
