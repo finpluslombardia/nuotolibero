@@ -102,8 +102,8 @@
     .benchmark-toggle span { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); }
 
     /* KPI & CHARTS LAYOUT */
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-    .insight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 25px; } /* Changed to 5 for YTD */
+    .insight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; } /* Changed to 4 for Forecast */
     .insight-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
     .kpi-card { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); display: flex; flex-direction: column; }
     .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
@@ -260,15 +260,16 @@
                     <div class="kpi-val" id="ov-yoy">0%</div>
                     <div class="kpi-sub" id="ov-yoy-label">-</div>
                 </div>
+                <!-- NEW YTD BOX INSTEAD OF FORECAST -->
                 <div class="kpi-card glass-card">
-                    <div class="kpi-head">Stima Fine Mese</div>
-                    <div class="kpi-val" id="ov-forecast" style="color:#a855f7">-</div>
-                    <div class="kpi-sub" id="ov-forecast-sub">proiezione</div>
+                    <div class="kpi-head">Trend Anno (YTD)</div>
+                    <div class="kpi-val" id="ov-ytd">0%</div>
+                    <div class="kpi-sub" id="ov-ytd-label">vs anno prec.</div>
                 </div>
             </div>
             
-            <!-- HIGHLIGHTS GRID (3 COLUMNS NOW) -->
-            <div class="insight-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <!-- HIGHLIGHTS GRID (4 COLUMNS NOW) -->
+            <div class="insight-grid" style="grid-template-columns: repeat(4, 1fr);">
                 <!-- BOX 1: ESTREMI (Record + Nero) -->
                 <div class="kpi-card glass-card" style="height:140px; border-left:4px solid #f59e0b; justify-content:space-evenly">
                     <div class="kpi-head" style="color:#b45309">📈 Estremi Giornalieri</div>
@@ -324,6 +325,13 @@
                     <div class="kpi-head" style="color:#047857; margin-bottom:10px">☀️ Fattore Meteo</div>
                     <div class="kpi-val" id="hl-sun-pct" style="font-size:2.8rem; color:#10b981; line-height:1">0%</div>
                     <div class="kpi-sub" style="font-size:0.85rem; color:#065f46; margin-top:5px">Giorni di Sole nel Mese</div>
+                </div>
+
+                <!-- BOX 4: FORECAST (MOVED HERE) -->
+                <div class="kpi-card glass-card" style="height:140px; border-left:4px solid #a855f7; justify-content:center; align-items:center; text-align:center">
+                    <div class="kpi-head" style="color:#7e22ce; margin-bottom:10px">Stima Fine Mese</div>
+                    <div class="kpi-val" id="ov-forecast" style="font-size:2.8rem; color:#a855f7; line-height:1">-</div>
+                    <div class="kpi-sub" id="ov-forecast-sub" style="font-size:0.85rem; color:#7e22ce; margin-top:5px">proiezione</div>
                 </div>
             </div>
 
@@ -940,18 +948,17 @@ window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 function renderOverviewKPI() {
     if(!dataIngressi || dataIngressi.length === 0) return;
     const today = new Date();
-    const todayStr = getStrDate(today); // Usato per escludere oggi dai minimi
+    const todayStr = getStrDate(today); 
     const currentMonthStr = today.toISOString().slice(0, 7);
     const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
     const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
     const yoyStr = `${ym.getFullYear()}-${String(ym.getMonth()+1).padStart(2,'0')}`;
+    const currYear = today.getFullYear();
     
-    // Filtro dati correnti
+    // Filtro dati correnti (Mese)
     const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats && x.totale > 0);
     const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
-    
-    // Calcolo giorni unici con dati (per la media)
     const uniqueDays = new Set(dCurrent.map(x=>x.date));
     const daysCurrent = uniqueDays.size;
 
@@ -962,7 +969,7 @@ function renderOverviewKPI() {
     const avgCurrent = daysCurrent > 0 ? (totalCurrent/daysCurrent) : 0;
     document.getElementById('ov-avg').innerText = avgCurrent.toFixed(0);
     
-    // Trend logic
+    // Trend logic (Vs Mese Precedente Completo per la media)
     const dPrevFull = dataIngressi.filter(x => x.date.startsWith(prevMonthStr) && !x.excludeStats && x.totale > 0);
     const totalPrevFull = dPrevFull.reduce((a,b)=>a+b.totale,0);
     const daysPrevFull = new Set(dPrevFull.map(x=>x.date)).size;
@@ -997,7 +1004,7 @@ function renderOverviewKPI() {
     document.getElementById('ov-mom').innerHTML = momHtml;
     document.getElementById('ov-mom-label').innerText = `vs ${pm_month_name} (al ${maxDay})`;
 
-    // 4. YoY
+    // 4. YoY (Month vs Prev Year Month)
     const dYoy = dataIngressi.filter(x => {
         return x.date.startsWith(yoyStr) && !x.excludeStats && x.totale > 0 && new Date(x.date).getDate() <= maxDay;
     });
@@ -1015,39 +1022,65 @@ function renderOverviewKPI() {
     const ym_year = ym.getFullYear();
     document.getElementById('ov-yoy-label').innerText = `vs ${ym_year} (al ${maxDay})`;
 
-    // 5. Forecast
+    // 5. NEW: YTD Trend (Anno vs Anno Prec)
+    const startYTD = new Date(currYear, 0, 1);
+    const limitDate = new Date(); // Today
+    
+    // Filtra Anno Corrente (YTD)
+    const dYtdCurr = dataIngressi.filter(x => {
+        const dt = new Date(x.date);
+        return dt.getFullYear() === currYear && dt <= limitDate && !x.excludeStats;
+    });
+    const totalYtdCurr = dYtdCurr.reduce((a,b)=>a+b.totale,0);
+
+    // Filtra Anno Precedente (YTD allineato)
+    const prevYearVal = currYear - 1;
+    const limitDatePrev = new Date(limitDate);
+    limitDatePrev.setFullYear(prevYearVal); // Stesso giorno anno prima
+
+    const dYtdPrev = dataIngressi.filter(x => {
+        const dt = new Date(x.date);
+        return dt.getFullYear() === prevYearVal && dt <= limitDatePrev && !x.excludeStats;
+    });
+    const totalYtdPrev = dYtdPrev.reduce((a,b)=>a+b.totale,0);
+
+    let ytdHtml = "";
+    if (totalYtdPrev > 0) {
+        let diff = ((totalYtdCurr - totalYtdPrev) / totalYtdPrev) * 100;
+        const color = diff >= 0 ? "#16a34a" : "#dc2626";
+        const sign = diff > 0 ? "+" : "";
+        ytdHtml = `<span style="color:${color}">${sign}${diff.toFixed(1)}%</span>`;
+    } else { ytdHtml = `<span style="color:#94a3b8; font-size:1.5rem">N/D</span>`; }
+    
+    document.getElementById('ov-ytd').innerHTML = ytdHtml;
+    document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${limitDate.getDate()}/${limitDate.getMonth()+1})`;
+
+
+    // 6. Forecast (MOVED TO ROW 2)
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     if(daysCurrent > 0) { 
         document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
         document.getElementById('ov-forecast-sub').innerText = "proiezione";
     } else { document.getElementById('ov-forecast').innerText = "-"; }
 
-    // --- HIGHLIGHTS LOGIC (Fixed Aggregation for "Giorno Nero/Record") ---
-    
-    // 1. Aggreghiamo i dati per data (somma di tutte le fasce per quel giorno)
+    // --- HIGHLIGHTS LOGIC ---
+    // 1. Aggreghiamo i dati per data
     const dailyTotals = {};
     dCurrent.forEach(d => {
         if (!dailyTotals[d.date]) dailyTotals[d.date] = 0;
         dailyTotals[d.date] += d.totale;
     });
-
-    // Creiamo un array di oggetti {date, totale}
-    const dailyArr = Object.keys(dailyTotals).map(date => ({
-        date: date,
-        totale: dailyTotals[date]
-    }));
+    const dailyArr = Object.keys(dailyTotals).map(date => ({ date: date, totale: dailyTotals[date] }));
 
     if(dailyArr.length > 0) {
-        // 1. Record Max (su tutti i giorni, incluso oggi)
+        // Record Max
         const recordDay = dailyArr.reduce((prev, curr) => (prev.totale > curr.totale) ? prev : curr);
         const rd = new Date(recordDay.date);
         document.getElementById('hl-record-val').innerText = recordDay.totale;
         document.getElementById('hl-record-date').innerText = rd.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
 
-        // 2. Minimo (Escludiamo oggi per evitare falsi positivi mattutini)
-        // Filtriamo l'array aggregato
+        // Minimo (No oggi)
         const dailyArrFinished = dailyArr.filter(d => d.date !== todayStr);
-
         if (dailyArrFinished.length > 0) {
             const minDay = dailyArrFinished.reduce((prev, curr) => (prev.totale < curr.totale) ? prev : curr);
             const md = new Date(minDay.date);
@@ -1058,7 +1091,7 @@ function renderOverviewKPI() {
             document.getElementById('hl-min-date').innerText = "Dati parziali";
         }
 
-        // Day of Week Stats (Utilizza i totali aggregati per coerenza)
+        // Day of Week Stats
         const dayCounts = {}; 
         dailyArr.forEach(d => {
             const dayIdx = new Date(d.date).getDay();
@@ -1066,36 +1099,28 @@ function renderOverviewKPI() {
             dayCounts[dayIdx].sum += d.totale;
             dayCounts[dayIdx].count++;
         });
-
-        let bestDayIdx = -1; let maxAvg = -1;
-        let worstDayIdx = -1; let minAvg = Infinity;
-
+        let bestDayIdx = -1; let maxAvg = -1; let worstDayIdx = -1; let minAvg = Infinity;
         Object.keys(dayCounts).forEach(k => {
             const avg = dayCounts[k].sum / dayCounts[k].count;
             if(avg > maxAvg) { maxAvg = avg; bestDayIdx = k; }
             if(avg < minAvg) { minAvg = avg; worstDayIdx = k; }
         });
-
         const daysMap = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
-        
-        // 3. Best Day
         if(bestDayIdx !== -1) {
             document.getElementById('hl-bestday-val').innerText = daysMap[bestDayIdx];
             document.getElementById('hl-bestday-avg').innerText = `Media: ${maxAvg.toFixed(0)}`;
         }
-        // 4. Worst Day
         if(worstDayIdx !== -1) {
             document.getElementById('hl-worstday-val').innerText = daysMap[worstDayIdx];
             document.getElementById('hl-worstday-avg').innerText = `Media: ${minAvg.toFixed(0)}`;
         }
 
-        // 5. Fattore Meteo (% Sole)
+        // Fattore Meteo
         const sunnyCount = dCurrent.filter(d => d.meteo && (d.meteo.includes('Sole') || d.meteo.includes('Sereno') || d.meteo.includes('Caldo'))).length;
         const pct = (sunnyCount / dCurrent.length) * 100;
         document.getElementById('hl-sun-pct').innerText = pct.toFixed(0) + "%";
 
     } else {
-        // Empty states
         document.getElementById('hl-record-val').innerText = "-";
         document.getElementById('hl-min-val').innerText = "-";
         document.getElementById('hl-bestday-val').innerText = "-";
@@ -1747,6 +1772,7 @@ window.toggleUtenzeChartMode = () => {
 };
 
 window.renderUtenze = () => {
+    if(!isChartReady()) return;
     const viewMode = document.getElementById('u-view-mode').value; const isDelta = viewMode === 'delta'; const chartType = isDelta ? 'bar' : 'line';
     
     // UPDATED LOGIC: Custom Range support
