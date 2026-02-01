@@ -2223,7 +2223,7 @@ window.renderUtenze = () => {
             });
 
             if(filtered.length > limitUtenze) {
-                tBodyArchive.innerHTML += `<tr><td colspan="7" style="text-align:center; padding:15px"><button class="btn btn-primary" onclick="limitUtenze+=200; renderUtenze()">⬇️ Carica altri risultati...</button></td></tr>`;
+                tBodyArchive.innerHTML += `<tr><td colspan="7" style="text-align:center; padding:15px"><button class="btn btn-primary" onclick="loadMoreUtenze()">⬇️ Carica altri risultati...</button></td></tr>`;
             }
         }
     }
@@ -2475,6 +2475,9 @@ window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('titl
 window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
 window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
 window.toggleExcludeStats = async (id, currentVal) => { try { await updateDoc(doc(db, "sessioni", id), { excludeStats: !currentVal }); showToast(!currentVal ? "Giorno escluso dalla media" : "Giorno reincluso nella media"); } catch(e) { showToast(e.message, "error"); } };
+window.loadMoreIngressi = () => { limitIngressi += 200; renderIngressiArchive(); };
+window.loadMoreUtenze = () => { limitUtenze += 200; renderUtenze(); };
+
 window.renderIngressiArchive = () => {
     const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const sort = document.getElementById('arch-sort').value;
     const f = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; });
@@ -2503,7 +2506,7 @@ window.renderIngressiArchive = () => {
     t.innerHTML += rowsBuffer.join('');
 
     if([...g.keys()].length > limitIngressi) {
-        t.innerHTML += `<tr><td colspan="11" style="text-align:center; padding:15px"><button class="btn btn-primary" onclick="limitIngressi+=200; renderIngressiArchive()">⬇️ Carica altri risultati...</button></td></tr>`;
+        t.innerHTML += `<tr><td colspan="11" style="text-align:center; padding:15px"><button class="btn btn-primary" onclick="loadMoreIngressi()">⬇️ Carica altri risultati...</button></td></tr>`;
     }
 }
 window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')debouncedRefresh(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
@@ -2512,7 +2515,7 @@ function refreshCurrentView(){ if(!document.getElementById('sub-overview').class
 setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
 const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('v-date').value=today; document.getElementById('d-date').value=today; document.getElementById('u-date').value=today;
 window.downloadCSV = () => { const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const filtered = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; }); if(!filtered.length) return showToast("Nessun dato da scaricare", "error"); let csvContent = "data:text/csv;charset=utf-8,Data;Tipo;Fascia;Meteo;EsclusoMedia;Intero;Ridotto;Abbonamenti;Gratuiti;Totale\n"; filtered.forEach(row => { csvContent += `${row.date};${row.type||'standard'};${row.fascia};${row.meteo};${row.excludeStats?'SI':'NO'};${row.int};${row.rid};${row.abb_int + row.abb_rid};${row.grat};${row.totale}\n`; }); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "archivio_ingressi.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
-window.resetArchiveFilters = () => { document.getElementById('arch-date-start').value=""; document.getElementById('arch-date-end').value=""; document.getElementById('arch-filter-fascia').value="all"; document.getElementById('arch-filter-meteo').value="all"; renderIngressiArchive(); };
+window.resetArchiveFilters = () => { document.getElementById('arch-date-start').value=""; document.getElementById('arch-date-end').value=""; document.getElementById('arch-filter-fascia').value="all"; document.getElementById('arch-filter-meteo').value="all"; limitIngressi = 200; renderIngressiArchive(); };
 </script>
 
 </body>
