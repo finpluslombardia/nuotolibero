@@ -739,7 +739,6 @@
                                 <th style="color:#3b82f6; background:rgba(59, 130, 246, 0.1)">💧 Lettura Acqua</th>
                                 <th style="color:#ef4444; background:rgba(239, 68, 68, 0.1)">🔥 Lettura Gas</th>
                                 <th>Note</th>
-                                <th style="text-align:right"></th>
                             </tr>
                         </thead>
                         <tbody id="tbody-utenze"></tbody>
@@ -960,23 +959,12 @@ function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])
 
 window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
 
-// FIXED FUNCTION FOR ROBUST DATE COMPARISON (INTEGER BASED + ANCHOR TO DATA)
+// FIXED FUNCTION FOR ROBUST DATE COMPARISON (INTEGER BASED)
 function renderOverviewKPI() {
     if(!dataIngressi || dataIngressi.length === 0) return;
-    
-    // ANCHOR LOGIC: Determine "Today" based on the LATEST DATA ENTRY, not system clock
-    // This allows backfilling or simulating future dates correctly
-    let anchorDate = new Date();
-    if(dataIngressi.length > 0) {
-        // dataIngressi is already sorted descending by date
-        const latestEntryDate = new Date(dataIngressi[0].date);
-        // We use the latest entry date as "Today" for KPI calculation purposes
-        anchorDate = latestEntryDate;
-    }
-
-    const currentYear = anchorDate.getFullYear();
-    const currentMonth = anchorDate.getMonth() + 1;
-    const currentMonthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+    const today = new Date();
+    // Manual local time string to avoid UTC/Timezone shift
+    const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
     
     // Parse helper
     const parseDate = (dateStr) => {
@@ -985,18 +973,24 @@ function renderOverviewKPI() {
         return { y: parseInt(parts[0]), m: parseInt(parts[1]), d: parseInt(parts[2]) };
     };
 
-    // 1. Filtro dati correnti (Mese Ancorato)
+    // 1. Filtro dati correnti (Mese)
     const dCurrent = dataIngressi.filter(x => x.date.startsWith(currentMonthStr) && !x.excludeStats);
     const totalCurrent = dCurrent.reduce((a,b)=>a+b.totale,0);
     const uniqueDays = new Set(dCurrent.map(x=>x.date));
     const daysCurrent = uniqueDays.size;
 
-    // DETERMINAZIONE GIORNO MASSIMO (Progressive Month Day based on ANCHOR)
-    let maxDay = anchorDate.getDate(); // Use the anchor's day (e.g., 1st)
-    
+    // DETERMINAZIONE GIORNO MASSIMO (Progressive Month Day)
+    let maxDay = today.getDate();
+    if (dCurrent.length > 0) {
+        const days = dCurrent.map(x => parseDate(x.date).d); 
+        const maxDataDay = Math.max(...days);
+        if (maxDataDay > maxDay) maxDay = maxDataDay;
+    }
+
     // 2. YoY Calculation (Mese Corrente vs Stesso Mese Anno Scorso)
-    const targetYoyYear = currentYear - 1;
-    const targetYoyMonth = currentMonth;
+    const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+    const targetYoyYear = ym.getFullYear();
+    const targetYoyMonth = ym.getMonth() + 1;
 
     const dYoy = dataIngressi.filter(x => {
         if(x.excludeStats) return false;
@@ -1046,13 +1040,10 @@ function renderOverviewKPI() {
     document.getElementById('ov-avg-trend').innerHTML = avgTrendHtml;
     
     // 3. Vs Mese Prec (MoM) partial comparison
-    // Calculate previous month carefully
-    let targetMomYear = currentYear;
-    let targetMomMonth = currentMonth - 1;
-    if (targetMomMonth === 0) { targetMomMonth = 12; targetMomYear--; }
-    
-    const pmDate = new Date(targetMomYear, targetMomMonth - 1, 1);
-    const pm_month_name = pmDate.toLocaleString('it-IT',{month:'long'});
+    const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const targetMomYear = pm.getFullYear();
+    const targetMomMonth = pm.getMonth() + 1;
+    const pm_month_name = pm.toLocaleString('it-IT',{month:'long'});
 
     const dPrevPartial = dataIngressi.filter(x => {
         if(x.excludeStats) return false;
@@ -1088,12 +1079,30 @@ function renderOverviewKPI() {
     document.getElementById('ov-yoy-label').innerText = `vs ${targetYoyYear} (al ${maxDay})`;
 
     // 5. YTD Trend (Anno vs Anno Prec)
-    const prevYearVal = currentYear - 1;
+    const currYear = today.getFullYear();
+    const prevYearVal = currYear - 1;
     
     const allCurrentYearData = dataIngressi.filter(x => {
         const {y} = parseDate(x.date);
-        return y === currentYear && !x.excludeStats;
+        return y === currYear && !x.excludeStats;
     });
+
+    let limitYTD = new Date();
+    if(allCurrentYearData.length > 0) {
+        const maxDateStr = allCurrentYearData.reduce((max, p) => p.date > max ? p.date : max, allCurrentYearData[0].date);
+        limitYTD = new Date(maxDateStr);
+    }
+    
+    // Parse limitYTD manually to get Month and Day limit
+    // Note: limitYTD is a Date object, usually local time if created from string.
+    // Safer to re-parse the maxDateStr string itself
+    let limitMonth = limitYTD.getMonth() + 1;
+    let limitDay = limitYTD.getDate();
+    // If no data, default to today
+    if(allCurrentYearData.length === 0) {
+        limitMonth = today.getMonth() + 1;
+        limitDay = today.getDate();
+    }
 
     const totalYtdCurr = allCurrentYearData.reduce((a,b)=>a+b.totale,0);
 
@@ -1101,9 +1110,8 @@ function renderOverviewKPI() {
         if(x.excludeStats) return false;
         const {y, m, d} = parseDate(x.date);
         if (y !== prevYearVal) return false;
-        // Logic for YTD limit based on currentMonth and maxDay (from anchor)
-        if (m < currentMonth) return true;
-        if (m === currentMonth && d <= maxDay) return true;
+        if (m < limitMonth) return true;
+        if (m === limitMonth && d <= limitDay) return true;
         return false;
     });
     const totalYtdPrev = dYtdPrev.reduce((a,b)=>a+b.totale,0);
@@ -1123,10 +1131,10 @@ function renderOverviewKPI() {
     ytdHtml = `<span style="color:${colorYtd}">${signYtd}${diffYtd.toFixed(1)}%</span>`;
     
     document.getElementById('ov-ytd').innerHTML = ytdHtml;
-    document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${maxDay}/${currentMonth})`;
+    document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${limitDay}/${limitMonth})`;
 
     // 6. Forecast
-    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     if(daysCurrent > 0) { 
         document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
         document.getElementById('ov-forecast-sub').innerText = "proiezione";
@@ -1134,9 +1142,7 @@ function renderOverviewKPI() {
 
     // --- HIGHLIGHTS LOGIC ---
     const dailyTotals = {};
-    // Use anchor date string to filter "today"
-    const todayStrHighlights = getStrDate(anchorDate);
-    
+    const todayStrHighlights = getStrDate(new Date());
     dCurrent.forEach(d => {
         if (!dailyTotals[d.date]) dailyTotals[d.date] = 0;
         dailyTotals[d.date] += d.totale;
@@ -1149,7 +1155,6 @@ function renderOverviewKPI() {
         document.getElementById('hl-record-val').innerText = recordDay.totale;
         document.getElementById('hl-record-date').innerText = rd.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
 
-        // Only exclude today if there are other days
         let dailyArrFinished = dailyArr.filter(d => d.date !== todayStrHighlights);
         if(dailyArrFinished.length === 0) dailyArrFinished = dailyArr; 
 
@@ -1202,15 +1207,10 @@ function renderOverviewKPI() {
 window.renderOverviewCharts = () => {
     if(!dataIngressi || dataIngressi.length === 0 || !isChartReady()) return;
     const chartType = document.getElementById('ov-chart-type').value;
-    
-    // ANCHOR CHARTS TO DATA TOO
-    let anchorDate = new Date();
-    if(dataIngressi.length > 0) anchorDate = new Date(dataIngressi[0].date);
-
-    const today = anchorDate;
+    const today = new Date();
     const dates=[], l30=[], l30_prev=[];
     for(let i=29; i>=0; i--) {
-        const dt=new Date(today); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
+        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
         dates.push(`${dt.toLocaleDateString('it-IT',{weekday:'short'})} ${dt.getDate()}/${dt.getMonth()+1}`);
         const dtPrev = getDataConfronto(dt);
         const dtPrevStr = getStrDate(dtPrev);
@@ -1230,7 +1230,7 @@ window.renderOverviewCharts = () => {
     // 90 DAYS CHART
     const dates90=[], l90=[], l90_prev=[];
     for(let i=89; i>=0; i--) {
-        const dt=new Date(today); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
+        const dt=new Date(); dt.setDate(today.getDate()-i); const dtStr=getStrDate(dt);
         dates90.push(`${dt.getDate()}/${dt.getMonth()+1}`);
         const dtPrev = getDataConfronto(dt);
         const dtPrevStr = getStrDate(dtPrev);
@@ -1969,23 +1969,22 @@ window.renderUtenze = () => {
 
     // --- RENDER MONTHLY TABLE ---
     const tBodyMonthly = document.getElementById('tbody-utenze-monthly');
-    if(tBodyMonthly) {
-        tBodyMonthly.innerHTML = "";
-        const sortedMonths = Object.keys(monthlyAgg).sort().reverse();
-        sortedMonths.forEach(mStr => {
-            const d = monthlyAgg[mStr];
-            const [y, m] = mStr.split('-');
-            const dateObj = new Date(y, parseInt(m)-1, 1);
-            const monthLabel = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
-            const row = `<tr>
-                <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
-                <td style="font-weight:600; color:#a16207">${d.elec.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
-                <td style="font-weight:600; color:#1d4ed8">${d.water.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
-                <td style="font-weight:600; color:#b91c1c">${d.gas.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
-            </tr>`;
-            tBodyMonthly.innerHTML += row;
-        });
-    }
+    tBodyMonthly.innerHTML = "";
+    const sortedMonths = Object.keys(monthlyAgg).sort().reverse();
+    sortedMonths.forEach(mStr => {
+        const d = monthlyAgg[mStr];
+        const [y, m] = mStr.split('-');
+        const dateObj = new Date(y, parseInt(m)-1, 1);
+        const monthLabel = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+        const row = `<tr>
+            <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
+            <td style="font-weight:600; color:#a16207">${d.elec.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+            <td style="font-weight:600; color:#1d4ed8">${d.water.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+            <td style="font-weight:600; color:#b91c1c">${d.gas.toLocaleString('it-IT', {maximumFractionDigits:0})}</td>
+        </tr>`;
+        tBodyMonthly.innerHTML += row;
+    });
+
 
     // Helper for context strings
     const getMeteoStr = () => {
@@ -2015,12 +2014,10 @@ window.renderUtenze = () => {
             diffHtml = `<span style="color:${color}; font-weight:800">${sign}${diff.toFixed(1)}%</span> vs ${monthName} ${prevYear} ${dayLabel}`;
         }
 
-        if(document.getElementById(`u-kpi-${type}-title`)) {
-            document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
-            document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
-            document.getElementById(`u-kpi-${type}-sub`).innerHTML = diffHtml;
-            if(contextHtml) document.getElementById(`u-kpi-${type}-context`).innerHTML = contextHtml;
-        }
+        document.getElementById(`u-kpi-${type}-title`).innerText = `${monthName} ${thisYear}`;
+        document.getElementById(`u-kpi-${type}-val`).innerText = `${valCurr.toLocaleString('it-IT', {maximumFractionDigits:0})} ${unit}`;
+        document.getElementById(`u-kpi-${type}-sub`).innerHTML = diffHtml;
+        if(contextHtml) document.getElementById(`u-kpi-${type}-context`).innerHTML = contextHtml;
     };
 
     updateKpi('elec', sumElec.curr, sumElec.prev, 'kWh', getMeteoStr());
@@ -2071,17 +2068,15 @@ window.renderUtenze = () => {
     // 1. Estremi Elettrico
     const fmtDate = (dStr) => dStr !== '-' ? new Date(dStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'}) : '-';
     
-    if(document.getElementById('u-hl-elec-max')) {
-        document.getElementById('u-hl-elec-max').innerText = maxElec.val > 0 ? maxElec.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
-        document.getElementById('u-hl-elec-max-date').innerText = fmtDate(maxElec.date);
-        
-        if(minElec.val !== Infinity) {
-            document.getElementById('u-hl-elec-min').innerText = minElec.val.toLocaleString('it-IT', {maximumFractionDigits:0});
-            document.getElementById('u-hl-elec-min-date').innerText = fmtDate(minElec.date);
-        } else {
-            document.getElementById('u-hl-elec-min').innerText = "-";
-            document.getElementById('u-hl-elec-min-date').innerText = "-";
-        }
+    document.getElementById('u-hl-elec-max').innerText = maxElec.val > 0 ? maxElec.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
+    document.getElementById('u-hl-elec-max-date').innerText = fmtDate(maxElec.date);
+    
+    if(minElec.val !== Infinity) {
+        document.getElementById('u-hl-elec-min').innerText = minElec.val.toLocaleString('it-IT', {maximumFractionDigits:0});
+        document.getElementById('u-hl-elec-min-date').innerText = fmtDate(minElec.date);
+    } else {
+        document.getElementById('u-hl-elec-min').innerText = "-";
+        document.getElementById('u-hl-elec-min-date').innerText = "-";
     }
 
     // 2. LAST 24H VALUES LOGIC
@@ -2108,98 +2103,24 @@ window.renderUtenze = () => {
     lastWater = findLatest('water');
     lastGas = findLatest('gas');
 
-    if(document.getElementById('u-last-elec')) {
-        document.getElementById('u-last-elec').innerText = lastElec.val !== '-' ? lastElec.val + " kWh" : "-";
-        document.getElementById('u-last-elec-date').innerText = lastElec.date;
-        document.getElementById('u-last-water').innerText = lastWater.val !== '-' ? lastWater.val + " m³" : "-";
-        document.getElementById('u-last-water-date').innerText = lastWater.date;
-        document.getElementById('u-last-gas').innerText = lastGas.val !== '-' ? lastGas.val + " m³" : "-";
-        document.getElementById('u-last-gas-date').innerText = lastGas.date;
-    }
+    document.getElementById('u-last-elec').innerText = lastElec.val !== '-' ? lastElec.val + " kWh" : "-";
+    document.getElementById('u-last-elec-date').innerText = lastElec.date;
+    document.getElementById('u-last-water').innerText = lastWater.val !== '-' ? lastWater.val + " m³" : "-";
+    document.getElementById('u-last-water-date').innerText = lastWater.date;
+    document.getElementById('u-last-gas').innerText = lastGas.val !== '-' ? lastGas.val + " m³" : "-";
+    document.getElementById('u-last-gas-date').innerText = lastGas.date;
+
 
     // 3. Estremi Gas
-    if(document.getElementById('u-hl-gas-max')) {
-        document.getElementById('u-hl-gas-max').innerText = maxGas.val > 0 ? maxGas.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
-        document.getElementById('u-hl-gas-max-date').innerText = fmtDate(maxGas.date);
+    document.getElementById('u-hl-gas-max').innerText = maxGas.val > 0 ? maxGas.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
+    document.getElementById('u-hl-gas-max-date').innerText = fmtDate(maxGas.date);
 
-        if(minGas.val !== Infinity) {
-            document.getElementById('u-hl-gas-min').innerText = minGas.val.toLocaleString('it-IT', {maximumFractionDigits:0});
-            document.getElementById('u-hl-gas-min-date').innerText = fmtDate(minGas.date);
-        } else {
-            document.getElementById('u-hl-gas-min').innerText = "-";
-            document.getElementById('u-hl-gas-min-date').innerText = "-";
-        }
-    }
-
-    // --- RENDER UTENZE ARCHIVE TABLE (FIXED: WAS MISSING) ---
-    const tBodyArchive = document.getElementById('tbody-utenze');
-    if(tBodyArchive) {
-        tBodyArchive.innerHTML = "";
-        
-        // 1. Prepare Data with Deltas (Reusing enriched logic)
-        const enrichedData = allDatesAsc.map(date => {
-            const g = grouped[date];
-            const row = { date: date, raw: g, delta: { elec: 0, water: 0, gas: 0 } };
-            ['elec', 'water', 'gas'].forEach(key => {
-                row.delta[key] = (g[key] && deltas[date][key] !== null) ? deltas[date][key] : null;
-            });
-            return row;
-        });
-
-        // 2. Filter based on UI inputs
-        const start = document.getElementById('u-hist-start') ? document.getElementById('u-hist-start').value : null;
-        const end = document.getElementById('u-hist-end') ? document.getElementById('u-hist-end').value : null;
-        const sortOrder = document.getElementById('u-hist-sort') ? document.getElementById('u-hist-sort').value : 'desc';
-
-        let filtered = enrichedData.filter(r => {
-            if (start && r.date < start) return false;
-            if (end && r.date > end) return false;
-            return true;
-        });
-
-        // 3. Sort
-        filtered.sort((a,b) => sortOrder === 'desc' ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
-
-        if(filtered.length === 0) {
-            tBodyArchive.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b">Nessun dato nel periodo selezionato.</td></tr>';
-        } else {
-            filtered.forEach(r => {
-                const d = r.raw;
-                const dt = r.date.split('-').reverse().join('/');
-                
-                // Format values with consumption
-                const fmtCell = (key, unit, color) => {
-                    if(!d[key]) return `<span style="color:#cbd5e1">-</span>`;
-                    const val = d[key].val.toLocaleString('it-IT', {maximumFractionDigits:1});
-                    const cons = r.delta[key] !== null ? r.delta[key].toLocaleString('it-IT', {maximumFractionDigits:1}) : '-';
-                    return `<div>${val}</div><div style="font-size:0.75rem; color:${color}; font-weight:700">(${cons} ${unit})</div>`;
-                };
-
-                // Detailed Elec Breakdown
-                let elecDetail = '-';
-                if(d.elec) {
-                    elecDetail = `<div style="font-size:0.8rem; color:#854d0e">F1: ${d.elec.a1||0}<br>F2: ${d.elec.a2||0}<br>F3: ${d.elec.a3||0}</div>`;
-                }
-
-                // Notes
-                const notes = d.notes.length ? d.notes.join("<br>") : "";
-
-                const row = `<tr>
-                    <td style="font-weight:700">${dt}</td>
-                    <td style="color:#a16207; font-weight:600">${fmtCell('elec', 'kWh', '#d97706')}</td>
-                    <td>${elecDetail}</td>
-                    <td style="color:#1e40af; font-weight:600">${fmtCell('water', 'm³', '#2563eb')}</td>
-                    <td style="color:#b91c1c; font-weight:600">${fmtCell('gas', 'm³', '#dc2626')}</td>
-                    <td style="font-size:0.85rem; color:#475569">${notes}</td>
-                    <td style="text-align:right">
-                       ${d.elec ? `<button class="btn btn-icon" style="color:var(--primary);background:transparent" onclick="editUtenze('${d.elec.id}')">✏️</button>` : ''} 
-                       ${d.water ? `<button class="btn btn-icon" style="color:var(--primary);background:transparent" onclick="editUtenze('${d.water.id}')">✏️</button>` : ''}
-                       ${d.gas ? `<button class="btn btn-icon" style="color:var(--primary);background:transparent" onclick="editUtenze('${d.gas.id}')">✏️</button>` : ''}
-                    </td>
-                </tr>`;
-                tBodyArchive.innerHTML += row;
-            });
-        }
+    if(minGas.val !== Infinity) {
+        document.getElementById('u-hl-gas-min').innerText = minGas.val.toLocaleString('it-IT', {maximumFractionDigits:0});
+        document.getElementById('u-hl-gas-min-date').innerText = fmtDate(minGas.date);
+    } else {
+        document.getElementById('u-hl-gas-min').innerText = "-";
+        document.getElementById('u-hl-gas-min-date').innerText = "-";
     }
 
     // === CHART GENERATION (NOW SAFE) ===
