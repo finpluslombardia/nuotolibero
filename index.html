@@ -787,8 +787,8 @@ onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen')
 
 function startListening() {
     try {
-        // IMPORTANT: Listeners must populate data arrays before calling init functions
-        onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(2000)), (snap) => { 
+        // IMPORTANT: INCREASED LIMIT TO 15000 TO ENSURE YEAR-OVER-YEAR DATA IS LOADED
+        onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(15000)), (snap) => { 
             dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); 
             populateStatFilters(); 
             refreshCurrentView();
@@ -964,7 +964,9 @@ function renderOverviewKPI() {
     if(!dataIngressi || dataIngressi.length === 0) return;
     const today = new Date();
     const todayStr = getStrDate(today); 
-    const currentMonthStr = today.toISOString().slice(0, 7);
+    // FIX: Manual local time string construction for currentMonthStr to avoid UTC/Timezone shift issues on 1st of month
+    const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+    
     const pm = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const prevMonthStr = `${pm.getFullYear()}-${String(pm.getMonth()+1).padStart(2,'0')}`;
     const ym = new Date(today.getFullYear() - 1, today.getMonth(), 1);
