@@ -648,15 +648,24 @@
         <div id="sub-u-charts" class="hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px">
                 <h2 class="page-title" style="margin:0; font-size:1.3rem">📊 Analisi Utenze</h2>
-                <div style="display:flex; gap:10px; align-items:center">
-                    <select id="u-range" class="filter-select" onchange="renderUtenze()" style="font-weight:700">
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+                    <select id="u-range" class="filter-select" onchange="toggleUtenzeChartMode()" style="font-weight:700">
                         <option value="7">Ultimi 7 Giorni</option>
                         <option value="15">Ultimi 15 Giorni</option>
                         <option value="30">Ultimi 30 Giorni</option>
                         <option value="90">Ultimi 3 Mesi</option>
                         <option value="180">Ultimi 6 Mesi</option>
                         <option value="365">Ultimi 12 Mesi</option>
+                        <option value="custom">📅 Periodo Personalizzato</option>
                     </select>
+                    
+                    <!-- NEW CUSTOM INPUTS -->
+                    <div id="u-chart-custom-inputs" class="hidden" style="display:flex; gap:5px; align-items:center">
+                        <input type="date" id="u-chart-start" class="filter-select" style="width:130px">
+                        <input type="date" id="u-chart-end" class="filter-select" style="width:130px">
+                        <button class="btn btn-primary" onclick="renderUtenze()" style="height:40px; padding:0 15px">OK</button>
+                    </div>
+
                     <select id="u-view-mode" class="filter-select" onchange="renderUtenze()" style="border:2px solid var(--primary); color:var(--primary); font-weight:700">
                         <option value="delta">📊 Consumo (Delta)</option>
                         <option value="total">📈 Lettura (Totale)</option>
@@ -1297,7 +1306,7 @@ window.renderStats = () => {
                 const month = d.getMonth();
                 const day = d.getDate();
                 const k = `${month}-${day}`;
-                
+              
                 if(compVal === 'avg') {
                     let sum = 0, count = 0;
                     if(histMap[k]) {
@@ -1367,7 +1376,7 @@ window.renderStats = () => {
                 let subset = compSet.filter(d => new Date(d.date).getDay() === getJsDay(i));
                 return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
             });
-            
+           
             weekDatasets.push({
                 label: (compVal === 'avg' ? 'Media' : compVal) + ' (Tot)',
                 data: compDataWeekly,
@@ -1716,10 +1725,46 @@ window.switchSubViewUtenze=(s)=>{
     renderUtenze();
 };
 
+// NEW FUNCTION: Toggle Custom Inputs for Utenze Charts
+window.toggleUtenzeChartMode = () => {
+    const val = document.getElementById('u-range').value;
+    const c = document.getElementById('u-chart-custom-inputs');
+    if(val === 'custom') {
+        c.classList.remove('hidden');
+        c.style.display = 'flex';
+        // Defaults
+        if(!document.getElementById('u-chart-start').value) {
+            const now = new Date();
+            document.getElementById('u-chart-end').value = now.toISOString().split('T')[0];
+            now.setDate(now.getDate()-30);
+            document.getElementById('u-chart-start').value = now.toISOString().split('T')[0];
+        }
+    } else {
+        c.classList.add('hidden');
+        c.style.display = 'none';
+        renderUtenze();
+    }
+};
+
 window.renderUtenze = () => {
-    if(!isChartReady()) return;
     const viewMode = document.getElementById('u-view-mode').value; const isDelta = viewMode === 'delta'; const chartType = isDelta ? 'bar' : 'line';
-    const rangeDays = parseInt(document.getElementById('u-range').value); const limitDate = new Date(); limitDate.setDate(limitDate.getDate() - rangeDays); const limitStr = limitDate.toISOString().split('T')[0];
+    
+    // UPDATED LOGIC: Custom Range support
+    const rangeVal = document.getElementById('u-range').value;
+    let limitStr = null;
+    let customStart = null;
+    let customEnd = null;
+
+    if (rangeVal === 'custom') {
+        customStart = document.getElementById('u-chart-start').value;
+        customEnd = document.getElementById('u-chart-end').value;
+    } else {
+        const rangeDays = parseInt(rangeVal); 
+        const limitDate = new Date(); 
+        limitDate.setDate(limitDate.getDate() - rangeDays); 
+        limitStr = limitDate.toISOString().split('T')[0];
+    }
+
     const showHistory = document.getElementById('u-compare-year').checked;
     const grouped = {};
     dataUtenze.forEach(d => {
@@ -1953,9 +1998,65 @@ window.renderUtenze = () => {
         document.getElementById('u-hl-gas-min-date').innerText = "-";
     }
 
+    // === TABLE GENERATION (MOVED UP FOR SAFETY) ===
+    const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse();
+    
+    // HISTORY FILTER LOGIC
+    const histStart = document.getElementById('u-hist-start').value;
+    const histEnd = document.getElementById('u-hist-end').value;
+    const histSort = document.getElementById('u-hist-sort').value;
+
+    let filteredDates = [...datesDesc];
+    if(histStart) filteredDates = filteredDates.filter(d => d >= histStart);
+    if(histEnd) filteredDates = filteredDates.filter(d => d <= histEnd);
+    if(histSort === 'asc') filteredDates.reverse();
+
+    const rowsBuffer = [];
+    filteredDates.forEach(date => {
+        const g = grouped[date]; const d = deltas[date];
+        const makeCell = (obj, deltaVal, color, suffix='') => {
+            if(!obj) return '<span style="color:#ccc">-</span>';
+            let deltaHtml = '';
+            if(deltaVal !== null) {
+                const warnStyle = (deltaVal > 1000 && suffix!=='kWh') ? 'color:#ef4444; text-decoration:underline' : `color:${color}`;
+                deltaHtml = `<div style="font-size:0.75rem; ${warnStyle}; opacity:0.8; font-weight:700">Consumo: +${deltaVal.toLocaleString('it-IT', {maximumFractionDigits: 1})} ${suffix}</div>`;
+            } else { deltaHtml = `<div style="font-size:0.75rem; color:#94a3b8">Primo dato</div>`; }
+            return `<div style="display:flex; flex-direction:column; gap:2px">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:5px"><span style="font-weight:800; font-size:1rem; color:${color}">${obj.val.toLocaleString('it-IT')}</span>
+                    <div style="display:flex; gap:2px"><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:var(--primary); border:1px solid #dbeafe; background:#eff6ff" onclick="editUtenze('${obj.id}')">✏️</button><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:#ef4444; border:1px solid #fee2e2; background:#fef2f2" onclick="delDoc('utenze_log','${obj.id}')">×</button></div>
+                </div>${deltaHtml}</div>`;
+        };
+        let elecDet = '-';
+        if(g.elec) {
+            const meteoBadge = g.elec.meteo ? `<br><span style="font-size:0.75rem; background:#f1f5f9; padding:2px 6px; border-radius:4px">Meteo: ${g.elec.meteo}</span>` : '';
+            elecDet = `<div style="font-size:0.75rem; color:#64748b">F1: <b>${g.elec.a1||0}</b> | F2: <b>${g.elec.a2||0}</b> | F3: <b>${g.elec.a3||0}</b>${meteoBadge}</div>`;
+        }
+        let gasCell = makeCell(g.gas, d.gas, '#dc2626', 'm³');
+        if(g.gas && g.gas.temp) { gasCell += `<div style="font-size:0.7rem; color:#64748b; margin-top:4px; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">🌡️ Temp: <b>${g.gas.temp}°C</b></div>`; }
+        const noteStr = g.notes.length > 0 ? g.notes.join('; ') : '';
+        const dateFmt = date.split('-').reverse().join('/');
+        rowsBuffer.push(`<tr><td style="font-weight:800; color:var(--text-main); vertical-align:top; padding-top:15px">${dateFmt}</td><td style="background:rgba(234, 179, 8, 0.05); vertical-align:top">${makeCell(g.elec, d.elec, '#d97706', 'kWh')}</td><td style="background:rgba(234, 179, 8, 0.05); vertical-align:top">${elecDet}</td><td style="background:rgba(59, 130, 246, 0.05); vertical-align:top">${makeCell(g.water, d.water, '#2563eb', 'm³')}</td><td style="background:rgba(239, 68, 68, 0.05); vertical-align:top">${gasCell}</td><td style="font-size:0.8rem; color:#64748b; font-style:italic; vertical-align:top; padding-top:15px">${noteStr}</td></tr>`);
+    });
+    t.innerHTML = rowsBuffer.join('');
+
+    // === CHART GENERATION (NOW SAFE) ===
+    if (!isChartReady()) return;
+
     // Chart Logic UPDATED with dual axis support
     function prepareChartData(type) {
-        const filteredDates = allDatesAsc.filter(d => d >= limitStr);
+        // FILTER DATES LOGIC: Either by limitStr OR by customRange
+        let filteredDates = [];
+        if (limitStr) {
+             filteredDates = allDatesAsc.filter(d => d >= limitStr);
+        } else if (customStart && customEnd) {
+             filteredDates = allDatesAsc.filter(d => d >= customStart && d <= customEnd);
+        } else if (customStart) {
+             filteredDates = allDatesAsc.filter(d => d >= customStart);
+        } else {
+             // Fallback
+             filteredDates = allDatesAsc;
+        }
+
         const labels = [], dataTotal = [], dataDelta = [], dataSecondary = [], dataHistoryTotal = [], dataHistoryDelta = [];
         const typeKey = type === '⚡ Elettricità' ? 'elec' : (type === '💧 Acqua' ? 'water' : 'gas');
         
@@ -2067,46 +2168,6 @@ window.renderUtenze = () => {
         renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd', null), chartType); // No secondary for water
         renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5', 'Temp. Esterna (°C)'), chartType);
     }
-
-    const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse();
-    
-    // HISTORY FILTER LOGIC
-    const histStart = document.getElementById('u-hist-start').value;
-    const histEnd = document.getElementById('u-hist-end').value;
-    const histSort = document.getElementById('u-hist-sort').value;
-
-    let filteredDates = [...datesDesc];
-    if(histStart) filteredDates = filteredDates.filter(d => d >= histStart);
-    if(histEnd) filteredDates = filteredDates.filter(d => d <= histEnd);
-    if(histSort === 'asc') filteredDates.reverse();
-
-    const rowsBuffer = [];
-    filteredDates.forEach(date => {
-        const g = grouped[date]; const d = deltas[date];
-        const makeCell = (obj, deltaVal, color, suffix='') => {
-            if(!obj) return '<span style="color:#ccc">-</span>';
-            let deltaHtml = '';
-            if(deltaVal !== null) {
-                const warnStyle = (deltaVal > 1000 && suffix!=='kWh') ? 'color:#ef4444; text-decoration:underline' : `color:${color}`;
-                deltaHtml = `<div style="font-size:0.75rem; ${warnStyle}; opacity:0.8; font-weight:700">Consumo: +${deltaVal.toLocaleString('it-IT', {maximumFractionDigits: 1})} ${suffix}</div>`;
-            } else { deltaHtml = `<div style="font-size:0.75rem; color:#94a3b8">Primo dato</div>`; }
-            return `<div style="display:flex; flex-direction:column; gap:2px">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:5px"><span style="font-weight:800; font-size:1rem; color:${color}">${obj.val.toLocaleString('it-IT')}</span>
-                    <div style="display:flex; gap:2px"><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:var(--primary); border:1px solid #dbeafe; background:#eff6ff" onclick="editUtenze('${obj.id}')">✏️</button><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:#ef4444; border:1px solid #fee2e2; background:#fef2f2" onclick="delDoc('utenze_log','${obj.id}')">×</button></div>
-                </div>${deltaHtml}</div>`;
-        };
-        let elecDet = '-';
-        if(g.elec) {
-            const meteoBadge = g.elec.meteo ? `<br><span style="font-size:0.75rem; background:#f1f5f9; padding:2px 6px; border-radius:4px">Meteo: ${g.elec.meteo}</span>` : '';
-            elecDet = `<div style="font-size:0.75rem; color:#64748b">F1: <b>${g.elec.a1||0}</b> | F2: <b>${g.elec.a2||0}</b> | F3: <b>${g.elec.a3||0}</b>${meteoBadge}</div>`;
-        }
-        let gasCell = makeCell(g.gas, d.gas, '#dc2626', 'm³');
-        if(g.gas && g.gas.temp) { gasCell += `<div style="font-size:0.7rem; color:#64748b; margin-top:4px; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">🌡️ Temp: <b>${g.gas.temp}°C</b></div>`; }
-        const noteStr = g.notes.length > 0 ? g.notes.join('; ') : '';
-        const dateFmt = date.split('-').reverse().join('/');
-        rowsBuffer.push(`<tr><td style="font-weight:800; color:var(--text-main); vertical-align:top; padding-top:15px">${dateFmt}</td><td style="background:rgba(234, 179, 8, 0.05); vertical-align:top">${makeCell(g.elec, d.elec, '#d97706', 'kWh')}</td><td style="background:rgba(234, 179, 8, 0.05); vertical-align:top">${elecDet}</td><td style="background:rgba(59, 130, 246, 0.05); vertical-align:top">${makeCell(g.water, d.water, '#2563eb', 'm³')}</td><td style="background:rgba(239, 68, 68, 0.05); vertical-align:top">${gasCell}</td><td style="font-size:0.8rem; color:#64748b; font-style:italic; vertical-align:top; padding-top:15px">${noteStr}</td></tr>`);
-    });
-    t.innerHTML = rowsBuffer.join('');
 };
 
 window.resetUtenzeHistory = () => {
