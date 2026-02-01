@@ -143,6 +143,21 @@
     .archive-toolbar { display: flex; gap: 10px; align-items: center; background: rgba(255,255,255,0.4); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: var(--glass-border); flex-wrap: wrap; }
     .arch-input, .arch-select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.9); font-size: 0.85rem; color: var(--text-main); font-weight: 600; }
     .trend-up { color: #16a34a; } .trend-down { color: #dc2626; }
+
+    /* UTENZE TABLE STYLES */
+    .u-cell { vertical-align: top; padding: 12px 10px; }
+    .u-big-num { font-size: 1.05rem; font-weight: 800; display: block; margin-bottom: 4px; }
+    .u-delta-badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+    .u-delta-elec { background: rgba(234, 179, 8, 0.2); color: #b45309; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .u-delta-water { background: rgba(59, 130, 246, 0.2); color: #1e40af; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .u-delta-gas { background: rgba(239, 68, 68, 0.2); color: #b91c1c; border: 1px solid rgba(239, 68, 68, 0.3); }
+    
+    .f-grid { display: flex; gap: 8px; font-size: 0.75rem; margin-top: 5px; flex-wrap: wrap; }
+    .f-item { background: rgba(255,255,255,0.5); padding: 2px 6px; border-radius: 6px; text-align: center; border: 1px solid rgba(0,0,0,0.05); font-weight: 600; color: #64748b; }
+    .f-item strong { color: #1e293b; font-weight: 800; }
+    
+    .meteo-tag { font-size: 0.75rem; font-weight: 600; color: #64748b; display: flex; align-items: center; gap:4px; margin-top: 5px; }
+    
 </style>
 </head>
 <body>
@@ -733,12 +748,13 @@
                     <table id="table-utenze">
                         <thead>
                             <tr>
-                                <th>Data</th>
-                                <th style="color:#eab308; background:rgba(234, 179, 8, 0.1)">⚡ Lettura Totale</th>
-                                <th style="color:#eab308; background:rgba(234, 179, 8, 0.1)">F1 / F2 / F3</th>
-                                <th style="color:#3b82f6; background:rgba(59, 130, 246, 0.1)">💧 Lettura Acqua</th>
-                                <th style="color:#ef4444; background:rgba(239, 68, 68, 0.1)">🔥 Lettura Gas</th>
-                                <th>Note</th>
+                                <th style="width:100px">Data</th>
+                                <th style="color:#b45309; background:rgba(234, 179, 8, 0.1); width:15%">⚡ Elettricità</th>
+                                <th style="color:#b45309; background:rgba(234, 179, 8, 0.05); width:20%">Dettaglio Fasce</th>
+                                <th style="color:#1e40af; background:rgba(59, 130, 246, 0.1); width:15%">💧 Acqua</th>
+                                <th style="color:#b91c1c; background:rgba(239, 68, 68, 0.1); width:15%">🔥 Gas</th>
+                                <th style="width:25%">Note / Meteo</th>
+                                <th style="width:50px"></th>
                             </tr>
                         </thead>
                         <tbody id="tbody-utenze"></tbody>
@@ -1426,7 +1442,7 @@ window.renderStats = () => {
                 const month = d.getMonth();
                 const day = d.getDate();
                 const k = `${month}-${day}`;
-               
+                
                 if(compVal === 'avg') {
                     let sum = 0, count = 0;
                     if(histMap[k]) {
@@ -2190,35 +2206,71 @@ window.renderUtenze = () => {
                 const d = r.raw;
                 const dt = r.date.split('-').reverse().join('/');
                 
-                // Format values with consumption
-                const fmtCell = (key, unit, color, id) => {
-                    if(!d[key]) return `<span style="color:#cbd5e1">-</span>`;
-                    const val = d[key].val.toLocaleString('it-IT', {maximumFractionDigits:1});
-                    const cons = r.delta[key] !== null ? r.delta[key].toLocaleString('it-IT', {maximumFractionDigits:1}) : '-';
-                    const editBtn = `<button class="btn btn-icon" style="color:var(--primary);background:transparent;float:right;padding:2px" onclick="editUtenze('${id}')">✏️</button>`;
-                    return `<div>${editBtn} ${val}</div><div style="font-size:0.75rem; color:${color}; font-weight:700">(${cons} ${unit})</div>`;
+                // Formatters for new table layout
+                const fmtBig = (val) => val ? val.toLocaleString('it-IT', {maximumFractionDigits:1}) : '-';
+                const fmtDelta = (val, type) => {
+                    if (val === null) return '';
+                    const cls = `u-delta-${type}`;
+                    const sign = val > 0 ? '+' : '';
+                    const unit = type === 'elec' ? 'kWh' : 'm³';
+                    return `<span class="u-delta-badge ${cls}">${sign}${val.toFixed(0)} ${unit}</span>`;
                 };
 
-                // Detailed Elec Breakdown with Meteo
-                let elecDetail = '-';
-                if(d.elec) {
-                    elecDetail = `<div style="font-size:0.8rem; color:#854d0e">F1: ${d.elec.a1||0}<br>F2: ${d.elec.a2||0}<br>F3: ${d.elec.a3||0}<br><b>${d.elec.meteo || ''}</b></div>`;
+                // Cells
+                let cellElec = `<span style="color:#cbd5e1">-</span>`;
+                let cellFasce = `<span style="color:#cbd5e1">-</span>`;
+                
+                if (d.elec) {
+                    cellElec = `
+                        <span class="u-big-num" style="color:#a16207">${fmtBig(d.elec.val)}</span>
+                        ${fmtDelta(r.delta.elec, 'elec')}
+                    `;
+                    cellFasce = `
+                        <div class="f-grid">
+                            <div class="f-item"><small>F1</small> <strong>${d.elec.a1||0}</strong></div>
+                            <div class="f-item"><small>F2</small> <strong>${d.elec.a2||0}</strong></div>
+                            <div class="f-item"><small>F3</small> <strong>${d.elec.a3||0}</strong></div>
+                        </div>
+                    `;
                 }
 
-                // Gas Detail with Temp
-                const gasTemp = (d.gas && d.gas.temp) ? `<div style="font-size:0.75rem;color:#b91c1c">Temp: ${d.gas.temp}°C</div>` : '';
+                let cellWater = `<span style="color:#cbd5e1">-</span>`;
+                if (d.water) {
+                    cellWater = `
+                        <span class="u-big-num" style="color:#1d4ed8">${fmtBig(d.water.val)}</span>
+                        ${fmtDelta(r.delta.water, 'water')}
+                    `;
+                }
 
-                // Notes
-                const notes = d.notes.length ? d.notes.join("<br>") : "";
+                let cellGas = `<span style="color:#cbd5e1">-</span>`;
+                if (d.gas) {
+                    cellGas = `
+                        <span class="u-big-num" style="color:#b91c1c">${fmtBig(d.gas.val)}</span>
+                        ${fmtDelta(r.delta.gas, 'gas')}
+                    `;
+                    if(d.gas.temp) {
+                         cellGas += `<div style="font-size:0.75rem; color:#7f1d1d; margin-top:4px">Temp: <b>${d.gas.temp}°C</b></div>`;
+                    }
+                }
 
-                const row = `<tr>
-                    <td style="font-weight:700">${dt}</td>
-                    <td style="color:#a16207; font-weight:600">${fmtCell('elec', 'kWh', '#d97706', d.elec ? d.elec.id : '')}</td>
-                    <td>${elecDetail}</td>
-                    <td style="color:#1e40af; font-weight:600">${fmtCell('water', 'm³', '#2563eb', d.water ? d.water.id : '')}</td>
-                    <td style="color:#b91c1c; font-weight:600">${fmtCell('gas', 'm³', '#dc2626', d.gas ? d.gas.id : '')}${gasTemp}</td>
-                    <td style="font-size:0.85rem; color:#475569">${notes}</td>
-                </tr>`;
+                // Notes & Meteo Combined
+                let notesHtml = [];
+                if(d.elec && d.elec.meteo) notesHtml.push(`<div class="meteo-tag">${d.elec.meteo}</div>`);
+                if(d.notes.length) notesHtml.push(`<div style="font-size:0.8rem; color:#475569; margin-top:4px">${d.notes.join(' | ')}</div>`);
+                
+                const editBtn = `<button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editUtenze('${d.elec ? d.elec.id : (d.water ? d.water.id : (d.gas ? d.gas.id : ''))}')">✏️</button>`;
+
+                const row = `
+                    <tr class="u-row">
+                        <td class="u-cell" style="font-weight:800; color:#334155">${dt}</td>
+                        <td class="u-cell" style="background:rgba(234, 179, 8, 0.03)">${cellElec}</td>
+                        <td class="u-cell" style="background:rgba(234, 179, 8, 0.03)">${cellFasce}</td>
+                        <td class="u-cell" style="background:rgba(59, 130, 246, 0.03)">${cellWater}</td>
+                        <td class="u-cell" style="background:rgba(239, 68, 68, 0.03)">${cellGas}</td>
+                        <td class="u-cell">${notesHtml.join('')}</td>
+                        <td class="u-cell" style="text-align:right">${editBtn}</td>
+                    </tr>
+                `;
                 tBodyArchive.innerHTML += row;
             });
 
