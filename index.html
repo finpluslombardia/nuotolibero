@@ -604,7 +604,7 @@
                 </div>
             </div>
 
-            <div class="insight-grid">
+            <div class="insight-grid" style="grid-template-columns: repeat(3, 1fr);">
                 <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #eab308">
                     <div class="kpi-head" style="color:#a16207">⚡ Consumi Estremi (Mese)</div>
                     <div style="display:flex; justify-content:space-between; width:100%; margin-top:5px; font-size:0.85rem; font-weight:600">
@@ -616,11 +616,24 @@
                         <div style="color:#047857; font-size:0.75rem" id="u-hl-elec-min-date">-</div>
                     </div>
                 </div>
-                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #3b82f6">
-                    <div class="kpi-head" style="color:#1d4ed8">💧 Litri per Bagnante</div>
-                    <div class="kpi-val" id="u-hl-water-eff" style="font-size:1.8rem">-</div>
-                    <div class="kpi-sub" style="font-size:0.8rem; color:#1e40af">Efficienza Idrica</div>
+                
+                <!-- NEW BOX: LAST 24H VALUES -->
+                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #8b5cf6">
+                    <div class="kpi-head" style="color:#7c3aed">🕒 Ultime 24 Ore</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px">
+                        <div style="font-size:0.8rem; font-weight:600; color:#eab308">⚡ <span id="u-last-elec">-</span></div>
+                        <div style="font-size:0.7rem; color:#64748b" id="u-last-elec-date">-</div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">
+                        <div style="font-size:0.8rem; font-weight:600; color:#3b82f6">💧 <span id="u-last-water">-</span></div>
+                        <div style="font-size:0.7rem; color:#64748b" id="u-last-water-date">-</div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">
+                        <div style="font-size:0.8rem; font-weight:600; color:#ef4444">🔥 <span id="u-last-gas">-</span></div>
+                        <div style="font-size:0.7rem; color:#64748b" id="u-last-gas-date">-</div>
+                    </div>
                 </div>
+
                 <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #ef4444">
                     <div class="kpi-head" style="color:#b91c1c">🔥 Consumi Estremi (Mese)</div>
                     <div style="display:flex; justify-content:space-between; width:100%; margin-top:5px; font-size:0.85rem; font-weight:600">
@@ -1988,9 +2001,7 @@ window.renderUtenze = () => {
     let minElec = { val: Infinity, date: '-' };
     let maxGas = { val: 0, date: '-' };
     let minGas = { val: Infinity, date: '-' };
-    let totalWaterM3 = 0;
-    let totalSwimmers = 0;
-
+    
     // Re-iterate strictly for the selected month to gather specific insight data
     const startOfMonth = new Date(thisYear, thisMonth, 1);
     const endOfMonth = new Date(thisYear, thisMonth + 1, 0);
@@ -2014,14 +2025,7 @@ window.renderUtenze = () => {
                 if (gVal > maxGas.val) { maxGas.val = gVal; maxGas.date = dStr; }
                 if (gVal < minGas.val) { minGas.val = gVal; minGas.date = dStr; }
             }
-            
-            // Water Sum for efficiency
-            totalWaterM3 += deltas[dStr].water || 0;
         }
-
-        // Ingressi Data (for efficiency calculation)
-        const dayBag = dataIngressi.find(x => x.date === dStr);
-        if (dayBag) totalSwimmers += dayBag.totale || 0;
     }
 
     // 1. Estremi Elettrico
@@ -2038,13 +2042,37 @@ window.renderUtenze = () => {
         document.getElementById('u-hl-elec-min-date').innerText = "-";
     }
 
-    // 2. Litri per Bagnante (Efficiency)
-    if (totalSwimmers > 0 && totalWaterM3 > 0) {
-        const litersPerPerson = (totalWaterM3 * 1000) / totalSwimmers;
-        document.getElementById('u-hl-water-eff').innerText = litersPerPerson.toFixed(0) + " L";
-    } else {
-        document.getElementById('u-hl-water-eff').innerText = "-";
-    }
+    // 2. LAST 24H VALUES LOGIC
+    let lastElec = { val: '-', date: '-' };
+    let lastWater = { val: '-', date: '-' };
+    let lastGas = { val: '-', date: '-' };
+
+    // Find latest non-null delta for each utility
+    // We iterate backwards through all dates
+    const findLatest = (typeKey) => {
+        const allDatesRev = [...allDatesAsc].reverse();
+        for(const dStr of allDatesRev) {
+            if(deltas[dStr] && deltas[dStr][typeKey] !== null) {
+                return { 
+                    val: deltas[dStr][typeKey].toLocaleString('it-IT', {maximumFractionDigits:1}), 
+                    date: new Date(dStr).toLocaleDateString('it-IT', {day:'2-digit', month:'2-digit'})
+                };
+            }
+        }
+        return { val: '-', date: '-' };
+    };
+
+    lastElec = findLatest('elec');
+    lastWater = findLatest('water');
+    lastGas = findLatest('gas');
+
+    document.getElementById('u-last-elec').innerText = lastElec.val !== '-' ? lastElec.val + " kWh" : "-";
+    document.getElementById('u-last-elec-date').innerText = lastElec.date;
+    document.getElementById('u-last-water').innerText = lastWater.val !== '-' ? lastWater.val + " m³" : "-";
+    document.getElementById('u-last-water-date').innerText = lastWater.date;
+    document.getElementById('u-last-gas').innerText = lastGas.val !== '-' ? lastGas.val + " m³" : "-";
+    document.getElementById('u-last-gas-date').innerText = lastGas.date;
+
 
     // 3. Estremi Gas
     document.getElementById('u-hl-gas-max').innerText = maxGas.val > 0 ? maxGas.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
@@ -2057,47 +2085,6 @@ window.renderUtenze = () => {
         document.getElementById('u-hl-gas-min').innerText = "-";
         document.getElementById('u-hl-gas-min-date').innerText = "-";
     }
-
-    // === TABLE GENERATION (MOVED UP FOR SAFETY) ===
-    const t = document.getElementById('tbody-utenze'); t.innerHTML = ""; const datesDesc = [...allDatesAsc].reverse();
-    
-    // HISTORY FILTER LOGIC
-    const histStart = document.getElementById('u-hist-start').value;
-    const histEnd = document.getElementById('u-hist-end').value;
-    const histSort = document.getElementById('u-hist-sort').value;
-
-    let filteredDates = [...datesDesc];
-    if(histStart) filteredDates = filteredDates.filter(d => d >= histStart);
-    if(histEnd) filteredDates = filteredDates.filter(d => d <= histEnd);
-    if(histSort === 'asc') filteredDates.reverse();
-
-    const rowsBuffer = [];
-    filteredDates.forEach(date => {
-        const g = grouped[date]; const d = deltas[date];
-        const makeCell = (obj, deltaVal, color, suffix='') => {
-            if(!obj) return '<span style="color:#ccc">-</span>';
-            let deltaHtml = '';
-            if(deltaVal !== null) {
-                const warnStyle = (deltaVal > 1000 && suffix!=='kWh') ? 'color:#ef4444; text-decoration:underline' : `color:${color}`;
-                deltaHtml = `<div style="font-size:0.75rem; ${warnStyle}; opacity:0.8; font-weight:700">Consumo: +${deltaVal.toLocaleString('it-IT', {maximumFractionDigits: 1})} ${suffix}</div>`;
-            } else { deltaHtml = `<div style="font-size:0.75rem; color:#94a3b8">Primo dato</div>`; }
-            return `<div style="display:flex; flex-direction:column; gap:2px">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:5px"><span style="font-weight:800; font-size:1rem; color:${color}">${obj.val.toLocaleString('it-IT')}</span>
-                    <div style="display:flex; gap:2px"><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:var(--primary); border:1px solid #dbeafe; background:#eff6ff" onclick="editUtenze('${obj.id}')">✏️</button><button class="btn btn-icon" style="width:24px; height:24px; padding:0; font-size:0.7rem; color:#ef4444; border:1px solid #fee2e2; background:#fef2f2" onclick="delDoc('utenze_log','${obj.id}')">×</button></div>
-                </div>${deltaHtml}</div>`;
-        };
-        let elecDet = '-';
-        if(g.elec) {
-            const meteoBadge = g.elec.meteo ? `<br><span style="font-size:0.75rem; background:#f1f5f9; padding:2px 6px; border-radius:4px">Meteo: ${g.elec.meteo}</span>` : '';
-            elecDet = `<div style="font-size:0.75rem; color:#64748b">F1: <b>${g.elec.a1||0}</b> | F2: <b>${g.elec.a2||0}</b> | F3: <b>${g.elec.a3||0}</b>${meteoBadge}</div>`;
-        }
-        let gasCell = makeCell(g.gas, d.gas, '#dc2626', 'm³');
-        if(g.gas && g.gas.temp) { gasCell += `<div style="font-size:0.7rem; color:#64748b; margin-top:4px; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">🌡️ Temp: <b>${g.gas.temp}°C</b></div>`; }
-        const noteStr = g.notes.length > 0 ? g.notes.join('; ') : '';
-        const dateFmt = date.split('-').reverse().join('/');
-        rowsBuffer.push(`<tr><td style="font-weight:800; color:var(--text-main); vertical-align:top; padding-top:15px">${dateFmt}</td><td style="background:rgba(234, 179, 8, 0.05); vertical-align:top">${makeCell(g.elec, d.elec, '#d97706', 'kWh')}</td><td style="background:rgba(234, 179, 8, 0.05); vertical-align:top">${elecDet}</td><td style="background:rgba(59, 130, 246, 0.05); vertical-align:top">${makeCell(g.water, d.water, '#2563eb', 'm³')}</td><td style="background:rgba(239, 68, 68, 0.05); vertical-align:top">${gasCell}</td><td style="font-size:0.8rem; color:#64748b; font-style:italic; vertical-align:top; padding-top:15px">${noteStr}</td></tr>`);
-    });
-    t.innerHTML = rowsBuffer.join('');
 
     // === CHART GENERATION (NOW SAFE) ===
     if (!isChartReady()) return;
