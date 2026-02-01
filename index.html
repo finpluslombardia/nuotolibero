@@ -648,15 +648,24 @@
         <div id="sub-u-charts" class="hidden">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px">
                 <h2 class="page-title" style="margin:0; font-size:1.3rem">📊 Analisi Utenze</h2>
-                <div style="display:flex; gap:10px; align-items:center">
-                    <select id="u-range" class="filter-select" onchange="renderUtenze()" style="font-weight:700">
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+                    <select id="u-range" class="filter-select" onchange="toggleUtenzeChartMode()" style="font-weight:700">
                         <option value="7">Ultimi 7 Giorni</option>
                         <option value="15">Ultimi 15 Giorni</option>
                         <option value="30">Ultimi 30 Giorni</option>
                         <option value="90">Ultimi 3 Mesi</option>
                         <option value="180">Ultimi 6 Mesi</option>
                         <option value="365">Ultimi 12 Mesi</option>
+                        <option value="custom">📅 Periodo Personalizzato</option>
                     </select>
+                    
+                    <!-- NEW CUSTOM INPUTS -->
+                    <div id="u-chart-custom-inputs" class="hidden" style="display:flex; gap:5px; align-items:center">
+                        <input type="date" id="u-chart-start" class="filter-select" style="width:130px">
+                        <input type="date" id="u-chart-end" class="filter-select" style="width:130px">
+                        <button class="btn btn-primary" onclick="renderUtenze()" style="height:40px; padding:0 15px">OK</button>
+                    </div>
+
                     <select id="u-view-mode" class="filter-select" onchange="renderUtenze()" style="border:2px solid var(--primary); color:var(--primary); font-weight:700">
                         <option value="delta">📊 Consumo (Delta)</option>
                         <option value="total">📈 Lettura (Totale)</option>
@@ -1297,7 +1306,7 @@ window.renderStats = () => {
                 const month = d.getMonth();
                 const day = d.getDate();
                 const k = `${month}-${day}`;
-                
+              
                 if(compVal === 'avg') {
                     let sum = 0, count = 0;
                     if(histMap[k]) {
@@ -1367,7 +1376,7 @@ window.renderStats = () => {
                 let subset = compSet.filter(d => new Date(d.date).getDay() === getJsDay(i));
                 return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
             });
-            
+           
             weekDatasets.push({
                 label: (compVal === 'avg' ? 'Media' : compVal) + ' (Tot)',
                 data: compDataWeekly,
@@ -1716,10 +1725,47 @@ window.switchSubViewUtenze=(s)=>{
     renderUtenze();
 };
 
+// NEW FUNCTION: Toggle Custom Inputs for Utenze Charts
+window.toggleUtenzeChartMode = () => {
+    const val = document.getElementById('u-range').value;
+    const c = document.getElementById('u-chart-custom-inputs');
+    if(val === 'custom') {
+        c.classList.remove('hidden');
+        c.style.display = 'flex';
+        // Defaults
+        if(!document.getElementById('u-chart-start').value) {
+            const now = new Date();
+            document.getElementById('u-chart-end').value = now.toISOString().split('T')[0];
+            now.setDate(now.getDate()-30);
+            document.getElementById('u-chart-start').value = now.toISOString().split('T')[0];
+        }
+    } else {
+        c.classList.add('hidden');
+        c.style.display = 'none';
+        renderUtenze();
+    }
+};
+
 window.renderUtenze = () => {
     if(!isChartReady()) return;
     const viewMode = document.getElementById('u-view-mode').value; const isDelta = viewMode === 'delta'; const chartType = isDelta ? 'bar' : 'line';
-    const rangeDays = parseInt(document.getElementById('u-range').value); const limitDate = new Date(); limitDate.setDate(limitDate.getDate() - rangeDays); const limitStr = limitDate.toISOString().split('T')[0];
+    
+    // UPDATED LOGIC: Custom Range support
+    const rangeVal = document.getElementById('u-range').value;
+    let limitStr = null;
+    let customStart = null;
+    let customEnd = null;
+
+    if (rangeVal === 'custom') {
+        customStart = document.getElementById('u-chart-start').value;
+        customEnd = document.getElementById('u-chart-end').value;
+    } else {
+        const rangeDays = parseInt(rangeVal); 
+        const limitDate = new Date(); 
+        limitDate.setDate(limitDate.getDate() - rangeDays); 
+        limitStr = limitDate.toISOString().split('T')[0];
+    }
+
     const showHistory = document.getElementById('u-compare-year').checked;
     const grouped = {};
     dataUtenze.forEach(d => {
@@ -1955,7 +2001,19 @@ window.renderUtenze = () => {
 
     // Chart Logic UPDATED with dual axis support
     function prepareChartData(type) {
-        const filteredDates = allDatesAsc.filter(d => d >= limitStr);
+        // FILTER DATES LOGIC: Either by limitStr OR by customRange
+        let filteredDates = [];
+        if (limitStr) {
+             filteredDates = allDatesAsc.filter(d => d >= limitStr);
+        } else if (customStart && customEnd) {
+             filteredDates = allDatesAsc.filter(d => d >= customStart && d <= customEnd);
+        } else if (customStart) {
+             filteredDates = allDatesAsc.filter(d => d >= customStart);
+        } else {
+             // Fallback
+             filteredDates = allDatesAsc;
+        }
+
         const labels = [], dataTotal = [], dataDelta = [], dataSecondary = [], dataHistoryTotal = [], dataHistoryDelta = [];
         const typeKey = type === '⚡ Elettricità' ? 'elec' : (type === '💧 Acqua' ? 'water' : 'gas');
         
