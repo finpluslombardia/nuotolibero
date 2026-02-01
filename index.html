@@ -739,7 +739,6 @@
                                 <th style="color:#3b82f6; background:rgba(59, 130, 246, 0.1)">💧 Lettura Acqua</th>
                                 <th style="color:#ef4444; background:rgba(239, 68, 68, 0.1)">🔥 Lettura Gas</th>
                                 <th>Note</th>
-                                <th style="text-align:right"></th>
                             </tr>
                         </thead>
                         <tbody id="tbody-utenze"></tbody>
@@ -760,6 +759,9 @@ import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc
 const firebaseConfig = { apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0", authDomain: "piscinastats-64519.firebaseapp.com", projectId: "piscinastats-64519", storageBucket: "piscinastats-64519.firebasestorage.app", messagingSenderId: "297663099794", appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 let dataIngressi=[], dataVasca=[], dataDae=[], dataUtenze=[]; let editIdIngressi=null, editIdVasca=null, editIdUtenze=null;
+let limitIngressi = 200;
+let limitUtenze = 200;
+
 const isChartReady = () => typeof Chart !== 'undefined';
 
 // UTILS: Debounce for performance optimization
@@ -2181,50 +2183,48 @@ window.renderUtenze = () => {
         if(filtered.length === 0) {
             tBodyArchive.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b">Nessun dato nel periodo selezionato.</td></tr>';
         } else {
-            // OPTIMIZATION: Limit rendering to first 200 rows to prevent freeze
-            const MAX_ROWS = 200;
-            const limitedList = filtered.slice(0, MAX_ROWS);
+            // OPTIMIZATION: Limit rendering to first limitUtenze rows to prevent freeze
+            const limitedList = filtered.slice(0, limitUtenze);
             
-            if(filtered.length > MAX_ROWS) {
-                tBodyArchive.innerHTML += `<tr><td colspan="7" style="text-align:center; background:#fef9c3; color:#854d0e; font-weight:700; padding:10px">⚠️ Visualizzati solo i primi ${MAX_ROWS} risultati su ${filtered.length}. Usa i filtri per vedere altro.</td></tr>`;
-            }
-
             limitedList.forEach(r => {
                 const d = r.raw;
                 const dt = r.date.split('-').reverse().join('/');
                 
                 // Format values with consumption
-                const fmtCell = (key, unit, color) => {
+                const fmtCell = (key, unit, color, id) => {
                     if(!d[key]) return `<span style="color:#cbd5e1">-</span>`;
                     const val = d[key].val.toLocaleString('it-IT', {maximumFractionDigits:1});
                     const cons = r.delta[key] !== null ? r.delta[key].toLocaleString('it-IT', {maximumFractionDigits:1}) : '-';
-                    return `<div>${val}</div><div style="font-size:0.75rem; color:${color}; font-weight:700">(${cons} ${unit})</div>`;
+                    const editBtn = `<button class="btn btn-icon" style="color:var(--primary);background:transparent;float:right;padding:2px" onclick="editUtenze('${id}')">✏️</button>`;
+                    return `<div>${editBtn} ${val}</div><div style="font-size:0.75rem; color:${color}; font-weight:700">(${cons} ${unit})</div>`;
                 };
 
-                // Detailed Elec Breakdown
+                // Detailed Elec Breakdown with Meteo
                 let elecDetail = '-';
                 if(d.elec) {
-                    elecDetail = `<div style="font-size:0.8rem; color:#854d0e">F1: ${d.elec.a1||0}<br>F2: ${d.elec.a2||0}<br>F3: ${d.elec.a3||0}</div>`;
+                    elecDetail = `<div style="font-size:0.8rem; color:#854d0e">F1: ${d.elec.a1||0}<br>F2: ${d.elec.a2||0}<br>F3: ${d.elec.a3||0}<br><b>${d.elec.meteo || ''}</b></div>`;
                 }
+
+                // Gas Detail with Temp
+                const gasTemp = (d.gas && d.gas.temp) ? `<div style="font-size:0.75rem;color:#b91c1c">Temp: ${d.gas.temp}°C</div>` : '';
 
                 // Notes
                 const notes = d.notes.length ? d.notes.join("<br>") : "";
 
                 const row = `<tr>
                     <td style="font-weight:700">${dt}</td>
-                    <td style="color:#a16207; font-weight:600">${fmtCell('elec', 'kWh', '#d97706')}</td>
+                    <td style="color:#a16207; font-weight:600">${fmtCell('elec', 'kWh', '#d97706', d.elec ? d.elec.id : '')}</td>
                     <td>${elecDetail}</td>
-                    <td style="color:#1e40af; font-weight:600">${fmtCell('water', 'm³', '#2563eb')}</td>
-                    <td style="color:#b91c1c; font-weight:600">${fmtCell('gas', 'm³', '#dc2626')}</td>
+                    <td style="color:#1e40af; font-weight:600">${fmtCell('water', 'm³', '#2563eb', d.water ? d.water.id : '')}</td>
+                    <td style="color:#b91c1c; font-weight:600">${fmtCell('gas', 'm³', '#dc2626', d.gas ? d.gas.id : '')}${gasTemp}</td>
                     <td style="font-size:0.85rem; color:#475569">${notes}</td>
-                    <td style="text-align:right">
-                       ${d.elec ? `<button class="btn btn-icon" style="color:var(--primary);background:transparent" onclick="editUtenze('${d.elec.id}')">✏️</button>` : ''} 
-                       ${d.water ? `<button class="btn btn-icon" style="color:var(--primary);background:transparent" onclick="editUtenze('${d.water.id}')">✏️</button>` : ''}
-                       ${d.gas ? `<button class="btn btn-icon" style="color:var(--primary);background:transparent" onclick="editUtenze('${d.gas.id}')">✏️</button>` : ''}
-                    </td>
                 </tr>`;
                 tBodyArchive.innerHTML += row;
             });
+
+            if(filtered.length > limitUtenze) {
+                tBodyArchive.innerHTML += `<tr><td colspan="7" style="text-align:center; padding:15px"><button class="btn btn-primary" onclick="limitUtenze+=200; renderUtenze()">⬇️ Carica altri risultati...</button></td></tr>`;
+            }
         }
     }
 
@@ -2363,6 +2363,7 @@ window.resetUtenzeHistory = () => {
     document.getElementById('u-hist-start').value = "";
     document.getElementById('u-hist-end').value = "";
     document.getElementById('u-hist-sort').value = "desc";
+    limitUtenze = 200; // Reset limit
     renderUtenze();
 };
 
@@ -2483,14 +2484,9 @@ window.renderIngressiArchive = () => {
     const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)});
     
     // OPTIMIZATION: Render max 200 rows
-    const MAX_ROWS = 200;
-    const limitedKeys = [...g.keys()].slice(0, MAX_ROWS);
+    const limitedKeys = [...g.keys()].slice(0, limitIngressi);
     const rowsBuffer = [];
     
-    if([...g.keys()].length > MAX_ROWS) {
-        rowsBuffer.push(`<tr><td colspan="11" style="text-align:center; background:#fef9c3; color:#854d0e; font-weight:700; padding:10px">⚠️ Visualizzati solo i primi ${MAX_ROWS} giorni. Usa i filtri o scarica l'Excel per vedere tutto.</td></tr>`);
-    }
-
     limitedKeys.forEach(k=>{
         const e=g.get(k);
         const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`;
@@ -2505,6 +2501,10 @@ window.renderIngressiArchive = () => {
         });
     });
     t.innerHTML += rowsBuffer.join('');
+
+    if([...g.keys()].length > limitIngressi) {
+        t.innerHTML += `<tr><td colspan="11" style="text-align:center; padding:15px"><button class="btn btn-primary" onclick="limitIngressi+=200; renderIngressiArchive()">⬇️ Carica altri risultati...</button></td></tr>`;
+    }
 }
 window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')debouncedRefresh(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
 window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); debouncedRefresh(); };
