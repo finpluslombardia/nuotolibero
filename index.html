@@ -958,6 +958,8 @@ function renderPie(id,l,d) { if(!isChartReady()) return; if(ch[id])ch[id].destro
 function renderMultiBar(id,l,ds,ax='x') { if(!isChartReady()) return; if(ch[id])ch[id].destroy(); ch[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:l,datasets:ds},options:{animation:false, responsive:true,maintainAspectRatio:false,indexAxis:ax,plugins:{legend:{display:true}}}}); }
 
 window.renderOverview = () => { renderOverviewKPI(); renderOverviewCharts(); }
+
+// FIXED FUNCTION FOR ROBUST DATE COMPARISON
 function renderOverviewKPI() {
     if(!dataIngressi || dataIngressi.length === 0) return;
     const today = new Date();
@@ -978,17 +980,19 @@ function renderOverviewKPI() {
     const daysCurrent = uniqueDays.size;
 
     // DETERMINAZIONE GIORNO MASSIMO (Progressive Month Day)
-    // Se ci sono dati futuri nel mese corrente, maxDay avanza per allineare il confronto
+    // Usiamo il giorno di oggi come base, ma se ci sono dati futuri caricati, estendiamo
     let maxDay = today.getDate();
     if (dCurrent.length > 0) {
-        const days = dCurrent.map(x => new Date(x.date).getDate());
+        const days = dCurrent.map(x => parseInt(x.date.split('-')[2])); // Parse int directly from string
         const maxDataDay = Math.max(...days);
         if (maxDataDay > maxDay) maxDay = maxDataDay;
     }
 
     // 2. YoY Calculation (Mese Corrente vs Stesso Mese Anno Scorso)
+    // FIX: Use parseInt on split string to avoid timezone shifts on 'new Date()'
     const dYoy = dataIngressi.filter(x => {
-        return x.date.startsWith(yoyStr) && !x.excludeStats && new Date(x.date).getDate() <= maxDay;
+        const dayNum = parseInt(x.date.split('-')[2]);
+        return x.date.startsWith(yoyStr) && !x.excludeStats && dayNum <= maxDay;
     });
     const totalYoy = dYoy.reduce((a,b)=>a+b.totale,0);
 
@@ -996,14 +1000,13 @@ function renderOverviewKPI() {
     document.getElementById('ov-total-curr').innerText = totalCurrent.toLocaleString();
     
     let totalYoyDiffHtml = '';
-    // Always calculate diff, assuming 0 if no data
     let diffYoy = 0;
     if (totalYoy > 0) {
         diffYoy = ((totalCurrent - totalYoy) / totalYoy) * 100;
     } else if (totalCurrent > 0) {
-        diffYoy = 100; // 0 to >0 is 100% growth (symbolic)
+        diffYoy = 100;
     } else {
-        diffYoy = 0; // 0 vs 0
+        diffYoy = 0;
     }
     
     const colorYoy = diffYoy === 0 ? "#64748b" : (diffYoy > 0 ? "#16a34a" : "#dc2626"); 
@@ -1022,7 +1025,6 @@ function renderOverviewKPI() {
     const avgYoy = uniqueDaysYoyFull > 0 ? (dYoyFullMonth.reduce((a,b)=>a+b.totale,0) / uniqueDaysYoyFull) : 0;
 
     let avgTrendHtml = '-';
-    // Always show vs avg, even if 0
     const diffAvg = avgCurrent - avgYoy;
     const colorAvg = diffAvg === 0 ? '#64748b' : (diffAvg > 0 ? '#10b981' : '#ef4444');
     const iconAvg = diffAvg > 0 ? '⬆' : (diffAvg < 0 ? '⬇' : '=');
@@ -1031,8 +1033,10 @@ function renderOverviewKPI() {
     document.getElementById('ov-avg-trend').innerHTML = avgTrendHtml;
     
     // 3. Vs Mese Prec (MoM) partial comparison
+    // FIX: Also applied robust date parsing here
     const dPrevPartial = dataIngressi.filter(x => {
-        return x.date.startsWith(prevMonthStr) && !x.excludeStats && new Date(x.date).getDate() <= maxDay;
+        const dayNum = parseInt(x.date.split('-')[2]);
+        return x.date.startsWith(prevMonthStr) && !x.excludeStats && dayNum <= maxDay;
     });
     const totalPrevPartial = dPrevPartial.reduce((a,b)=>a+b.totale,0);
     
@@ -1053,11 +1057,8 @@ function renderOverviewKPI() {
     document.getElementById('ov-mom').innerHTML = momHtml;
     document.getElementById('ov-mom-label').innerText = `vs ${pm_month_name} (al ${maxDay})`;
 
-    // 4. YoY (Month vs Prev Year Month)
+    // 4. YoY Box (Uses same logic as top box but different display)
     let yoyBoxHtml = "";
-    // Reuse diffYoy calculated for the first box, but formatted differently if needed
-    // Actually exact same logic applies
-    
     const colorYoyBox = diffYoy === 0 ? "#64748b" : (diffYoy > 0 ? "#16a34a" : "#dc2626");
     const signYoyBox = diffYoy > 0 ? "+" : "";
     yoyBoxHtml = `<span style="color:${colorYoyBox}">${signYoyBox}${diffYoy.toFixed(1)}%</span>`;
@@ -1066,22 +1067,17 @@ function renderOverviewKPI() {
     document.getElementById('ov-yoy-label').innerText = `vs ${ym_year} (al ${maxDay})`;
 
     // 5. YTD Trend (Anno vs Anno Prec)
-    // Fix YTD Limit Date: Use the max date available in the current year, OR today, whichever is greater
-    // Actually, we should cap YTD at the last inserted data point of current year to be accurate.
     const allCurrentYearData = dataIngressi.filter(x => new Date(x.date).getFullYear() === currYear && !x.excludeStats);
     let limitYTD = new Date();
     if(allCurrentYearData.length > 0) {
-        // Find max date
         const maxDateStr = allCurrentYearData.reduce((max, p) => p.date > max ? p.date : max, allCurrentYearData[0].date);
         limitYTD = new Date(maxDateStr);
     }
 
     const totalYtdCurr = allCurrentYearData.reduce((a,b)=>a+b.totale,0);
-
-    // Filtra Anno Precedente (YTD allineato)
     const prevYearVal = currYear - 1;
     const limitDatePrev = new Date(limitYTD);
-    limitDatePrev.setFullYear(prevYearVal); // Stesso giorno anno prima
+    limitDatePrev.setFullYear(prevYearVal); 
 
     const dYtdPrev = dataIngressi.filter(x => {
         const dt = new Date(x.date);
@@ -1106,7 +1102,6 @@ function renderOverviewKPI() {
     document.getElementById('ov-ytd').innerHTML = ytdHtml;
     document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${limitYTD.getDate()}/${limitYTD.getMonth()+1})`;
 
-
     // 6. Forecast
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     if(daysCurrent > 0) { 
@@ -1115,9 +1110,8 @@ function renderOverviewKPI() {
     } else { document.getElementById('ov-forecast').innerText = "-"; }
 
     // --- HIGHLIGHTS LOGIC ---
-    // 1. Aggreghiamo i dati per data
     const dailyTotals = {};
-    const todayStrHighlights = getStrDate(new Date()); // Renamed to avoid confusion
+    const todayStrHighlights = getStrDate(new Date());
     dCurrent.forEach(d => {
         if (!dailyTotals[d.date]) dailyTotals[d.date] = 0;
         dailyTotals[d.date] += d.totale;
@@ -1125,16 +1119,13 @@ function renderOverviewKPI() {
     const dailyArr = Object.keys(dailyTotals).map(date => ({ date: date, totale: dailyTotals[date] }));
 
     if(dailyArr.length > 0) {
-        // Record Max
         const recordDay = dailyArr.reduce((prev, curr) => (prev.totale > curr.totale) ? prev : curr);
         const rd = new Date(recordDay.date);
         document.getElementById('hl-record-val').innerText = recordDay.totale;
         document.getElementById('hl-record-date').innerText = rd.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'});
 
-        // Minimo (No oggi, per evitare falsi positivi mentre si inseriscono i dati)
-        // Se l'unico dato è oggi, mostra quello.
         let dailyArrFinished = dailyArr.filter(d => d.date !== todayStrHighlights);
-        if(dailyArrFinished.length === 0) dailyArrFinished = dailyArr; // Fallback
+        if(dailyArrFinished.length === 0) dailyArrFinished = dailyArr; 
 
         if (dailyArrFinished.length > 0) {
             const minDay = dailyArrFinished.reduce((prev, curr) => (prev.totale < curr.totale) ? prev : curr);
@@ -1146,7 +1137,6 @@ function renderOverviewKPI() {
             document.getElementById('hl-min-date').innerText = "Dati parziali";
         }
 
-        // Day of Week Stats
         const dayCounts = {}; 
         dailyArr.forEach(d => {
             const dayIdx = new Date(d.date).getDay();
@@ -1170,7 +1160,6 @@ function renderOverviewKPI() {
             document.getElementById('hl-worstday-avg').innerText = `Media: ${minAvg.toFixed(0)}`;
         }
 
-        // Fattore Meteo
         const sunnyCount = dCurrent.filter(d => d.meteo && (d.meteo.includes('Sole') || d.meteo.includes('Sereno') || d.meteo.includes('Caldo'))).length;
         const pct = (sunnyCount / dCurrent.length) * 100;
         document.getElementById('hl-sun-pct').innerText = pct.toFixed(0) + "%";
@@ -1386,7 +1375,7 @@ window.renderStats = () => {
                 const month = d.getMonth();
                 const day = d.getDate();
                 const k = `${month}-${day}`;
-              
+               
                 if(compVal === 'avg') {
                     let sum = 0, count = 0;
                     if(histMap[k]) {
@@ -1456,7 +1445,7 @@ window.renderStats = () => {
                 let subset = compSet.filter(d => new Date(d.date).getDay() === getJsDay(i));
                 return subset.length ? subset.reduce((a,b)=>a+b.totale,0)/subset.length : 0;
             });
-           
+            
             weekDatasets.push({
                 label: (compVal === 'avg' ? 'Media' : compVal) + ' (Tot)',
                 data: compDataWeekly,
