@@ -788,7 +788,7 @@ onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen')
 function startListening() {
     try {
         // IMPORTANT: INCREASED LIMIT TO 15000 TO ENSURE YEAR-OVER-YEAR DATA IS LOADED
-        onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(15000)), (snap) => { 
+        onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(10000)), (snap) => { 
             dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); 
             populateStatFilters(); 
             refreshCurrentView();
