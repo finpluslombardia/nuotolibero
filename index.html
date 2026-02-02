@@ -754,7 +754,7 @@
                                 <th style="color:#1e40af; background:rgba(59, 130, 246, 0.1); width:15%">💧 Acqua</th>
                                 <th style="color:#b91c1c; background:rgba(239, 68, 68, 0.1); width:15%">🔥 Gas</th>
                                 <th style="width:25%">Note</th>
-                                <th style="width:50px"></th>
+                                <th style="width:50px; text-align:center">Azioni</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-utenze"></tbody>
@@ -1855,6 +1855,19 @@ window.cancelEditUtenze = () => {
     editIdUtenze = null; document.getElementById('title-utenze').innerText = "Registrazione Letture Utenze"; document.getElementById('btn-save-utenze').innerText = "SALVA"; document.getElementById('btn-save-utenze').style.background = ""; document.getElementById('cb-utenze').classList.remove('editing'); document.getElementById('cancel-utenze').classList.add('hidden'); document.querySelectorAll('#cb-utenze input:not([type=date])').forEach(i=>i.value=''); toggleUtenzeMode();
 };
 
+// NEW FUNCTION: Delete all records for a specific day
+window.deleteUtenzeDate = async (date) => {
+    if(!confirm(`Vuoi cancellare TUTTI i dati del giorno ${date.split('-').reverse().join('/')}?`)) return;
+    const toDelete = dataUtenze.filter(d => d.date === date);
+    if (toDelete.length === 0) return;
+    
+    try {
+        const promises = toDelete.map(d => deleteDoc(doc(db, "utenze_log", d.id)));
+        await Promise.all(promises);
+        showToast("Giornata eliminata");
+    } catch(e) { showToast(e.message, "error"); }
+};
+
 window.switchSubViewUtenze=(s)=>{
     ['overview','charts','archive'].forEach(v=>{ document.getElementById('sub-u-'+v).classList.add('hidden'); document.getElementById('btn-sub-u-'+v).classList.remove('btn-primary'); });
     document.getElementById('sub-u-'+s).classList.remove('hidden'); document.getElementById('btn-sub-u-'+s).classList.add('btn-primary');
@@ -2216,13 +2229,16 @@ window.renderUtenze = () => {
                     return `<span class="u-delta-badge ${cls}">${sign}${val.toFixed(0)} ${unit}</span>`;
                 };
 
+                // Helper for Edit Button
+                const mkEdit = (id) => `<button class="btn btn-icon" style="width:24px;height:24px;padding:0;margin-left:5px;font-size:0.8rem;background:rgba(255,255,255,0.8);color:#2563eb" onclick="editUtenze('${id}')" title="Modifica">✏️</button>`;
+
                 // Cells
                 let cellElec = `<span style="color:#cbd5e1">-</span>`;
                 let cellFasce = `<span style="color:#cbd5e1">-</span>`;
                 
                 if (d.elec) {
                     cellElec = `
-                        <span class="u-big-num" style="color:#a16207">${fmtBig(d.elec.val)}</span>
+                        <span class="u-big-num" style="color:#a16207">${fmtBig(d.elec.val)} ${mkEdit(d.elec.id)}</span>
                         ${fmtDelta(r.delta.elec, 'elec')}
                     `;
                     
@@ -2241,7 +2257,7 @@ window.renderUtenze = () => {
                 let cellWater = `<span style="color:#cbd5e1">-</span>`;
                 if (d.water) {
                     cellWater = `
-                        <span class="u-big-num" style="color:#1d4ed8">${fmtBig(d.water.val)}</span>
+                        <span class="u-big-num" style="color:#1d4ed8">${fmtBig(d.water.val)} ${mkEdit(d.water.id)}</span>
                         ${fmtDelta(r.delta.water, 'water')}
                     `;
                 }
@@ -2249,7 +2265,7 @@ window.renderUtenze = () => {
                 let cellGas = `<span style="color:#cbd5e1">-</span>`;
                 if (d.gas) {
                     cellGas = `
-                        <span class="u-big-num" style="color:#b91c1c">${fmtBig(d.gas.val)}</span>
+                        <span class="u-big-num" style="color:#b91c1c">${fmtBig(d.gas.val)} ${mkEdit(d.gas.id)}</span>
                         ${fmtDelta(r.delta.gas, 'gas')}
                     `;
                     if(d.gas.temp) {
@@ -2261,7 +2277,8 @@ window.renderUtenze = () => {
                 let notesHtml = [];
                 if(d.notes.length) notesHtml.push(`<div style="font-size:0.8rem; color:#475569; margin-top:4px">${d.notes.join(' | ')}</div>`);
                 
-                const editBtn = `<button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editUtenze('${d.elec ? d.elec.id : (d.water ? d.water.id : (d.gas ? d.gas.id : ''))}')">✏️</button>`;
+                // Delete Button for the whole row
+                const delBtn = `<button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="deleteUtenzeDate('${r.date}')" title="Elimina intera giornata">🗑️</button>`;
 
                 const row = `
                     <tr class="u-row">
@@ -2271,7 +2288,7 @@ window.renderUtenze = () => {
                         <td class="u-cell" style="background:rgba(59, 130, 246, 0.03)">${cellWater}</td>
                         <td class="u-cell" style="background:rgba(239, 68, 68, 0.03)">${cellGas}</td>
                         <td class="u-cell">${notesHtml.join('')}</td>
-                        <td class="u-cell" style="text-align:right">${editBtn}</td>
+                        <td class="u-cell" style="text-align:right">${delBtn}</td>
                     </tr>
                 `;
                 tBodyArchive.innerHTML += row;
