@@ -105,7 +105,7 @@
 
     /* KPI & CHARTS LAYOUT */
     .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; margin-bottom: 25px; } /* Changed to 5 for YTD */
-    .insight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; } /* Default 3 cols for Insights */
+    .insight-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; } /* Changed to 4 for Forecast */
     .insight-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
     .kpi-card { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); display: flex; flex-direction: column; }
     .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
@@ -600,7 +600,6 @@
                 <input type="month" id="u-kpi-month-selector" class="filter-select" style="font-weight:700; background:rgba(255,255,255,0.8)" onchange="renderUtenze()">
             </div>
 
-            <!-- ROW 1: Monthly KPI -->
             <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 25px;">
                 <div class="kpi-card glass-card" style="border-left: 4px solid #eab308">
                     <div class="kpi-head" id="u-kpi-elec-title">-</div>
@@ -622,9 +621,7 @@
                 </div>
             </div>
 
-            <!-- ROW 2: Extremes (Elec, Water, Gas) -->
             <div class="insight-grid" style="grid-template-columns: repeat(3, 1fr);">
-                <!-- Elec Extremes -->
                 <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #eab308">
                     <div class="kpi-head" style="color:#a16207">⚡ Consumi Estremi (Mese)</div>
                     <div style="display:flex; justify-content:space-between; width:100%; margin-top:5px; font-size:0.85rem; font-weight:600">
@@ -637,36 +634,7 @@
                     </div>
                 </div>
                 
-                <!-- Water Extremes (New Center Box) -->
-                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #3b82f6">
-                    <div class="kpi-head" style="color:#1d4ed8">💧 Consumi Estremi (Mese)</div>
-                    <div style="display:flex; justify-content:space-between; width:100%; margin-top:5px; font-size:0.85rem; font-weight:600">
-                        <div>Max: <span style="color:#1d4ed8; font-weight:800" id="u-hl-water-max">-</span></div>
-                        <div style="color:#1e40af; font-size:0.75rem" id="u-hl-water-max-date">-</div>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; width:100%; margin-top:2px; font-size:0.85rem; font-weight:600; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">
-                        <div>Min: <span style="color:#10b981; font-weight:800" id="u-hl-water-min">-</span></div>
-                        <div style="color:#047857; font-size:0.75rem" id="u-hl-water-min-date">-</div>
-                    </div>
-                </div>
-
-                <!-- Gas Extremes -->
-                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #ef4444">
-                    <div class="kpi-head" style="color:#b91c1c">🔥 Consumi Estremi (Mese)</div>
-                    <div style="display:flex; justify-content:space-between; width:100%; margin-top:5px; font-size:0.85rem; font-weight:600">
-                        <div>Max: <span style="color:#b91c1c; font-weight:800" id="u-hl-gas-max">-</span></div>
-                        <div style="color:#7f1d1d; font-size:0.75rem" id="u-hl-gas-max-date">-</div>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; width:100%; margin-top:2px; font-size:0.85rem; font-weight:600; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">
-                        <div>Min: <span style="color:#10b981; font-weight:800" id="u-hl-gas-min">-</span></div>
-                        <div style="color:#047857; font-size:0.75rem" id="u-hl-gas-min-date">-</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ROW 3: Last 24h, Last Week, Efficiency (New Row) -->
-            <div class="insight-grid" style="grid-template-columns: repeat(3, 1fr);">
-                <!-- Last 24h (Moved here) -->
+                <!-- NEW BOX: LAST 24H VALUES -->
                 <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #8b5cf6">
                     <div class="kpi-head" style="color:#7c3aed">🕒 Ultime 24 Ore</div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px">
@@ -683,26 +651,16 @@
                     </div>
                 </div>
 
-                <!-- Last Week Totals (New) -->
-                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #10b981">
-                    <div class="kpi-head" style="color:#047857">📅 Settimana Scorsa (Totali)</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px">
-                        <div style="font-size:0.8rem; font-weight:600; color:#eab308">⚡ <span id="u-lw-elec">-</span></div>
-                        <div style="font-size:0.7rem; color:#64748b" id="u-lw-range">Lun-Dom</div>
+                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #ef4444">
+                    <div class="kpi-head" style="color:#b91c1c">🔥 Consumi Estremi (Mese)</div>
+                    <div style="display:flex; justify-content:space-between; width:100%; margin-top:5px; font-size:0.85rem; font-weight:600">
+                        <div>Max: <span style="color:#b91c1c; font-weight:800" id="u-hl-gas-max">-</span></div>
+                        <div style="color:#7f1d1d; font-size:0.75rem" id="u-hl-gas-max-date">-</div>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">
-                        <div style="font-size:0.8rem; font-weight:600; color:#3b82f6">💧 <span id="u-lw-water">-</span></div>
+                    <div style="display:flex; justify-content:space-between; width:100%; margin-top:2px; font-size:0.85rem; font-weight:600; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">
+                        <div>Min: <span style="color:#10b981; font-weight:800" id="u-hl-gas-min">-</span></div>
+                        <div style="color:#047857; font-size:0.75rem" id="u-hl-gas-min-date">-</div>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px; border-top:1px solid rgba(0,0,0,0.05); padding-top:2px">
-                        <div style="font-size:0.8rem; font-weight:600; color:#ef4444">🔥 <span id="u-lw-gas">-</span></div>
-                    </div>
-                </div>
-
-                <!-- Suggested: Water Efficiency (New) -->
-                <div class="kpi-card glass-card" style="height:110px; border-left:4px solid #3b82f6; justify-content:center; align-items:center; text-align:center">
-                    <div class="kpi-head" style="color:#1d4ed8; margin-bottom:10px">💧 Efficienza Idrica</div>
-                    <div class="kpi-val" id="u-eff-val" style="font-size:2.2rem; color:#3b82f6; line-height:1">-</div>
-                    <div class="kpi-sub" id="u-eff-sub" style="font-size:0.8rem; color:#1e40af; margin-top:5px">Litri Acqua / Bagnante (Mese)</div>
                 </div>
             </div>
 
@@ -2147,8 +2105,6 @@ window.renderUtenze = () => {
     // --- NEW UTENZE HIGHLIGHTS LOGIC ---
     let maxElec = { val: 0, date: '-' };
     let minElec = { val: Infinity, date: '-' };
-    let maxWater = { val: 0, date: '-' };
-    let minWater = { val: Infinity, date: '-' };
     let maxGas = { val: 0, date: '-' };
     let minGas = { val: Infinity, date: '-' };
     let totalWaterM3 = 0;
@@ -2169,13 +2125,6 @@ window.renderUtenze = () => {
             if (eVal !== null) {
                 if (eVal > maxElec.val) { maxElec.val = eVal; maxElec.date = dStr; }
                 if (eVal < minElec.val) { minElec.val = eVal; minElec.date = dStr; }
-            }
-
-            // Water Peak & Min
-            const wVal = deltas[dStr].water;
-            if (wVal !== null) {
-                if (wVal > maxWater.val) { maxWater.val = wVal; maxWater.date = dStr; }
-                if (wVal < minWater.val) { minWater.val = wVal; minWater.date = dStr; }
             }
             
             // Gas Peak & Min
@@ -2210,26 +2159,13 @@ window.renderUtenze = () => {
         }
     }
 
-    // Water Extremes
-    if(document.getElementById('u-hl-water-max')) {
-        document.getElementById('u-hl-water-max').innerText = maxWater.val > 0 ? maxWater.val.toLocaleString('it-IT', {maximumFractionDigits:0}) : "-";
-        document.getElementById('u-hl-water-max-date').innerText = fmtDate(maxWater.date);
-        
-        if(minWater.val !== Infinity) {
-            document.getElementById('u-hl-water-min').innerText = minWater.val.toLocaleString('it-IT', {maximumFractionDigits:0});
-            document.getElementById('u-hl-water-min-date').innerText = fmtDate(minWater.date);
-        } else {
-            document.getElementById('u-hl-water-min').innerText = "-";
-            document.getElementById('u-hl-water-min-date').innerText = "-";
-        }
-    }
-
     // 2. LAST 24H VALUES LOGIC
     let lastElec = { val: '-', date: '-' };
     let lastWater = { val: '-', date: '-' };
     let lastGas = { val: '-', date: '-' };
 
     // Find latest non-null delta for each utility
+    // We iterate backwards through all dates
     const findLatest = (typeKey) => {
         const allDatesRev = [...allDatesAsc].reverse();
         for(const dStr of allDatesRev) {
@@ -2270,37 +2206,8 @@ window.renderUtenze = () => {
         }
     }
 
-    // 4. Last Week Totals
-    const todayObj = new Date();
-    const dayOfWeek = todayObj.getDay(); 
-    const diffToMon = todayObj.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-    const thisMonday = new Date(todayObj.setDate(diffToMon));
-    const lastSunday = new Date(thisMonday); lastSunday.setDate(lastSunday.getDate() - 1);
-    const lastMonday = new Date(lastSunday); lastMonday.setDate(lastMonday.getDate() - 6);
-    
-    let lwSums = { elec: 0, water: 0, gas: 0 };
-    for (let d = new Date(lastMonday); d <= lastSunday; d.setDate(d.getDate() + 1)) {
-        const dStr = getStrDate(d);
-        if(deltas[dStr]) {
-            lwSums.elec += deltas[dStr].elec || 0;
-            lwSums.water += deltas[dStr].water || 0;
-            lwSums.gas += deltas[dStr].gas || 0;
-        }
-    }
-
-    if(document.getElementById('u-lw-elec')) {
-        document.getElementById('u-lw-elec').innerText = lwSums.elec.toLocaleString('it-IT', {maximumFractionDigits:0}) + " kWh";
-        document.getElementById('u-lw-water').innerText = lwSums.water.toLocaleString('it-IT', {maximumFractionDigits:0}) + " m³";
-        document.getElementById('u-lw-gas').innerText = lwSums.gas.toLocaleString('it-IT', {maximumFractionDigits:0}) + " m³";
-    }
-
-    // 5. Water Efficiency
-    const efficiency = totalSwimmers > 0 ? (totalWaterM3 * 1000 / totalSwimmers) : 0;
-    if(document.getElementById('u-eff-val')) {
-        document.getElementById('u-eff-val').innerText = efficiency.toFixed(0);
-    }
-
     // --- RENDER UTENZE ARCHIVE TABLE ---
+    // OPTIMIZATION: Critical Fix for Windows freezing. Do not use innerHTML+= in loops.
     const tBodyArchive = document.getElementById('tbody-utenze');
     if(tBodyArchive) {
         // 1. Prepare Data with Deltas (Reusing enriched logic)
@@ -2559,6 +2466,157 @@ window.resetUtenzeHistory = () => {
     renderUtenze();
 };
 
+window.downloadUtenzeCSV = () => {
+    if(!dataUtenze.length) return showToast("Nessun dato da esportare", "error");
+
+    // 1. Preparazione Dati (Simile a renderUtenze per avere i delta corretti)
+    const grouped = {};
+    dataUtenze.forEach(d => {
+        if(!grouped[d.date]) grouped[d.date] = { date: d.date, elec: null, water: null, gas: null, notes: [] };
+        if(d.type === '⚡ Elettricità') grouped[d.date].elec = d;
+        if(d.type === '💧 Acqua') grouped[d.date].water = d;
+        if(d.type === '🔥 Gas Metano') grouped[d.date].gas = d;
+        if(d.note) grouped[d.date].notes.push(d.note);
+    });
+
+    const allDatesAsc = Object.keys(grouped).sort();
+    let prevVals = { elec: null, water: null, gas: null };
+    
+    // Arricchiamo l'oggetto grouped con i delta
+    const enrichedData = allDatesAsc.map(date => {
+        const g = grouped[date];
+        const row = { date: date, raw: g, delta: { elec: 0, water: 0, gas: 0 } };
+        
+        ['elec', 'water', 'gas'].forEach(key => {
+            if(g[key]) {
+                if(prevVals[key] !== null) {
+                    let d = g[key].val - prevVals[key];
+                    row.delta[key] = d < 0 ? 0 : d;
+                }
+                prevVals[key] = g[key].val;
+            } else {
+                row.delta[key] = null; // Nessuna lettura quel giorno
+            }
+        });
+        return row;
+    });
+
+    // 2. Filtro Date (Rispetta i filtri attivi nell'UI)
+    const start = document.getElementById('u-hist-start').value;
+    const end = document.getElementById('u-hist-end').value;
+    
+    const filtered = enrichedData.filter(r => {
+        if (start && r.date < start) return false;
+        if (end && r.date > end) return false;
+        return true;
+    });
+
+    if(!filtered.length) return showToast("Nessun dato nel periodo selezionato", "error");
+
+    // 3. Generazione CSV
+    // Header
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Data;Elettricita_Lettura;Elettricita_Consumo;F1;F2;F3;Meteo;Acqua_Lettura;Acqua_Consumo;Gas_Lettura;Gas_Consumo;Gas_Temp;Note\n";
+
+    // Rows
+    filtered.forEach(r => {
+        const d = r.raw;
+        const dt = r.date.split('-').reverse().join('/'); // DD/MM/YYYY
+        
+        // Elec Fields
+        const elVal = d.elec ? d.elec.val.toString().replace('.', ',') : "";
+        const elCons = r.delta.elec !== null ? r.delta.elec.toFixed(1).replace('.', ',') : "";
+        const f1 = d.elec ? (d.elec.a1||0).toString().replace('.', ',') : "";
+        const f2 = d.elec ? (d.elec.a2||0).toString().replace('.', ',') : "";
+        const f3 = d.elec ? (d.elec.a3||0).toString().replace('.', ',') : "";
+        const meteo = d.elec ? (d.elec.meteo || "") : "";
+
+        // Water Fields
+        const waVal = d.water ? d.water.val.toString().replace('.', ',') : "";
+        const waCons = r.delta.water !== null ? r.delta.water.toFixed(1).replace('.', ',') : "";
+
+        // Gas Fields
+        const gaVal = d.gas ? d.gas.val.toString().replace('.', ',') : "";
+        const gaCons = r.delta.gas !== null ? r.delta.gas.toFixed(1).replace('.', ',') : "";
+        const gaTemp = (d.gas && d.gas.temp) ? d.gas.temp.toString().replace('.', ',') : "";
+
+        // Note
+        const notes = d.notes.join(" | ").replace(/;/g, ","); // Escape semicolons
+
+        csvContent += `${dt};${elVal};${elCons};${f1};${f2};${f3};${meteo};${waVal};${waCons};${gaVal};${gaCons};${gaTemp};${notes}\n`;
+    });
+
+    // 4. Download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `utenze_export_${start||'inizio'}_${end||'fine'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+window.saveIngressi = async () => {
+    const d = document.getElementById('i-date').value; if(!d) return showToast("Data mancante","error");
+    // Removed all zero checks here
+    const p = { date:d, type:document.getElementById('i-type').value, fascia:document.getElementById('i-fascia').value, meteo:document.getElementById('i-meteo').value, excludeStats: document.getElementById('i-exclude').checked, int:parseInt(document.getElementById('q-intero').value)||0, rid:parseInt(document.getElementById('q-ridotto').value)||0, grat:parseInt(document.getElementById('q-gratuito').value)||0, abb_int:parseInt(document.getElementById('q-abb-int').value)||0, abb_rid:parseInt(document.getElementById('q-abb-rid').value)||0 };
+    p.totale = p.int + p.rid + p.grat + p.abb_int + p.abb_rid;
+    
+    try {
+        if(editIdIngressi) { await updateDoc(doc(db,"sessioni",editIdIngressi), p); showToast("Aggiornato"); cancelEditIngressi(); } else { await addDoc(collection(db,"sessioni"), p); showToast("Salvato"); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; }
+    } catch(e){ showToast(e.message,"error"); }
+};
+window.editIngressi = (id) => { const d = dataIngressi.find(x=>x.id===id); if(!d) return; editIdIngressi = id; document.getElementById('i-date').value=d.date; document.getElementById('i-type').value=d.type||'standard'; document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo; document.getElementById('i-exclude').checked = d.excludeStats || false; document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid; document.getElementById('q-gratuito').value=d.grat; document.getElementById('q-abb-int').value=d.abb_int; document.getElementById('q-abb-rid').value=d.abb_rid; document.getElementById('title-ingressi').innerText="Modifica Ingressi"; document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; document.getElementById('btn-save-ingressi').style.background="#f59e0b"; document.getElementById('cancel-ingressi').classList.remove('hidden'); document.getElementById('cb-ingressi').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; };
+window.saveVasca = async () => { const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value; if(!date || !time) return showToast("Data/Ora mancanti","error"); const payload = { date, time, type:document.getElementById('v-type').value, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value }; try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); } };
+window.editVasca = (id) => { const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id; document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time; document.getElementById('v-type').value=d.type||'interna'; document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta; document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph; document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc; document.getElementById('v-clt').value=d.clt; document.getElementById('title-vasca').innerText="Modifica Valori"; document.getElementById('btn-save-vasca').innerText="AGGIORNA"; document.getElementById('btn-save-vasca').style.background="#f59e0b"; document.getElementById('cancel-vasca').classList.remove('hidden'); document.getElementById('cb-vasca').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
+window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('title-vasca').innerText="Registrazione Valori"; document.getElementById('btn-save-vasca').innerText="SALVA"; document.getElementById('btn-save-vasca').style.background=""; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
+window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
+window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
+window.toggleExcludeStats = async (id, currentVal) => { try { await updateDoc(doc(db, "sessioni", id), { excludeStats: !currentVal }); showToast(!currentVal ? "Giorno escluso dalla media" : "Giorno reincluso nella media"); } catch(e) { showToast(e.message, "error"); } };
+window.loadMoreIngressi = () => { limitIngressi += 200; renderIngressiArchive(); };
+window.loadMoreUtenze = () => { limitUtenze += 200; renderUtenze(); };
+
+window.renderIngressiArchive = () => {
+    const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const sort = document.getElementById('arch-sort').value;
+    const f = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; });
+    f.sort((a,b)=>{const da=new Date(a.date), db=new Date(b.date); return sort==='desc'?db-da:da-db});
+    const t=document.getElementById('tbody-ingressi'); 
+    
+    // OPTIMIZATION: Use join
+    if(f.length === 0) { t.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:20px;">Nessun dato trovato.</td></tr>'; return; }
+    const g=new Map(); f.forEach(d=>{if(!g.has(d.date))g.set(d.date,[]); g.get(d.date).push(d)});
+    
+    // OPTIMIZATION: Render max 200 rows
+    const limitedKeys = [...g.keys()].slice(0, limitIngressi);
+    const rowsBuffer = [];
+    
+    limitedKeys.forEach(k=>{
+        const e=g.get(k);
+        const dh=`<div style="font-weight:800;font-size:0.95rem;color:#1e293b">${k.split('-').reverse().join('/')}</div><div style="font-size:0.8rem;color:#64748b">${new Date(k).toLocaleDateString('it-IT',{weekday:'short'}).toUpperCase()}</div>`;
+        e.forEach((d,i)=>{
+            const b=i===e.length-1?"border-bottom:2px solid rgba(0,0,0,0.1)":"border-bottom:1px solid rgba(0,0,0,0.05)";
+            let badge = d.type === 'festivo' ? '<span class="badge badge-ko" style="margin-left:5px">🔴 Festivo</span>' : d.type === 'evento' ? '<span class="badge badge-evt" style="margin-left:5px">🏆 Evento</span>' : d.type === 'extra' ? '<span class="badge badge-summer" style="margin-left:5px">⚠️ Extra</span>' : '';
+            if (d.type === 'maltempo') badge = '<span class="badge" style="background:#475569; color:white; margin-left:5px">⛈️ Maltempo</span>';
+            const isExcluded = d.excludeStats === true;
+            const rowStyle = isExcluded ? "opacity:0.5; background: repeating-linear-gradient(45deg,rgba(0,0,0,0.02),rgba(0,0,0,0.02) 10px,rgba(0,0,0,0.06) 10px,rgba(0,0,0,0.06) 20px);" : "";
+            const excludeIcon = isExcluded ? "✅" : "🚫";
+            rowsBuffer.push(`<tr style="${b}; ${rowStyle}">${i===0?`<td rowspan="${e.length}" style="vertical-align:middle;background:rgba(255,255,255,0.4)">${dh}</td>`:''} <td><b>${d.fascia}</b>${badge}<br><small style="color:#64748b">${d.meteo}</small>${isExcluded?'<br><b style="color:#ef4444;font-size:0.65rem">ESCLUSO MEDIA</b>':''}</td> <td class="col-detail bg-sub-blue">${d.int}</td><td class="col-detail bg-sub-blue">${d.rid}</td><td class="col-subtot bg-sub-blue" style="color:var(--primary)">${(d.int||0)+(d.rid||0)}</td> <td class="col-detail bg-sub-purp">${d.abb_int}</td><td class="col-detail bg-sub-purp">${d.abb_rid}</td><td class="col-subtot bg-sub-purp" style="color:#a855f7">${(d.abb_int||0)+(d.abb_rid||0)}</td> <td class="col-detail">${d.grat}</td><td class="col-total">${d.totale}</td> <td style="text-align:right; min-width:110px"><button class="btn btn-icon" style="color:#64748b;background:transparent;border:1px solid #e2e8f0;margin-right:5px;width:30px;height:30px" onclick="toggleExcludeStats('${d.id}', ${isExcluded})">${excludeIcon}</button><button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editIngressi('${d.id}')">✏️</button><button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('sessioni','${d.id}')">🗑️</button></td></tr>`);
+        });
+    });
+    t.innerHTML = rowsBuffer.join('');
+
+    if([...g.keys()].length > limitIngressi) {
+        t.innerHTML += `<tr><td colspan="11" style="text-align:center; padding:15px"><button class="btn btn-primary" onclick="loadMoreIngressi()">⬇️ Carica altri risultati...</button></td></tr>`;
+    }
+}
+window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')debouncedRefresh(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
+window.switchSubView=(s)=>{ ['overview','stats','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); debouncedRefresh(); };
+function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
+setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
+const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('v-date').value=today; document.getElementById('d-date').value=today; document.getElementById('u-date').value=today;
+window.downloadCSV = () => { const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const filtered = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; }); if(!filtered.length) return showToast("Nessun dato da scaricare", "error"); let csvContent = "data:text/csv;charset=utf-8,Data;Tipo;Fascia;Meteo;EsclusoMedia;Intero;Ridotto;Abbonamenti;Gratuiti;Totale\n"; filtered.forEach(row => { csvContent += `${row.date};${row.type||'standard'};${row.fascia};${row.meteo};${row.excludeStats?'SI':'NO'};${row.int};${row.rid};${row.abb_int + row.abb_rid};${row.grat};${row.totale}\n`; }); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "archivio_ingressi.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
+window.resetArchiveFilters = () => { document.getElementById('arch-date-start').value=""; document.getElementById('arch-date-end').value=""; document.getElementById('arch-filter-fascia').value="all"; document.getElementById('arch-filter-meteo').value="all"; limitIngressi = 200; renderIngressiArchive(); };
 </script>
 
 </body>
