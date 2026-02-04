@@ -341,7 +341,7 @@
                 <div class="kpi-card glass-card" style="height:140px; border-left:4px solid #10b981; justify-content:center; align-items:center; text-align:center">
                     <div class="kpi-head" style="color:#047857; margin-bottom:10px">☀️ Fattore Meteo</div>
                     <div class="kpi-val" id="hl-sun-pct" style="font-size:2.8rem; color:#10b981; line-height:1">0%</div>
-                    <div class="kpi-sub" style="font-size:0.85rem; color:#065f46; margin-top:5px">Giorni di Sole nel Mese</div>
+                    <div class="kpi-sub" id="hl-sun-sub" style="font-size:0.85rem; color:#065f46; margin-top:5px">Giorni di Sole nel Mese</div>
                 </div>
 
                 <!-- BOX 4: FORECAST (MOVED HERE) -->
@@ -827,29 +827,31 @@ const debouncedRefresh = debounce(() => {
 
 function startListening() {
     try {
+        const errHandler = (err) => { console.error(err); showToast("Errore Database: " + err.message, "error"); };
+
         // IMPORTANT: LIMIT 10000 (Maximum allowed)
         onSnapshot(query(collection(db, "sessioni"), orderBy("date", "desc"), limit(10000)), (snap) => { 
             dataIngressi = snap.docs.map(d=>({id:d.id,...d.data()})); 
             populateStatFilters(); 
             debouncedRefresh();
-        });
+        }, errHandler);
         
         onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { 
             dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); 
             if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); 
-        });
+        }, errHandler);
 
         onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), limit(200)), (snap) => { 
             dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); 
             if(!document.getElementById('module-dae').classList.contains('hidden')) renderDae(); 
-        });
+        }, errHandler);
 
         onSnapshot(query(collection(db, "utenze_log"), orderBy("date", "desc"), limit(4000)), (snap) => { 
             dataUtenze = snap.docs.map(d=>({id:d.id,...d.data()})); 
             // Use debounced render for utenze too if visible
             if(!document.getElementById('module-utenze').classList.contains('hidden')) debouncedRefresh();
-        });
-    } catch(e) { console.error(e); }
+        }, errHandler);
+    } catch(e) { console.error(e); showToast("Errore Init: " + e.message, "error"); }
 }
 
 window.populateStatFilters = () => {
@@ -1163,12 +1165,18 @@ function renderOverviewKPI() {
     document.getElementById('ov-ytd').innerHTML = ytdHtml;
     document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${maxDay}/${currentMonth})`;
 
-    // 6. Forecast
+    // 6. Forecast & Total Comparison
     const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+    // Calculate total for full previous month
+    const totalYoyFull = dYoyFullMonth.reduce((a,b)=>a+b.totale,0);
+
     if(daysCurrent > 0) { 
         document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
+        document.getElementById('ov-forecast-sub').innerHTML = `proiezione <br><span style="font-size:0.75rem; color:#7e22ce; opacity:0.8">vs ${totalYoyFull} (${targetYoyYear})</span>`;
+    } else { 
+        document.getElementById('ov-forecast').innerText = "-"; 
         document.getElementById('ov-forecast-sub').innerText = "proiezione";
-    } else { document.getElementById('ov-forecast').innerText = "-"; }
+    }
 
     // --- HIGHLIGHTS LOGIC ---
     const dailyTotals = {};
@@ -1226,7 +1234,13 @@ function renderOverviewKPI() {
 
         const sunnyCount = dCurrent.filter(d => d.meteo && (d.meteo.includes('Sole') || d.meteo.includes('Sereno') || d.meteo.includes('Caldo'))).length;
         const pct = (sunnyCount / dCurrent.length) * 100;
+        
+        // WEATHER COMPARISON LOGIC
+        const sunnyCountYoy = dYoyFullMonth.filter(d => d.meteo && (d.meteo.includes('Sole') || d.meteo.includes('Sereno') || d.meteo.includes('Caldo'))).length;
+        const pctYoy = dYoyFullMonth.length > 0 ? (sunnyCountYoy / dYoyFullMonth.length) * 100 : 0;
+
         document.getElementById('hl-sun-pct').innerText = pct.toFixed(0) + "%";
+        document.getElementById('hl-sun-sub').innerHTML = `Giorni di Sole<br><span style="font-size:0.75rem; color:#065f46; opacity:0.8">vs ${pctYoy.toFixed(0)}% (${targetYoyYear})</span>`;
 
     } else {
         document.getElementById('hl-record-val').innerText = "-";
@@ -1234,6 +1248,7 @@ function renderOverviewKPI() {
         document.getElementById('hl-bestday-val').innerText = "-";
         document.getElementById('hl-worstday-val').innerText = "-";
         document.getElementById('hl-sun-pct').innerText = "-%";
+        document.getElementById('hl-sun-sub').innerText = "Giorni di Sole nel Mese";
     }
 }
 
