@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stat CF Lampugnano</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- Aggiunta libreria per Export Excel Reale (.xlsx) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
     :root {
@@ -2665,47 +2667,54 @@ window.downloadUtenzeCSV = () => {
 
     if(!filtered.length) return showToast("Nessun dato nel periodo selezionato", "error");
 
-    // 3. Generazione CSV
-    // Header
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Data;Elettricita_Lettura;Elettricita_Consumo;F1;F2;F3;Meteo;Acqua_Lettura;Acqua_Consumo;Gas_Lettura;Gas_Consumo;Gas_Temp;Note\n";
-
-    // Rows
-    filtered.forEach(r => {
+    // 3. Generazione EXCEL (.xlsx) con SheetJS
+    const excelData = filtered.map(r => {
         const d = r.raw;
         const dt = r.date.split('-').reverse().join('/'); // DD/MM/YYYY
         
-        // Elec Fields
-        const elVal = d.elec ? d.elec.val.toString().replace('.', ',') : "";
-        const elCons = r.delta.elec !== null ? r.delta.elec.toFixed(1).replace('.', ',') : "";
-        const f1 = d.elec ? (d.elec.a1||0).toString().replace('.', ',') : "";
-        const f2 = d.elec ? (d.elec.a2||0).toString().replace('.', ',') : "";
-        const f3 = d.elec ? (d.elec.a3||0).toString().replace('.', ',') : "";
-        const meteo = d.elec ? (d.elec.meteo || "") : "";
-
-        // Water Fields
-        const waVal = d.water ? d.water.val.toString().replace('.', ',') : "";
-        const waCons = r.delta.water !== null ? r.delta.water.toFixed(1).replace('.', ',') : "";
-
-        // Gas Fields
-        const gaVal = d.gas ? d.gas.val.toString().replace('.', ',') : "";
-        const gaCons = r.delta.gas !== null ? r.delta.gas.toFixed(1).replace('.', ',') : "";
-        const gaTemp = (d.gas && d.gas.temp) ? d.gas.temp.toString().replace('.', ',') : "";
-
-        // Note
-        const notes = d.notes.join(" | ").replace(/;/g, ","); // Escape semicolons
-
-        csvContent += `${dt};${elVal};${elCons};${f1};${f2};${f3};${meteo};${waVal};${waCons};${gaVal};${gaCons};${gaTemp};${notes}\n`;
+        return {
+            "Data": dt,
+            "Elettricità Lettura": d.elec ? d.elec.val : "",
+            "Elettricità Consumo": r.delta.elec !== null ? r.delta.elec : "",
+            "F1": d.elec ? (d.elec.a1||0) : "",
+            "F2": d.elec ? (d.elec.a2||0) : "",
+            "F3": d.elec ? (d.elec.a3||0) : "",
+            "Meteo": d.elec ? (d.elec.meteo || "") : "",
+            "Acqua Lettura": d.water ? d.water.val : "",
+            "Acqua Consumo": r.delta.water !== null ? r.delta.water : "",
+            "Gas Lettura": d.gas ? d.gas.val : "",
+            "Gas Consumo": r.delta.gas !== null ? r.delta.gas : "",
+            "Gas Temp": (d.gas && d.gas.temp) ? d.gas.temp : "",
+            "Note": d.notes.join(" | ")
+        };
     });
 
-    // 4. Download
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `utenze_export_${start||'inizio'}_${end||'fine'}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Creazione Workbook
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    
+    // Auto-width colonne (estetica)
+    const wscols = [
+        {wch: 12}, // Data
+        {wch: 15}, // Elec Let
+        {wch: 15}, // Elec Cons
+        {wch: 8},  // F1
+        {wch: 8},  // F2
+        {wch: 8},  // F3
+        {wch: 15}, // Meteo
+        {wch: 15}, // Wat Let
+        {wch: 15}, // Wat Cons
+        {wch: 15}, // Gas Let
+        {wch: 15}, // Gas Cons
+        {wch: 10}, // Temp
+        {wch: 40}  // Note
+    ];
+    ws['!cols'] = wscols;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Storico Utenze");
+
+    // Download
+    XLSX.writeFile(wb, `utenze_export_${start||'inizio'}_${end||'fine'}.xlsx`);
 };
 
 window.saveIngressi = async () => {
