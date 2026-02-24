@@ -2036,11 +2036,13 @@
             }
 
             document.getElementById('viewNoticeModal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
             lucide.createIcons();
         }
 
         function closeViewModal() { 
             document.getElementById('viewNoticeModal').classList.add('hidden'); 
+            document.body.classList.remove('overflow-hidden');
             openedNoticeId = null;
             // Opzionale: Pulisce l'URL quando si chiude il modale se è stato aperto via link diretto
             // window.history.replaceState({}, document.title, window.location.pathname);
