@@ -1986,16 +1986,32 @@
                     downloadBtn.removeAttribute('href');
                     downloadBtn.onclick = (e) => {
                         e.preventDefault();
-                        fetch(notice.attachmentUrl)
-                            .then(res => res.blob())
-                            .then(blob => {
-                                const blobUrl = URL.createObjectURL(blob);
-                                window.open(blobUrl, '_blank');
-                            })
-                            .catch(err => {
-                                console.error("Errore apertura PDF", err);
-                                showToast("Errore nell'apertura del documento", true);
-                            });
+                        try {
+                            // Conversione sincrona da Base64 a Blob per evitare i blocchi dei popup
+                            const arr = notice.attachmentUrl.split(',');
+                            const mime = arr[0].match(/:(.*?);/)[1];
+                            const bstr = atob(arr[1]);
+                            let n = bstr.length;
+                            const u8arr = new Uint8Array(n);
+                            while(n--){
+                                u8arr[n] = bstr.charCodeAt(n);
+                            }
+                            const blob = new Blob([u8arr], {type: mime});
+                            const blobUrl = URL.createObjectURL(blob);
+                            
+                            // Crea un link temporaneo per forzare il download ed evitare la pagina bianca
+                            const link = document.createElement('a');
+                            link.href = blobUrl;
+                            link.download = 'Documento_Allegato.pdf'; 
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            
+                            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                        } catch (err) {
+                            console.error("Errore estrazione PDF", err);
+                            showToast("Errore durante il download del documento", true);
+                        }
                     };
                 } else {
                     downloadBtn.href = notice.attachmentUrl;
