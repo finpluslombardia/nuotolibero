@@ -55,8 +55,7 @@
     .cb-row { display: flex; gap: 15px; align-items: flex-end; width: 100%; }
     #cb-utenze .cb-row { flex-wrap: wrap; }
     #cb-ingressi .cb-row { flex-wrap: nowrap; gap: 15px; }
-    #cb-vasca .cb-row { flex-wrap: nowrap; gap: 15px; }
-    
+        
     /* INPUT FIELDS STANDARD */
     .inp-field { display: flex; flex-direction: column; flex: 1; min-width: 0; }
     .inp-field label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -184,8 +183,7 @@
     <ul class="nav-links"><li class="nav-item active" id="nav-module-ingressi" onclick="switchModule('ingressi')">🎫 Nuoto Libero</li></ul>
     <div class="nav-section-title" style="margin-top:20px">Impianto</div>
     <ul class="nav-links">
-        <li class="nav-item" id="nav-module-vasca" onclick="switchModule('vasca')">💧 Valori Vasca</li>
-        <li class="nav-item" id="nav-module-dae" onclick="switchModule('dae')">⚡ Controllo DAE</li>
+                <li class="nav-item" id="nav-module-dae" onclick="switchModule('dae')">⚡ Controllo DAE</li>
         <li class="nav-item" id="nav-module-utenze" onclick="switchModule('utenze')">📊 Utenze</li>
     </ul>
     <div class="sidebar-footer">
@@ -424,6 +422,24 @@
                 <div class="chart-card glass-card"><div class="chart-header">Performance Meteo</div><div class="chart-wrapper"><canvas id="chartMeteo"></canvas></div></div>
             </div>
             <div class="charts-row-main"><div class="chart-card glass-card"><div class="chart-header">Popolarità Fasce Orarie</div><div class="chart-wrapper"><canvas id="chartFasce"></canvas></div></div></div>
+
+            <div class="table-wrap glass-card" style="margin-top:25px">
+                <h3 style="padding:15px 20px; margin:0; font-size:1rem; border-bottom:1px solid rgba(0,0,0,0.05)">🔥 Heatmap Giorno Settimana × Fascia Oraria (Media Ingressi)</h3>
+                <div style="overflow-x:auto; padding:15px">
+                    <table id="table-heatmap-fasce" style="border-collapse:separate; border-spacing:3px">
+                        <thead><tr id="heatmap-fasce-head"></tr></thead>
+                        <tbody id="heatmap-fasce-body"></tbody>
+                    </table>
+                    <div style="font-size:0.75rem; color:#64748b; margin-top:10px">Il colore più intenso indica una media ingressi più alta per quella combinazione giorno/fascia, nel periodo selezionato.</div>
+                </div>
+            </div>
+
+            <div class="charts-row-main">
+                <div class="chart-card glass-card">
+                    <div class="chart-header">📊 Confronto Fasce nel Tempo (Trend Mensile)</div>
+                    <div class="chart-wrapper"><canvas id="chartFasceTrend"></canvas></div>
+                </div>
+            </div>
         </div>
 
                 <div id="sub-riepilogo" class="hidden">
@@ -456,6 +472,11 @@
                     </table>
                 </div>
             </div>
+
+            <div class="chart-card glass-card" style="margin-top:25px; height:320px; padding:15px">
+                <div class="chart-header">🎟️ Composizione Tipo Ticket nel Tempo (%)</div>
+                <div class="chart-wrapper"><canvas id="chartTicketTrend"></canvas></div>
+            </div>
         </div>
 
 <div id="sub-archive" class="hidden">
@@ -474,54 +495,6 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<div id="module-vasca" class="module-container hidden" style="display:flex; flex-direction:column; height:100%">
-    <div class="control-bar" id="cb-vasca">
-        <div class="cb-header"><span class="cb-title" id="title-vasca">Registrazione Valori Vasca</span><button class="btn btn-danger hidden" id="cancel-vasca" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditVasca()">Annulla Modifica</button></div>
-        <div class="cb-row">
-            <div class="group-ctx" style="flex:1.2; align-items:flex-end; gap:10px">
-                <div class="inp-field" style="flex:1"><label>Data</label><input type="date" id="v-date"></div>
-                <div class="inp-field" style="flex:0.8"><label>Orario</label><input type="time" id="v-time"></div>
-                <div class="inp-field" style="flex:1.2"><label>Vasca</label>
-                    <select id="v-type">
-                        <option value="interna">🏠 Interna</option>
-                        <option value="esterna">☀️ Esterna</option>
-                    </select>
-                </div>
-            </div>
-            <div class="group-chem" style="flex:2">
-                <div class="t-box"><label>BAGNANTI</label><input type="number" id="v-bag" value="0"></div>
-                <div class="t-box"><label>T. ARIA</label><input type="number" step="0.1" id="v-ta" value="0"></div>
-                <div class="t-box"><label>T. H2O</label><input type="number" step="0.1" id="v-th" value="0"></div>
-                <div class="t-box"><label>pH</label><input type="number" step="0.1" id="v-ph" value="0"></div>
-                <div class="t-box"><label>CL LIB.</label><input type="number" step="0.1" id="v-cll" value="0" oninput="calcClTot()"></div>
-                <div class="t-box"><label>CL COMB.</label><input type="number" step="0.1" id="v-clc" value="0" oninput="calcClTot()"></div>
-                <div class="t-box"><label>CL TOT.</label><input type="number" step="0.1" id="v-clt" value="0"></div>
-            </div>
-            <div class="group-actions"><button id="btn-save-vasca" class="btn btn-primary" style="height:44px; min-width:120px" onclick="saveVasca()">SALVA</button></div>
-        </div>
-    </div>
-    <div class="scroll-area">
-        <h2 class="page-title">💧 Diario Vasca</h2>
-        
-        <!-- NEW VASCA TOOLBAR -->
-        <div class="archive-toolbar" style="margin-bottom: 15px; background: rgba(255,255,255,0.5);">
-            <div class="arch-group"><span class="arch-label">Data:</span><input type="date" id="v-search-date" class="arch-input" onchange="renderVasca()"></div>
-            <select id="v-search-type" class="arch-select" onchange="renderVasca()">
-                <option value="all">🏊 Tutte le Vasche</option>
-                <option value="interna">🏠 Interna</option>
-                <option value="esterna">☀️ Esterna</option>
-            </select>
-            <select id="v-search-alert" class="arch-select" onchange="renderVasca()" style="color:#b91c1c; font-weight:700">
-                <option value="all" style="color:var(--text-main)">✅ Tutti i Dati</option>
-                <option value="alert">⚠️ Solo Anomalie</option>
-            </select>
-            <button class="btn btn-danger" style="height:36px; padding:0 15px" onclick="resetVascaFilter()">✕</button>
-        </div>
-
-        <div class="table-wrap glass-card"><div style="overflow-x:auto;"><table id="table-vasca"><thead><tr><th>Data</th><th>Ora / Vasca</th><th>Bagnanti</th><th>T. Aria</th><th>T. Acqua</th><th>pH</th><th>Cl Lib</th><th>Cl Comb</th><th>Cl Tot</th><th style="text-align:right"></th></tr></thead><tbody id="tbody-vasca"></tbody></table></div></div>
     </div>
 </div>
 
@@ -862,7 +835,7 @@ import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc
 
 const firebaseConfig = { apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0", authDomain: "piscinastats-64519.firebaseapp.com", projectId: "piscinastats-64519", storageBucket: "piscinastats-64519.firebasestorage.app", messagingSenderId: "297663099794", appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
-let dataIngressi=[], dataVasca=[], dataDae=[], dataUtenze=[]; let editIdIngressi=null, editIdVasca=null, editIdUtenze=null;
+let dataIngressi=[], dataDae=[], dataUtenze=[]; let editIdIngressi=null, editIdUtenze=null;
 let limitIngressi = 200;
 let limitUtenze = 200;
 
@@ -922,10 +895,7 @@ function startListening() {
             debouncedRefresh();
         }, errHandler);
         
-        onSnapshot(query(collection(db, "valori_vasca"), orderBy("date", "desc"), limit(500)), (snap) => { 
-            dataVasca = snap.docs.map(d=>({id:d.id,...d.data()})); 
-            if(!document.getElementById('module-vasca').classList.contains('hidden')) renderVasca(); 
-        }, errHandler);
+
 
         onSnapshot(query(collection(db, "dae_log"), orderBy("date", "desc"), limit(200)), (snap) => { 
             dataDae = snap.docs.map(d=>({id:d.id,...d.data()})); 
@@ -1063,15 +1033,19 @@ function renderDynamicChart(id, labels, datasets, type, isStacked=false) {
                     bodyFont: { size: 13, weight: 'bold' },
                     callbacks: {
                         afterBody: function(context) {
-                            const punto = context.find(c => c.raw);
-                            if(!punto) return [];
+                            const punto = context.find(c => c.raw && typeof c.raw === 'object');
+                            if(!punto || !punto.raw) return [];
+                            const lines = [];
+                            if (punto.raw.meteo) lines.push(`${punto.raw.meteo}`);
+                            if (punto.raw.dayType) lines.push(`📅 ${punto.raw.dayType}`);
                             if (punto.raw.refDate) {
                                 const dRef = new Date(punto.raw.refDate);
                                 const dStr = dRef.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-                                return ['', '------------------', `Confrontato con:\n${dStr}`];
+                                if (lines.length) lines.push('------------------');
+                                lines.push(`Confrontato con:\n${dStr}`);
                             }
-                            if (punto.raw.extraInfo) return ['', `📝 ${punto.raw.extraInfo}`];
-                            return [];
+                            if (punto.raw.extraInfo) lines.push(`📝 ${punto.raw.extraInfo}`);
+                            return lines.length ? ['', ...lines] : [];
                         }
                     }
                 }
@@ -1251,16 +1225,48 @@ function renderOverviewKPI() {
     document.getElementById('ov-ytd').innerHTML = ytdHtml;
     document.getElementById('ov-ytd-label').innerText = `vs ${prevYearVal} (al ${maxDay}/${currentMonth})`;
 
-    // 6. Forecast & Total Comparison
+    // 6. Forecast & Total Comparison (basata su trend storico per giorno della settimana)
     const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
     // Calculate total for full previous month
     const totalYoyFull = dYoyFullMonth.reduce((a,b)=>a+b.totale,0);
 
-    if(daysCurrent > 0) { 
-        document.getElementById('ov-forecast').innerText = ((totalCurrent / daysCurrent) * daysInMonth).toFixed(0); 
-        document.getElementById('ov-forecast-sub').innerHTML = `proiezione <br><span style="font-size:0.75rem; color:#7e22ce; opacity:0.8">vs ${totalYoyFull} (${targetYoyYear})</span>`;
-    } else { 
-        document.getElementById('ov-forecast').innerText = "-"; 
+    if(daysCurrent > 0) {
+        // Storico: tutti i dati passati (esclusi i giorni esclusi dalla media e il mese corrente stesso)
+        const histForForecast = dataIngressi.filter(x => !x.excludeStats && x.date.slice(0,7) !== currentMonthStr);
+
+        // Media storica per giorno della settimana (0=Dom...6=Sab), su tutti gli anni disponibili
+        const weekdaySums = new Array(7).fill(0);
+        const weekdayDayCounts = new Array(7).fill(0); // conta giorni-calendario unici per evitare doppio peso multi-fascia
+        const weekdaySeenDates = new Array(7).fill(null).map(() => new Set());
+        histForForecast.forEach(x => {
+            const wd = new Date(x.date).getDay();
+            weekdaySums[wd] += x.totale || 0;
+            weekdaySeenDates[wd].add(x.date);
+        });
+        for (let wd = 0; wd < 7; wd++) weekdayDayCounts[wd] = weekdaySeenDates[wd].size;
+        const weekdayAvg = weekdaySums.map((sum, wd) => weekdayDayCounts[wd] > 0 ? sum / weekdayDayCounts[wd] : null);
+
+        // Somma stimata per i giorni RIMANENTI del mese (da maxDay+1 a fine mese)
+        let estimatedRemaining = 0;
+        let hasHistoricalBasis = true;
+        for (let d = maxDay + 1; d <= daysInMonth; d++) {
+            const dt = new Date(currentYear, currentMonth - 1, d);
+            const wd = dt.getDay();
+            if (weekdayAvg[wd] !== null) {
+                estimatedRemaining += weekdayAvg[wd];
+            } else {
+                // Fallback: nessun dato storico per quel giorno della settimana -> usa media generale del mese in corso
+                hasHistoricalBasis = false;
+                estimatedRemaining += (totalCurrent / daysCurrent);
+            }
+        }
+
+        const forecastTotal = totalCurrent + estimatedRemaining;
+        document.getElementById('ov-forecast').innerText = forecastTotal.toFixed(0);
+        const basisLabel = hasHistoricalBasis ? 'su trend storico' : 'su trend storico (parziale)';
+        document.getElementById('ov-forecast-sub').innerHTML = `proiezione <span style="font-size:0.65rem; opacity:0.7">(${basisLabel})</span><br><span style="font-size:0.75rem; color:#7e22ce; opacity:0.8">vs ${totalYoyFull} (${targetYoyYear})</span>`;
+    } else {
+        document.getElementById('ov-forecast').innerText = "-";
         document.getElementById('ov-forecast-sub').innerText = "proiezione";
     }
 
@@ -1354,7 +1360,10 @@ window.renderOverviewCharts = () => {
         const dtPrev = getDataConfronto(dt);
         const dtPrevStr = getStrDate(dtPrev);
         const valOggi = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0);
-        l30.push({ x: dates[dates.length-1], y: valOggi, refDate: dtPrevStr });
+        const dayEntries30 = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats);
+        const meteoSet30 = [...new Set(dayEntries30.map(x=>x.meteo).filter(Boolean))];
+        const dayTypeSet30 = [...new Set(dayEntries30.map(x=>x.type).filter(t=>t && t!=='standard'))];
+        l30.push({ x: dates[dates.length-1], y: valOggi, refDate: dtPrevStr, meteo: meteoSet30.join(', '), dayType: dayTypeSet30.join(', ') });
         l30_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
     
@@ -1374,7 +1383,10 @@ window.renderOverviewCharts = () => {
         const dtPrev = getDataConfronto(dt);
         const dtPrevStr = getStrDate(dtPrev);
         const valOggi = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0);
-        l90.push({ x: dates90[dates90.length-1], y: valOggi, refDate: dtPrevStr });
+        const dayEntries90 = dataIngressi.filter(x=>x.date===dtStr && !x.excludeStats);
+        const meteoSet90 = [...new Set(dayEntries90.map(x=>x.meteo).filter(Boolean))];
+        const dayTypeSet90 = [...new Set(dayEntries90.map(x=>x.type).filter(t=>t && t!=='standard'))];
+        l90.push({ x: dates90[dates90.length-1], y: valOggi, refDate: dtPrevStr, meteo: meteoSet90.join(', '), dayType: dayTypeSet90.join(', ') });
         l90_prev.push(dataIngressi.filter(x=>x.date===dtPrevStr && !x.excludeStats).reduce((a,b)=>a+b.totale,0));
     }
     renderDynamicChart('chartRecent90', dates90, [
@@ -1670,155 +1682,113 @@ window.renderStats = () => {
     renderMultiBar('chartMeteo', meteoData.labels, meteoData.datasets);
     const fasceData = buildMultiSeries(d => ({key: d.fascia, val: d.totale}));
     renderMultiBar('chartFasce', fasceData.labels, fasceData.datasets, 'y');
+
+    // --- HEATMAP GIORNO SETTIMANA x FASCIA ---
+    renderHeatmapFasce(fMain);
+
+    // --- CONFRONTO FASCE NEL TEMPO (trend mensile, ultimi 12 mesi del periodo o anno selezionato) ---
+    renderFasceTrendChart(filteredSource, startDate, endDate);
 };
 
-function renderVasca() { 
-    const searchDate = document.getElementById('v-search-date') ? document.getElementById('v-search-date').value : null;
-    const searchType = document.getElementById('v-search-type').value;
-    const searchAlert = document.getElementById('v-search-alert').value;
+// --- HEATMAP GIORNO SETTIMANA x FASCIA ORARIA ---
+function renderHeatmapFasce(dataset) {
+    const head = document.getElementById('heatmap-fasce-head');
+    const body = document.getElementById('heatmap-fasce-body');
+    if (!head || !body) return;
 
-    const t=document.getElementById('tbody-vasca'); 
-    
-    // OPTIMIZATION: Use string buffer instead of innerHTML += inside loops
-    let htmlBuffer = "";
-    
-    let list = [...dataVasca];
-    if(searchDate) list = list.filter(d => d.date === searchDate);
-    
-    // Filter Type
-    if (searchType !== 'all') {
-        list = list.filter(d => (d.type || 'interna') === searchType);
-    }
+    const weekDaysLabels = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+    const getJsDay = (i) => (i + 1) % 7; // 0=Lun..6=Dom -> JS getDay()
 
-    // Filter Anomalies
-    if (searchAlert === 'alert') {
-        list = list.filter(d => {
-            const ph = parseFloat(d.ph);
-            const cl = parseFloat(d.cll);
-            const phBad = (ph < 6.5 || ph > 7.5);
-            const clBad = (cl < 0.8 || cl > 1.7);
-            return phBad || clBad;
-        });
-    }
-
-    // Sort globale per raggruppamento corretto
-    list.sort((a,b) => (b.date + b.time).localeCompare(a.date + a.time));
-
-    if(list.length === 0) {
-        t.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:#64748b">Nessuna registrazione trovata.</td></tr>';
+    if (!dataset || dataset.length === 0) {
+        head.innerHTML = '<th>Fascia</th>';
+        body.innerHTML = '<tr><td style="padding:15px; color:#64748b">Nessun dato nel periodo selezionato.</td></tr>';
         return;
     }
 
-    // Raggruppamento per Mese
-    const groups = {};
-    list.forEach(d => {
-        const key = d.date.substring(0, 7); // YYYY-MM
-        if(!groups[key]) groups[key] = [];
-        groups[key].push(d);
-    });
+    const fasce = [...new Set(dataset.map(d => d.fascia))].sort();
 
-    const sortedMonths = Object.keys(groups).sort().reverse();
-
-    sortedMonths.forEach((mKey, mIndex) => {
-        // Header Mese
-        const [y, m] = mKey.split('-');
-        const dateObj = new Date(y, m - 1, 1);
-        const monthName = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
-        const groupId = 'vasca-g-' + mKey;
-        const count = groups[mKey].length;
-        
-        // Auto-expand if searching or if it's the very first group (current/latest month)
-        const isExpanded = searchDate ? true : (mIndex === 0); 
-        const displayStyle = isExpanded ? 'table-row' : 'none';
-        const arrow = isExpanded ? '▼' : '▶';
-        const bgHeader = mIndex === 0 ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.5)';
-
-        htmlBuffer += `
-            <tr style="background:${bgHeader}; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.6); transition:background 0.2s" onclick="toggleVascaGroup('${groupId}', this)" onmouseover="this.style.background='rgba(37,99,235,0.2)'" onmouseout="this.style.background='${bgHeader}'">
-                <td colspan="10" style="font-weight:800; color:var(--text-main); padding:15px; font-size:0.95rem">
-                    <span class="group-arrow" style="display:inline-block; width:20px; color:var(--primary)">${arrow}</span> 
-                    ${monthName.charAt(0).toUpperCase() + monthName.slice(1)} 
-                    <span style="font-weight:500; font-size:0.8rem; color:var(--text-muted); margin-left:10px; background:rgba(255,255,255,0.6); padding:2px 8px; border-radius:10px">${count} reg.</span>
-                </td>
-            </tr>
-        `;
-
-        // Raggruppamento per Giorno all'interno del Mese per rowspan
-        const dayGroups = new Map();
-        groups[mKey].forEach(d => {
-            if(!dayGroups.has(d.date)) dayGroups.set(d.date, []);
-            dayGroups.get(d.date).push(d);
-        });
-
-        // Itero i giorni del mese
-        [...dayGroups.keys()].forEach(dKey => {
-            const entries = dayGroups.get(dKey);
-            // Sort per ora decrescente
-            entries.sort((a,b) => b.time.localeCompare(a.time));
-            
-            const dateFmt = dKey.split('-').reverse().join('/');
-            const dh = `<div style="font-weight:800;color:#1e293b">${dateFmt}</div>`;
-
-            entries.forEach((d, i) => {
-                const isLast = i === entries.length - 1;
-                const borderStyle = isLast ? "border-bottom:2px solid rgba(0,0,0,0.1)" : "border-bottom:1px solid rgba(0,0,0,0.05)";
-                
-                const phVal = parseFloat(d.ph); const phAlert = (phVal < 6.5 || phVal > 7.5);
-                const phStyle = phAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : 'font-weight:600';
-                const clVal = parseFloat(d.cll); const clAlert = (clVal < 0.8 || clVal > 1.7);
-                const clStyle = clAlert ? 'background:#fee2e2; color:#b91c1c; font-weight:900; border:1px solid #fca5a5' : '';
-                
-                const typeLabel = d.type === 'esterna' ? '<span class="badge badge-summer">☀️ Est.</span>' : '<span class="badge badge-std">🏠 Int.</span>';
-
-                // Costruzione riga
-                let rowHtml = `<tr class="group-item ${groupId}" style="display:${displayStyle}; ${borderStyle}; background:rgba(255,255,255,0.25)">`;
-                
-                // Cella Data con Rowspan (solo alla prima occorrenza)
-                if (i === 0) {
-                    rowHtml += `<td rowspan="${entries.length}" style="vertical-align:middle; background:rgba(255,255,255,0.4); min-width:90px">${dh}</td>`;
-                }
-
-                rowHtml += `
-                    <td>
-                        <div style="font-weight:700;color:#2563eb">${d.time}</div>
-                        <div style="margin-top:2px; font-size:0.75rem">${typeLabel}</div>
-                    </td>
-                    <td>${d.bag}</td>
-                    <td>${d.ta}°</td>
-                    <td>${d.th}°</td>
-                    <td style="${phStyle}">${d.ph}</td>
-                    <td style="${clStyle}">${d.cll}</td>
-                    <td>${d.clc}</td>
-                    <td style="font-weight:700">${d.clt}</td> 
-                    <td style="text-align:right">
-                        <button class="btn btn-icon" style="color:var(--primary);background:#eef2ff" onclick="editVasca('${d.id}')">✏️</button>
-                        <button class="btn btn-icon" style="color:#ef4444;background:#fef2f2" onclick="delDoc('valori_vasca','${d.id}')">🗑️</button>
-                    </td>
-                </tr>`;
-                
-                htmlBuffer += rowHtml;
-            });
+    // Calcola media per ogni combinazione fascia/giorno settimana
+    const matrix = {}; // fascia -> [media_lun, media_mar, ...]
+    let maxVal = 0;
+    fasce.forEach(fascia => {
+        matrix[fascia] = weekDaysLabels.map((_, i) => {
+            const jsDay = getJsDay(i);
+            const subset = dataset.filter(d => d.fascia === fascia && new Date(d.date).getDay() === jsDay);
+            if (subset.length === 0) return null;
+            const avg = subset.reduce((a,b) => a + (b.totale||0), 0) / subset.length;
+            if (avg > maxVal) maxVal = avg;
+            return avg;
         });
     });
-    
-    t.innerHTML = htmlBuffer;
+
+    // Header
+    head.innerHTML = '<th style="text-align:left; padding:8px 12px; background:rgba(255,255,255,0.6)">Fascia</th>' +
+        weekDaysLabels.map(d => `<th style="padding:8px 12px; background:rgba(255,255,255,0.6); font-size:0.8rem">${d}</th>`).join('');
+
+    // Body con celle colorate in base all'intensità
+    const getColor = (val) => {
+        if (val === null || maxVal === 0) return 'rgba(0,0,0,0.03)';
+        const intensity = Math.min(val / maxVal, 1);
+        // scala dal blu chiaro al blu intenso
+        const alpha = 0.08 + intensity * 0.75;
+        return `rgba(37, 99, 235, ${alpha.toFixed(2)})`;
+    };
+    const getTextColor = (val) => {
+        if (val === null || maxVal === 0) return '#94a3b8';
+        const intensity = Math.min(val / maxVal, 1);
+        return intensity > 0.55 ? '#fff' : '#1e293b';
+    };
+
+    body.innerHTML = fasce.map(fascia => {
+        const cells = matrix[fascia].map(val => {
+            const bg = getColor(val);
+            const txtColor = getTextColor(val);
+            const display = val === null ? '-' : Math.round(val);
+            return `<td style="text-align:center; padding:10px 8px; background:${bg}; color:${txtColor}; font-weight:700; border-radius:6px; font-size:0.85rem">${display}</td>`;
+        }).join('');
+        return `<tr><td style="padding:8px 12px; font-weight:700; font-size:0.85rem; white-space:nowrap">${fascia}</td>${cells}</tr>`;
+    }).join('');
 }
 
-window.toggleVascaGroup = (groupId, headerTr) => {
-    const rows = document.querySelectorAll(`.${groupId}`);
-    const arrow = headerTr.querySelector('.group-arrow');
-    const isHidden = rows[0].style.display === 'none';
-    rows.forEach(r => r.style.display = isHidden ? 'table-row' : 'none');
-    arrow.innerText = isHidden ? '▼' : '▶';
-};
+// --- CONFRONTO FASCE NEL TEMPO (TREND MENSILE) ---
+function renderFasceTrendChart(dataset, startDate, endDate) {
+    if (!isChartReady()) return;
+    if (!dataset || dataset.length === 0) { renderMultiBar('chartFasceTrend', [], []); return; }
 
-window.resetVascaFilter = () => {
-    const inp = document.getElementById('v-search-date');
-    if(inp) inp.value = "";
-    document.getElementById('v-search-type').value = "all";
-    document.getElementById('v-search-alert').value = "all";
-    renderVasca();
-};
+    const fasce = [...new Set(dataset.map(d => d.fascia))].sort();
+
+    // Costruisci etichette mensili tra startDate e endDate (oppure ultimi 12 mesi se range troppo corto/lungo)
+    const monthKeys = [];
+    let cursor = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    const endCursor = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+    while (cursor <= endCursor) {
+        monthKeys.push(`${cursor.getFullYear()}-${String(cursor.getMonth()+1).padStart(2,'0')}`);
+        cursor.setMonth(cursor.getMonth() + 1);
+    }
+    const monthLabels = monthKeys.map(k => {
+        const [y, m] = k.split('-');
+        return new Date(y, m-1, 1).toLocaleString('it-IT', { month: 'short', year: '2-digit' });
+    });
+
+    const colors = ['#2563eb','#f59e0b','#10b981','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1','#14b8a6'];
+
+    const datasets = fasce.map((fascia, idx) => {
+        const data = monthKeys.map(mk => {
+            const subset = dataset.filter(d => d.fascia === fascia && d.date.slice(0,7) === mk);
+            return subset.reduce((a,b) => a + (b.totale||0), 0);
+        });
+        return {
+            label: fascia,
+            data: data,
+            borderColor: colors[idx % colors.length],
+            backgroundColor: colors[idx % colors.length] + '20',
+            fill: false,
+            tension: 0.3
+        };
+    });
+
+    renderDynamicChart('chartFasceTrend', monthLabels, datasets, 'line');
+}
 
 window.saveDae = async () => { const d=document.getElementById('d-date').value||new Date().toISOString().split('T')[0]; const a=document.getElementById('d-ass').value; const o=document.getElementById('d-op').value; const tVal = document.getElementById('d-time').value; if(!a||!o) return showToast("Compila nomi","error"); try { await addDoc(collection(db,"dae_log"),{date:d,time:tVal,ass:a,op:o,status:document.getElementById('d-status').value}); document.getElementById('d-ass').value=""; document.getElementById('d-op').value=""; showToast("DAE Registrato!"); } catch(e){ showToast(e.message,"error"); } };
 window.renderDae = () => {
@@ -2762,10 +2732,6 @@ window.saveIngressi = async () => {
 };
 window.editIngressi = (id) => { const d = dataIngressi.find(x=>x.id===id); if(!d) return; editIdIngressi = id; document.getElementById('i-date').value=d.date; document.getElementById('i-type').value=d.type||'standard'; document.getElementById('i-fascia').value=d.fascia; document.getElementById('i-meteo').value=d.meteo; document.getElementById('i-exclude').checked = d.excludeStats || false; document.getElementById('q-intero').value=d.int; document.getElementById('q-ridotto').value=d.rid; document.getElementById('q-gratuito').value=d.grat; document.getElementById('q-abb-int').value=d.abb_int; document.getElementById('q-abb-rid').value=d.abb_rid; document.getElementById('title-ingressi').innerText="Modifica Ingressi"; document.getElementById('btn-save-ingressi').innerText="AGGIORNA"; document.getElementById('btn-save-ingressi').style.background="#f59e0b"; document.getElementById('cancel-ingressi').classList.remove('hidden'); document.getElementById('cb-ingressi').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
 window.cancelEditIngressi = () => { editIdIngressi=null; document.getElementById('title-ingressi').innerText="Registrazione Ingressi"; document.getElementById('btn-save-ingressi').innerText="SALVA"; document.getElementById('btn-save-ingressi').style.background=""; document.getElementById('cancel-ingressi').classList.add('hidden'); document.getElementById('cb-ingressi').classList.remove('editing'); document.querySelectorAll('#module-ingressi .t-box input').forEach(i=>i.value=0); document.getElementById('i-exclude').checked = false; };
-window.saveVasca = async () => { const date = document.getElementById('v-date').value; const time = document.getElementById('v-time').value; if(!date || !time) return showToast("Data/Ora mancanti","error"); const payload = { date, time, type:document.getElementById('v-type').value, bag:document.getElementById('v-bag').value, ta:document.getElementById('v-ta').value, th:document.getElementById('v-th').value, ph:document.getElementById('v-ph').value, cll:document.getElementById('v-cll').value, clc:document.getElementById('v-clc').value, clt:document.getElementById('v-clt').value }; try { if(editIdVasca){ await updateDoc(doc(db,"valori_vasca",editIdVasca), payload); showToast("Aggiornato"); cancelEditVasca(); } else { await addDoc(collection(db,"valori_vasca"), payload); showToast("Salvato"); } } catch(e){ showToast(e.message,"error"); } };
-window.editVasca = (id) => { const d = dataVasca.find(x=>x.id===id); if(!d)return; editIdVasca=id; document.getElementById('v-date').value=d.date; document.getElementById('v-time').value=d.time; document.getElementById('v-type').value=d.type||'interna'; document.getElementById('v-bag').value=d.bag; document.getElementById('v-ta').value=d.ta; document.getElementById('v-th').value=d.th; document.getElementById('v-ph').value=d.ph; document.getElementById('v-cll').value=d.cll; document.getElementById('v-clc').value=d.clc; document.getElementById('v-clt').value=d.clt; document.getElementById('title-vasca').innerText="Modifica Valori"; document.getElementById('btn-save-vasca').innerText="AGGIORNA"; document.getElementById('btn-save-vasca').style.background="#f59e0b"; document.getElementById('cancel-vasca').classList.remove('hidden'); document.getElementById('cb-vasca').classList.add('editing'); window.scrollTo({top:0,behavior:'smooth'}); };
-window.cancelEditVasca = () => { editIdVasca=null; document.getElementById('title-vasca').innerText="Registrazione Valori"; document.getElementById('btn-save-vasca').innerText="SALVA"; document.getElementById('btn-save-vasca').style.background=""; document.getElementById('cancel-vasca').classList.add('hidden'); document.getElementById('cb-vasca').classList.remove('editing'); };
-window.calcClTot = () => { document.getElementById('v-clt').value = ((parseFloat(document.getElementById('v-cll').value)||0) + (parseFloat(document.getElementById('v-clc').value)||0)).toFixed(2); };
 window.delDoc = async (c,i) => { if(confirm("Eliminare?")){ await deleteDoc(doc(db,c,i)); showToast("Eliminato"); } };
 window.toggleExcludeStats = async (id, currentVal) => { try { await updateDoc(doc(db, "sessioni", id), { excludeStats: !currentVal }); showToast(!currentVal ? "Giorno escluso dalla media" : "Giorno reincluso nella media"); } catch(e) { showToast(e.message, "error"); } };
 window.loadMoreIngressi = () => { limitIngressi += 200; renderIngressiArchive(); };
@@ -2823,6 +2789,62 @@ function aggregateRiepilogoMensile(yearFilter) {
         agg[yyyymm].tot += d.totale || 0;
     });
     return agg;
+}
+
+// --- GRAFICO COMPOSIZIONE TIPO TICKET NEL TEMPO (%) ---
+function renderTicketTrendChart(agg, sortedMonthsDesc) {
+    if (!isChartReady()) return;
+    const canvas = document.getElementById('chartTicketTrend');
+    if (!canvas) return;
+
+    // Ordine cronologico crescente per il grafico
+    const months = [...sortedMonthsDesc].sort();
+    if (months.length === 0) { renderMultiBar('chartTicketTrend', [], []); return; }
+
+    const labels = months.map(mStr => {
+        const [y, m] = mStr.split('-');
+        return new Date(y, m-1, 1).toLocaleString('it-IT', { month: 'short', year: '2-digit' });
+    });
+
+    const pctSingoli = [], pctAbb = [], pctGrat = [];
+    months.forEach(mStr => {
+        const d = agg[mStr];
+        const totMonth = (d.int||0) + (d.rid||0) + (d.abb_int||0) + (d.abb_rid||0) + (d.grat||0);
+        if (totMonth === 0) { pctSingoli.push(0); pctAbb.push(0); pctGrat.push(0); return; }
+        pctSingoli.push(((d.int + d.rid) / totMonth) * 100);
+        pctAbb.push(((d.abb_int + d.abb_rid) / totMonth) * 100);
+        pctGrat.push((d.grat / totMonth) * 100);
+    });
+
+    if (ch['chartTicketTrend']) ch['chartTicketTrend'].destroy();
+    ch['chartTicketTrend'] = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Biglietto Singolo (Int.+Rid.)', data: pctSingoli, backgroundColor: '#2563eb', stack: 'pct' },
+                { label: 'Abbonamenti', data: pctAbb, backgroundColor: '#a855f7', stack: 'pct' },
+                { label: 'Gratuiti', data: pctGrat, backgroundColor: '#10b981', stack: 'pct' }
+            ]
+        },
+        options: {
+            animation: false,
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true, max: 100, ticks: { callback: (v) => v + '%' } }
+            },
+            plugins: {
+                legend: { display: true },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`
+                    }
+                }
+            }
+        }
+    });
 }
 
 window.renderRiepilogoMensile = () => {
@@ -2887,6 +2909,7 @@ window.renderRiepilogoMensile = () => {
             <td style="font-weight:900; color:var(--primary); background:rgba(37,99,235,0.1)">${fmt(grandTotal.tot)}</td>
         </tr>`;
     }
+    renderTicketTrendChart(agg, sortedMonths);
 };
 
 window.downloadRiepilogoCSV = () => {
@@ -2910,11 +2933,11 @@ window.downloadRiepilogoCSV = () => {
     document.body.removeChild(link);
 };
 
-window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')debouncedRefresh(); if(m==='vasca')renderVasca(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
+window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')debouncedRefresh(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); };
 window.switchSubView=(s)=>{ ['overview','stats','riepilogo','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); debouncedRefresh(); };
 function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-riepilogo').classList.contains('hidden')) renderRiepilogoMensile(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
 setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
-const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('v-date').value=today; document.getElementById('d-date').value=today; document.getElementById('u-date').value=today;
+const today=new Date().toISOString().split('T')[0]; document.getElementById('i-date').value=today; document.getElementById('d-date').value=today; document.getElementById('u-date').value=today;
 window.downloadCSV = () => { const start = document.getElementById('arch-date-start').value; const end = document.getElementById('arch-date-end').value; const fascia = document.getElementById('arch-filter-fascia').value; const meteo = document.getElementById('arch-filter-meteo').value; const filtered = dataIngressi.filter(d => { if (start && d.date < start) return false; if (end && d.date > end) return false; if (fascia !== 'all' && d.fascia !== fascia) return false; if (meteo !== 'all' && d.meteo !== meteo) return false; return true; }); if(!filtered.length) return showToast("Nessun dato da scaricare", "error"); let csvContent = "data:text/csv;charset=utf-8,Data;Tipo;Fascia;Meteo;EsclusoMedia;Intero;Ridotto;Abbonamenti;Gratuiti;Totale\n"; filtered.forEach(row => { csvContent += `${row.date};${row.type||'standard'};${row.fascia};${row.meteo};${row.excludeStats?'SI':'NO'};${row.int};${row.rid};${row.abb_int + row.abb_rid};${row.grat};${row.totale}\n`; }); const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "archivio_ingressi.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); };
 window.resetArchiveFilters = () => { document.getElementById('arch-date-start').value=""; document.getElementById('arch-date-end').value=""; document.getElementById('arch-filter-fascia').value="all"; document.getElementById('arch-filter-meteo').value="all"; limitIngressi = 200; renderIngressiArchive(); };
 </script>
