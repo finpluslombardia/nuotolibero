@@ -2863,6 +2863,8 @@ window.renderRiepilogoMensile = () => {
     const yearFilter = yearSel ? yearSel.value : 'all';
 
     const agg = aggregateRiepilogoMensile(yearFilter);
+    // Aggrega sempre tutti gli anni per il confronto YoY
+    const aggAll = aggregateRiepilogoMensile('all');
     const tBody = document.getElementById('tbody-riepilogo-mensile');
     const tFoot = document.getElementById('tfoot-riepilogo-mensile');
     if (!tBody) return;
@@ -2886,6 +2888,19 @@ window.renderRiepilogoMensile = () => {
         grandTotal.int += d.int; grandTotal.rid += d.rid; grandTotal.abb_int += d.abb_int;
         grandTotal.abb_rid += d.abb_rid; grandTotal.grat += d.grat; grandTotal.tot += d.tot;
 
+        // Confronto YoY: stesso mese dell'anno precedente (sempre su aggAll)
+        const prevYear = String(parseInt(y) - 1);
+        const prevMStr = `${prevYear}-${m}`;
+        const prevD = aggAll[prevMStr];
+        let yoyHtml = '';
+        if (prevD && prevD.tot > 0) {
+            const delta = ((d.tot - prevD.tot) / prevD.tot) * 100;
+            const sign = delta >= 0 ? '+' : '';
+            const color = delta >= 0 ? '#16a34a' : '#dc2626';
+            const arrow = delta >= 0 ? '▲' : '▼';
+            yoyHtml = `<div style="font-size:0.72rem; font-weight:700; color:${color}; margin-top:2px">${arrow} ${sign}${delta.toFixed(1)}% vs ${prevYear}</div>`;
+        }
+
         rows.push(`<tr>
             <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
             <td>${fmt(d.int)}</td>
@@ -2893,7 +2908,7 @@ window.renderRiepilogoMensile = () => {
             <td style="color:#a855f7">${fmt(d.abb_int)}</td>
             <td style="color:#a855f7">${fmt(d.abb_rid)}</td>
             <td>${fmt(d.grat)}</td>
-            <td style="font-weight:800; color:var(--primary); background:rgba(37,99,235,0.05)">${fmt(d.tot)}</td>
+            <td style="font-weight:800; color:var(--primary); background:rgba(37,99,235,0.05)">${fmt(d.tot)}${yoyHtml}</td>
         </tr>`);
     });
 
@@ -2919,10 +2934,14 @@ window.downloadRiepilogoCSV = () => {
     const sortedMonths = Object.keys(agg).sort();
     if (!sortedMonths.length) return showToast("Nessun dato da scaricare", "error");
 
-    let csvContent = "data:text/csv;charset=utf-8,Mese;Intero;Ridotto;AbbPeriodici;Abb11Ingr;Gratuiti;Totale\n";
+    const aggAllCsv = aggregateRiepilogoMensile('all');
+    let csvContent = "data:text/csv;charset=utf-8,Mese;Intero;Ridotto;AbbPeriodici;Abb11Ingr;Gratuiti;Totale;vsAnnoPrecedente%\n";
     sortedMonths.forEach(mStr => {
         const d = agg[mStr];
-        csvContent += `${mStr};${d.int};${d.rid};${d.abb_int};${d.abb_rid};${d.grat};${d.tot}\n`;
+        const [y, m] = mStr.split('-');
+        const prevD = aggAllCsv[`${parseInt(y)-1}-${m}`];
+        const yoy = prevD && prevD.tot > 0 ? (((d.tot - prevD.tot) / prevD.tot) * 100).toFixed(1) + '%' : '';
+        csvContent += `${mStr};${d.int};${d.rid};${d.abb_int};${d.abb_rid};${d.grat};${d.tot};${yoy}\n`;
     });
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
