@@ -775,9 +775,16 @@
             </div>
 
             <div style="display:flex; flex-direction:column; gap:25px; margin-bottom:25px;">
-                <div class="chart-card glass-card" style="height:300px; padding:15px">
-                    <div class="chart-header" style="font-size:0.85rem; color:#eab308">⚡ Elettricità (kWh) vs Meteo</div>
-                    <div class="chart-wrapper"><canvas id="chartElec"></canvas></div>
+                <div class="chart-card glass-card" style="height:320px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem; color:#eab308">⚡ Elettricità (kWh) — colore barra = meteo del giorno</div>
+                    <div class="chart-wrapper" style="height:calc(100% - 58px)"><canvas id="chartElec"></canvas></div>
+                    <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center; padding-top:7px; font-size:0.72rem; color:#475569">
+                        <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#fbbf24;margin-right:3px;vertical-align:middle"></span>Sole</span>
+                        <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#fb923c;margin-right:3px;vertical-align:middle"></span>Variabile</span>
+                        <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#94a3b8;margin-right:3px;vertical-align:middle"></span>Nuvoloso</span>
+                        <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#60a5fa;margin-right:3px;vertical-align:middle"></span>Pioggia</span>
+                        <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#cbd5e1;margin-right:3px;vertical-align:middle"></span>N/D</span>
+                    </div>
                 </div>
                 <div class="chart-card glass-card" style="height:300px; padding:15px">
                     <div class="chart-header" style="font-size:0.85rem; color:#3b82f6">💧 Acqua (m³)</div>
@@ -2531,9 +2538,9 @@ window.renderUtenze = () => {
                 secVal = curr.gas.temp; // Direct temp value
             }
 
-            dataTotal.push({ x: label, y: val, extraInfo: extra, rawDate: dateStr });
+            dataTotal.push({ x: label, y: val, extraInfo: extra, rawDate: dateStr, meteo: curr[typeKey] ? curr[typeKey].meteo : null });
             const dVal = deltas[dateStr] ? deltas[dateStr][typeKey] : 0;
-            dataDelta.push({ x: label, y: dVal, extraInfo: extra, rawDate: dateStr });
+            dataDelta.push({ x: label, y: dVal, extraInfo: extra, rawDate: dateStr, meteo: curr[typeKey] ? curr[typeKey].meteo : null });
             
             // Push secondary data point
             dataSecondary.push({ x: label, y: secVal }); // y can be null
@@ -2609,7 +2616,63 @@ window.renderUtenze = () => {
 
     // Only render charts if their container is visible
     if (!document.getElementById('sub-u-charts').classList.contains('hidden')) {
-        renderDynamicChart('chartElec', elecData.labels, makeDatasets(elecData, elecData, '#eab308', '#fde047', 'Indice Meteo (10=Pioggia, 100=Sole)'), chartType);
+        function renderElecMeteoChart(elecData, isDelta, showHistory, chartType) {
+            if (!isChartReady()) return;
+            if (ch['chartElec']) ch['chartElec'].destroy();
+            const METEO_COLOR = { 'Sole': '#fbbf24', 'Variabile': '#fb923c', 'Nuvoloso': '#94a3b8', 'Pioggia': '#60a5fa' };
+            const DEFAULT_COLOR = '#cbd5e1';
+            function meteoColor(meteoStr) {
+                if (!meteoStr) return DEFAULT_COLOR;
+                for (const [key, col] of Object.entries(METEO_COLOR)) { if (meteoStr.includes(key)) return col; }
+                return DEFAULT_COLOR;
+            }
+            const mainData = isDelta ? elecData.dataDelta : elecData.dataTotal;
+            const bgColors = mainData.map(p => meteoColor(p.meteo));
+            const datasets = [{
+                label: isDelta ? 'Consumo (kWh)' : 'Lettura (kWh)',
+                data: mainData, backgroundColor: bgColors, borderWidth: 0,
+                type: isDelta ? 'bar' : 'line', yAxisID: 'y', order: 2,
+                pointRadius: isDelta ? 0 : 3, tension: 0.4, parsing: { yAxisKey: 'y' }
+            }];
+            if (showHistory) {
+                const histData = isDelta ? elecData.dataHistoryDelta : elecData.dataHistoryTotal;
+                datasets.push({
+                    label: isDelta ? 'Consumo Anno Prec.' : 'Lettura Anno Prec.',
+                    data: histData, backgroundColor: '#fde047', borderColor: '#fde047',
+                    borderWidth: isDelta ? 0 : 2, borderDash: isDelta ? [] : [4,4],
+                    type: isDelta ? 'bar' : 'line', yAxisID: 'y', order: 3,
+                    pointRadius: isDelta ? 0 : 2, tension: 0.4, parsing: { yAxisKey: 'y' }
+                });
+            }
+            ch['chartElec'] = new Chart(document.getElementById('chartElec'), {
+                type: isDelta ? 'bar' : 'line',
+                data: { labels: elecData.labels, datasets },
+                options: {
+                    animation: false, responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: showHistory },
+                        tooltip: {
+                            backgroundColor: 'rgba(15,23,42,0.95)', padding: 12, cornerRadius: 8,
+                            titleFont: { size: 13 }, bodyFont: { size: 13, weight: 'bold' },
+                            callbacks: {
+                                afterBody: function(ctx) {
+                                    const p = ctx.find(c => c.raw && typeof c.raw === 'object');
+                                    if (!p || !p.raw) return [];
+                                    const lines = [];
+                                    if (p.raw.meteo) lines.push(p.raw.meteo);
+                                    if (p.raw.extraInfo && p.raw.extraInfo !== p.raw.meteo) lines.push(p.raw.extraInfo);
+                                    return lines.length ? ['', ...lines] : [];
+                                }
+                            }
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, display: true, position: 'left' }, x: {} }
+                }
+            });
+        }
+
+        renderElecMeteoChart(elecData, isDelta, showHistory, chartType);
         renderDynamicChart('chartWater', waterData.labels, makeDatasets(waterData, waterData, '#3b82f6', '#93c5fd', null), chartType); // No secondary for water
         renderDynamicChart('chartGas', gasData.labels, makeDatasets(gasData, gasData, '#ef4444', '#fca5a5', 'Temp. Esterna (°C)'), chartType);
     }
