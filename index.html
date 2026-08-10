@@ -465,6 +465,7 @@
                                 <th style="color:#a855f7">Abb. 11 Ingr.</th>
                                 <th>Gratuiti</th>
                                 <th style="background:rgba(37,99,235,0.08)">Totale</th>
+                                <th style="background:rgba(251,191,36,0.12); color:#b45309">☀️ Tot. Esterna</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-riepilogo-mensile"></tbody>
@@ -2840,21 +2841,29 @@ window.renderIngressiArchive = () => {
 }
 
 // --- RIEPILOGO MENSILE INGRESSI ---
+const SUMMER_MONTHS = new Set([5,6,7,8,9]);
+const OUTDOOR_FASCE = ['Estiva - Mattina','Estiva - Pomeriggio','Estiva - Unico'];
+
 function aggregateRiepilogoMensile(yearFilter) {
-    // Aggrega TUTTI gli ingressi (anche quelli esclusi dalla media, su richiesta: sono un conteggio reale)
-    const agg = {}; // YYYY-MM -> {int,rid,abb_int,abb_rid,grat,tot}
+    const agg = {};
     dataIngressi.forEach(d => {
         if (!d.date) return;
         const yyyymm = d.date.slice(0, 7);
         const y = d.date.slice(0, 4);
+        const monthNum = parseInt(d.date.slice(5, 7));
         if (yearFilter !== 'all' && y !== yearFilter) return;
-        if (!agg[yyyymm]) agg[yyyymm] = { int: 0, rid: 0, abb_int: 0, abb_rid: 0, grat: 0, tot: 0 };
+        if (!agg[yyyymm]) agg[yyyymm] = { int: 0, rid: 0, abb_int: 0, abb_rid: 0, grat: 0, tot: 0, tot_ext: 0, tot_int: 0 };
         agg[yyyymm].int += d.int || 0;
         agg[yyyymm].rid += d.rid || 0;
         agg[yyyymm].abb_int += d.abb_int || 0;
         agg[yyyymm].abb_rid += d.abb_rid || 0;
         agg[yyyymm].grat += d.grat || 0;
         agg[yyyymm].tot += d.totale || 0;
+        if (SUMMER_MONTHS.has(monthNum)) {
+            const isExt = d.fascia && OUTDOOR_FASCE.includes(d.fascia);
+            if (isExt) agg[yyyymm].tot_ext += d.totale || 0;
+            else agg[yyyymm].tot_int += d.totale || 0;
+        }
     });
     return agg;
 }
@@ -2951,12 +2960,14 @@ window.renderRiepilogoMensile = () => {
     sortedMonths.forEach(mStr => {
         const d = agg[mStr];
         const [y, m] = mStr.split('-');
-        const dateObj = new Date(parseInt(y), parseInt(m) - 1, 1);
+        const monthNum = parseInt(m);
+        const isSummer = SUMMER_MONTHS.has(monthNum);
+        const dateObj = new Date(parseInt(y), monthNum - 1, 1);
         const monthLabel = dateObj.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
         grandTotal.int += d.int; grandTotal.rid += d.rid; grandTotal.abb_int += d.abb_int;
         grandTotal.abb_rid += d.abb_rid; grandTotal.grat += d.grat; grandTotal.tot += d.tot;
+        if (isSummer) grandTotal.tot_ext = (grandTotal.tot_ext || 0) + (d.tot_ext || 0);
 
-        // Confronto YoY: stesso mese dell'anno precedente (sempre su aggAll)
         const prevYear = String(parseInt(y) - 1);
         const prevMStr = `${prevYear}-${m}`;
         const prevD = aggAll[prevMStr];
@@ -2969,6 +2980,16 @@ window.renderRiepilogoMensile = () => {
             yoyHtml = `<div style="font-size:0.72rem; font-weight:700; color:${color}; margin-top:2px">${arrow} ${sign}${delta.toFixed(1)}% vs ${prevYear}</div>`;
         }
 
+        const subStyle = 'font-size:0.71rem; font-weight:400; opacity:0.65; margin-top:2px';
+        const hasVascaData = isSummer && (d.tot_int > 0 || d.tot_ext > 0);
+        const vascaHtml = hasVascaData
+            ? `<div style="${subStyle}">🏘 Int. ${fmt(d.tot_int)}  ☀️ Est. ${fmt(d.tot_ext)}</div>`
+            : '';
+
+        const extCell = isSummer && d.tot_ext > 0
+            ? `<td style="font-weight:700; color:#b45309; background:rgba(251,191,36,0.08)">${fmt(d.tot_ext)}</td>`
+            : `<td style="color:#cbd5e1; text-align:center">—</td>`;
+
         rows.push(`<tr>
             <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
             <td>${fmt(d.int)}</td>
@@ -2976,7 +2997,8 @@ window.renderRiepilogoMensile = () => {
             <td style="color:#a855f7">${fmt(d.abb_int)}</td>
             <td style="color:#a855f7">${fmt(d.abb_rid)}</td>
             <td>${fmt(d.grat)}</td>
-            <td style="font-weight:800; color:var(--primary); background:rgba(37,99,235,0.05)">${fmt(d.tot)}${yoyHtml}</td>
+            <td style="font-weight:800; color:var(--primary); background:rgba(37,99,235,0.05)">${fmt(d.tot)}${yoyHtml}${vascaHtml}</td>
+            ${extCell}
         </tr>`);
     });
 
@@ -2990,6 +3012,7 @@ window.renderRiepilogoMensile = () => {
             <td style="font-weight:800; color:#a855f7">${fmt(grandTotal.abb_rid)}</td>
             <td style="font-weight:800">${fmt(grandTotal.grat)}</td>
             <td style="font-weight:900; color:var(--primary); background:rgba(37,99,235,0.1)">${fmt(grandTotal.tot)}</td>
+            ${grandTotal.tot_ext > 0 ? `<td style="font-weight:900; color:#b45309; background:rgba(251,191,36,0.1)">${fmt(grandTotal.tot_ext)}</td>` : '<td></td>'}
         </tr>`;
     }
     renderTicketTrendChart(agg, sortedMonths);
