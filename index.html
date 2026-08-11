@@ -848,7 +848,6 @@
         <div class="filter-row" style="margin-bottom:20px; justify-content:center; flex-wrap:wrap">
             <button class="btn btn-primary" id="btn-sub-inc-overview" onclick="switchSubViewIncassi('overview')">Panoramica</button>
             <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-stats" onclick="switchSubViewIncassi('stats')">Statistiche</button>
-            <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-weekly" onclick="switchSubViewIncassi('weekly')">Settimanale</button>
             <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-riepilogo" onclick="switchSubViewIncassi('riepilogo')">Riepilogo</button>
             <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-archive" onclick="switchSubViewIncassi('archive')">Archivio</button>
             <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-register" onclick="switchSubViewIncassi('register')">➕ Registra Incasso</button>
@@ -893,23 +892,8 @@
                 <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Incasso (mese)</div>
                 <div class="chart-wrapper"><canvas id="chartIncPaymentMix"></canvas></div>
             </div>
-        </div>
 
-        <!-- Incassi Sub-View: Statistiche -->
-        <div id="sub-inc-stats" class="hidden">
-            <div class="chart-card glass-card" style="height:340px; padding:15px; margin-bottom:20px">
-                <div class="chart-header" style="font-size:0.85rem">📈 Andamento Incasso Giornaliero</div>
-                <div class="chart-wrapper"><canvas id="chartIncTrend"></canvas></div>
-            </div>
-            <div class="chart-card glass-card" style="height:320px; padding:15px">
-                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori (mensile)</div>
-                <div class="chart-wrapper"><canvas id="chartIncCategoryTrend"></canvas></div>
-            </div>
-        </div>
-
-        <!-- Incassi Sub-View: Settimanale -->
-        <div id="sub-inc-weekly" class="hidden">
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px">
+            <div style="display:flex; align-items:center; gap:10px; margin:30px 0 15px">
                 <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📅 Confronto Settimanale</h3>
                 <input type="week" id="inc-weekly-week-selector" class="filter-select" style="font-weight:700; background:rgba(255,255,255,0.8)" onchange="renderIncassiWeekly()">
             </div>
@@ -957,6 +941,18 @@
                         <tbody id="tbody-incassi-weekly"></tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- Incassi Sub-View: Statistiche -->
+        <div id="sub-inc-stats" class="hidden">
+            <div class="chart-card glass-card" style="height:340px; padding:15px; margin-bottom:20px">
+                <div class="chart-header" style="font-size:0.85rem">📈 Andamento Incasso Giornaliero</div>
+                <div class="chart-wrapper"><canvas id="chartIncTrend"></canvas></div>
+            </div>
+            <div class="chart-card glass-card" style="height:320px; padding:15px">
+                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori (mensile)</div>
+                <div class="chart-wrapper"><canvas id="chartIncCategoryTrend"></canvas></div>
             </div>
         </div>
 
@@ -1120,6 +1116,7 @@ import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc
 const firebaseConfig = { apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0", authDomain: "piscinastats-64519.firebaseapp.com", projectId: "piscinastats-64519", storageBucket: "piscinastats-64519.firebasestorage.app", messagingSenderId: "297663099794", appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
 let dataIngressi=[], dataDae=[], dataUtenze=[], dataIncassi=[]; let editIdIngressi=null, editIdUtenze=null, editIdIncassi=null;
+let isRestrictedIncassiUser = false; // seg.cflampugnano@gmail.com: collaboratore, vede solo Archivio e Registra Incasso nel modulo Incassi
 let limitIngressi = 200;
 let limitUtenze = 200;
 
@@ -1160,7 +1157,15 @@ function getStrDate(d) {
 window.showToast = (msg, type='success') => { const c = document.getElementById('toast-container'); const e = document.createElement('div'); e.className = `toast toast-${type}`; e.innerHTML = `<span>${type==='success'?'✅':'⚠️'}</span> ${msg}`; c.appendChild(e); requestAnimationFrame(()=>e.classList.add('show')); setTimeout(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),300)},3000); };
 window.doLogin = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch(e) { document.getElementById('login-error').innerText = e.message; } };
 window.doLogout = () => signOut(auth);
-onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen').classList.add('hidden'); document.getElementById('user-display').innerText=u.email.split('@')[0]; startListening(); } else { document.getElementById('login-screen').classList.remove('hidden'); } });
+function applyIncassiPermissions() {
+    const restrictedButtons = ['btn-sub-inc-overview', 'btn-sub-inc-stats', 'btn-sub-inc-riepilogo'];
+    restrictedButtons.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.toggle('hidden', isRestrictedIncassiUser);
+    });
+}
+onAuthStateChanged(auth, (u) => { if(u){ document.getElementById('login-screen').classList.add('hidden'); document.getElementById('user-display').innerText=u.email.split('@')[0]; isRestrictedIncassiUser = (u.email||'').toLowerCase() === 'seg.cflampugnano@gmail.com'; applyIncassiPermissions(); startListening(); } else { document.getElementById('login-screen').classList.remove('hidden'); } });
 
 // Debounced refresh to prevent UI freezing on rapid updates
 const debouncedRefresh = debounce(() => {
@@ -2430,7 +2435,8 @@ window.switchSubViewUtenze=(s)=>{
 };
 
 window.switchSubViewIncassi=(s)=>{
-    ['overview','stats','weekly','riepilogo','archive','register'].forEach(v=>{ document.getElementById('sub-inc-'+v).classList.add('hidden'); document.getElementById('btn-sub-inc-'+v).classList.remove('btn-primary'); });
+    if (isRestrictedIncassiUser && ['overview','stats','riepilogo'].includes(s)) s = 'archive';
+    ['overview','stats','riepilogo','archive','register'].forEach(v=>{ document.getElementById('sub-inc-'+v).classList.add('hidden'); document.getElementById('btn-sub-inc-'+v).classList.remove('btn-primary'); });
     document.getElementById('sub-inc-'+s).classList.remove('hidden'); document.getElementById('btn-sub-inc-'+s).classList.add('btn-primary');
     renderIncassi();
 };
@@ -2440,14 +2446,12 @@ window.renderIncassi = () => {
     if (!dataIncassi) return;
     const overviewVisible = !document.getElementById('sub-inc-overview').classList.contains('hidden');
     const statsVisible = !document.getElementById('sub-inc-stats').classList.contains('hidden');
-    const weeklyVisible = !document.getElementById('sub-inc-weekly').classList.contains('hidden');
     const riepilogoVisible = !document.getElementById('sub-inc-riepilogo').classList.contains('hidden');
     const archiveVisible = !document.getElementById('sub-inc-archive').classList.contains('hidden');
     const registerVisible = !document.getElementById('sub-inc-register').classList.contains('hidden');
 
-    if (overviewVisible) renderIncassiOverview();
+    if (overviewVisible) { renderIncassiOverview(); renderIncassiWeekly(); }
     if (statsVisible) renderIncassiStats();
-    if (weeklyVisible) renderIncassiWeekly();
     if (riepilogoVisible) renderRiepilogoIncassi();
     if (archiveVisible) renderIncassiArchive();
     if (registerVisible) { toggleSeasonalFields(); updateIncassiLiveTotal(); }
@@ -3860,7 +3864,7 @@ window.downloadRiepilogoCSV = () => {
     document.body.removeChild(link);
 };
 
-window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')debouncedRefresh(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); if(m==='incassi'){ switchSubViewIncassi('overview'); } };
+window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')debouncedRefresh(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); if(m==='incassi'){ switchSubViewIncassi(isRestrictedIncassiUser ? 'archive' : 'overview'); } };
 window.switchSubView=(s)=>{ ['overview','stats','riepilogo','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); debouncedRefresh(); };
 function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-riepilogo').classList.contains('hidden')) renderRiepilogoMensile(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
 setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
