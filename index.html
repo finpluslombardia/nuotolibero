@@ -856,14 +856,11 @@
 
             <div style="max-height:55vh; overflow-y:auto; padding-right:6px">
 
-            <!-- CORSI N4 -->
+            <!-- CORSI ESENTI IVA -->
             <div style="margin-top:14px; padding:12px; border-radius:10px; background:rgba(180,83,9,0.05); border:1px solid rgba(180,83,9,0.15)">
-                <div style="font-weight:800; font-size:0.85rem; color:#b45309; margin-bottom:8px">💳 Corsi N4 (Esenti IVA)</div>
+                <div style="font-weight:800; font-size:0.85rem; color:#b45309; margin-bottom:8px">💳 Corsi (Esenti IVA)</div>
                 <div class="cb-row">
-                    <div class="inp-field" style="flex:1"><label>Totale (€)</label><input type="number" step="any" id="inc-n4-tot" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                </div>
-                <div style="font-size:0.75rem; font-weight:700; color:#64748b; margin:10px 0 6px">Metodi di pagamento</div>
-                <div class="cb-row">
+                    <div class="inp-field" style="flex:1.3"><label>Totale (€)</label><input type="number" step="any" id="inc-n4-tot" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                     <div class="inp-field"><label>Carta</label><input type="number" step="any" id="inc-n4-pos" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                     <div class="inp-field"><label>Satispay</label><input type="number" step="any" id="inc-n4-satispay" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                     <div class="inp-field"><label>Bonifico</label><input type="number" step="any" id="inc-n4-bonifico" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
@@ -906,9 +903,14 @@
 
             <!-- ACCESSORI -->
             <div style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(124,58,237,0.05); border:1px solid rgba(124,58,237,0.15)">
-                <div style="font-weight:800; font-size:0.85rem; color:#7c3aed; margin-bottom:8px">🛍️ Accessori</div>
+                <div style="font-weight:800; font-size:0.85rem; color:#7c3aed; margin-bottom:4px">🛍️ Accessori</div>
+                <div style="font-size:0.75rem; color:#64748b; margin-bottom:8px">Totale calcolato: <b id="inc-accessori-calc-tot">€ 0,00</b></div>
                 <div class="cb-row">
-                    <div class="inp-field" style="flex:1"><label>Totale (€)</label><input type="number" step="any" id="inc-accessori-tot" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    <div class="inp-field"><label>Crediti</label><input type="number" step="any" id="inc-acc-crediti" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    <div class="inp-field"><label>Tessere</label><input type="number" step="any" id="inc-acc-tessere" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    <div class="inp-field"><label>Cuffie</label><input type="number" step="any" id="inc-acc-cuffie" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    <div class="inp-field"><label>Noleggio</label><input type="number" step="any" id="inc-acc-noleggio" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    <div class="inp-field"><label>Altro</label><input type="number" step="any" id="inc-acc-altro" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                 </div>
             </div>
 
@@ -951,7 +953,7 @@
                     <div class="kpi-context" id="inc-kpi-tot-context"></div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #b45309">
-                    <div class="kpi-head">📚 Corsi N4</div>
+                    <div class="kpi-head">📚 Corsi</div>
                     <div class="kpi-val" id="inc-kpi-n4-val">-</div>
                     <div class="kpi-sub" id="inc-kpi-n4-sub">-</div>
                 </div>
@@ -985,7 +987,7 @@
                 <div class="chart-wrapper"><canvas id="chartIncTrend"></canvas></div>
             </div>
             <div class="chart-card glass-card" style="height:320px; padding:15px">
-                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi N4 / Corsi IVA / Pubblico (mensile)</div>
+                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori (mensile)</div>
                 <div class="chart-wrapper"><canvas id="chartIncCategoryTrend"></canvas></div>
             </div>
         </div>
@@ -996,7 +998,7 @@
                 <h2 class="page-title" style="margin:0; font-size:1.3rem">📅 Riepilogo Mensile Incassi</h2>
                 <div style="display:flex; gap:10px; align-items:center">
                     <select id="inc-riep-year-filter" class="filter-select" onchange="renderRiepilogoIncassi()" style="font-weight:700">
-                        <option value="all">Tutti gli Anni</option>
+                        <option value="all">Tutte le Stagioni</option>
                     </select>
                     <button class="btn btn-primary" style="height:36px; font-size:0.8rem; padding:0 20px" onclick="downloadRiepilogoIncassiCSV()">Scarica Excel</button>
                 </div>
@@ -1007,7 +1009,7 @@
                         <thead>
                             <tr>
                                 <th>Mese</th>
-                                <th style="color:#b45309">Corsi N4</th>
+                                <th style="color:#b45309">Corsi</th>
                                 <th style="color:#2563eb">Ingressi</th>
                                 <th style="color:#7c3aed">Abbonamenti</th>
                                 <th style="color:#ea580c">Accessori</th>
@@ -1033,7 +1035,7 @@
                         <thead>
                             <tr>
                                 <th>Data</th>
-                                <th style="color:#b45309">Corsi N4</th>
+                                <th style="color:#b45309">Corsi</th>
                                 <th style="color:#2563eb">Ingressi</th>
                                 <th style="color:#7c3aed">Abbonamenti</th>
                                 <th style="color:#ea580c">Accessori</th>
@@ -2216,7 +2218,7 @@ window.updateIncassiLiveTotal = () => {
         + numVal('inc-abb-sem-intero') + numVal('inc-abb-sem-ridotto')
         + numVal('inc-abb-ann-intero') + numVal('inc-abb-ann-ridotto')
         + numVal('inc-abb-estivi');
-    const accessoriTot = numVal('inc-accessori-tot');
+    const accessoriTot = numVal('inc-acc-crediti') + numVal('inc-acc-tessere') + numVal('inc-acc-cuffie') + numVal('inc-acc-noleggio') + numVal('inc-acc-altro');
     const ivaDetailTot = ingressiTot + abbonamentiTot + accessoriTot;
 
     const ivaPos = numVal('inc-iva-pos'), ivaSat = numVal('inc-iva-satispay'), ivaBon = numVal('inc-iva-bonifico'), ivaCnt = numVal('inc-iva-contanti');
@@ -2227,6 +2229,8 @@ window.updateIncassiLiveTotal = () => {
     document.getElementById('inc-live-total').innerText = fmtEUR(incassoTotale);
     const ivaCalcEl = document.getElementById('inc-iva-calc-tot');
     if (ivaCalcEl) ivaCalcEl.innerText = fmtEUR(ivaDetailTot);
+    const accCalcEl = document.getElementById('inc-accessori-calc-tot');
+    if (accCalcEl) accCalcEl.innerText = fmtEUR(accessoriTot);
 
     // Indicatori di riconciliazione
     const n4Check = document.getElementById('inc-n4-check');
@@ -2273,7 +2277,7 @@ const INCASSI_FIELD_MAP = {
     'inc-ing-estsab-intero':'ing_est_sab_intero', 'inc-ing-estsab-ridotto':'ing_est_sab_ridotto',
     'inc-ing-estdom-intero':'ing_est_dom_intero', 'inc-ing-estdom-ridotto':'ing_est_dom_ridotto',
     'inc-abb-estivi':'abb_estivi',
-    'inc-accessori-tot':'accessori_tot',
+    'inc-acc-crediti':'acc_crediti', 'inc-acc-tessere':'acc_tessere', 'inc-acc-cuffie':'acc_cuffie', 'inc-acc-noleggio':'acc_noleggio', 'inc-acc-altro':'acc_altro',
     'inc-iva-pos':'iva_pos', 'inc-iva-satispay':'iva_satispay', 'inc-iva-bonifico':'iva_bonifico', 'inc-iva-contanti':'iva_contanti',
 };
 
@@ -2305,7 +2309,7 @@ window.saveIncassi = async () => {
 
     // Validazione riconciliazione: i metodi di pagamento devono combaciare con i totali calcolati
     if (Math.abs(v.n4PaySum - v.n4Tot) >= EPS) {
-        return showToast(`Corsi N4: i metodi di pagamento (${fmtEUR(v.n4PaySum)}) non combaciano con il totale (${fmtEUR(v.n4Tot)})`, "error");
+        return showToast(`Corsi: i metodi di pagamento (${fmtEUR(v.n4PaySum)}) non combaciano con il totale (${fmtEUR(v.n4Tot)})`, "error");
     }
     if (Math.abs(v.ivaPaySum - v.ivaDetailTot) >= EPS) {
         return showToast(`Parte IVA: i metodi di pagamento (${fmtEUR(v.ivaPaySum)}) non combaciano con il totale calcolato (${fmtEUR(v.ivaDetailTot)})`, "error");
@@ -2324,6 +2328,7 @@ window.saveIncassi = async () => {
         ing_est_sab_intero: numVal('inc-ing-estsab-intero'), ing_est_sab_ridotto: numVal('inc-ing-estsab-ridotto'),
         ing_est_dom_intero: numVal('inc-ing-estdom-intero'), ing_est_dom_ridotto: numVal('inc-ing-estdom-ridotto'),
         abb_estivi: numVal('inc-abb-estivi'),
+        acc_crediti: numVal('inc-acc-crediti'), acc_tessere: numVal('inc-acc-tessere'), acc_cuffie: numVal('inc-acc-cuffie'), acc_noleggio: numVal('inc-acc-noleggio'), acc_altro: numVal('inc-acc-altro'),
         accessori_tot: v.accessoriTot,
         iva_pos: v.ivaPos, iva_satispay: v.ivaSat, iva_bonifico: v.ivaBon, iva_contanti: v.ivaCnt,
         // aggregati per il reporting (Panoramica/Riepilogo/Archivio)
@@ -2438,7 +2443,7 @@ function renderIncassiOverview() {
         ch['chartIncPaymentMix'] = new Chart(canvas, {
             type: 'doughnut',
             data: {
-                labels: ['Corsi N4', 'Ingressi', 'Abbonamenti', 'Accessori'],
+                labels: ['Corsi', 'Ingressi', 'Abbonamenti', 'Accessori'],
                 datasets: [{ data: [curr.n4, curr.ingressi, curr.abbonamenti, curr.accessori], backgroundColor: ['#b45309','#2563eb','#7c3aed','#ea580c'] }]
             },
             options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
@@ -2488,7 +2493,7 @@ function renderIncassiStats() {
         ch['chartIncCategoryTrend'] = new Chart(c2, {
             type: 'bar',
             data: { labels, datasets: [
-                { label: 'Corsi N4', data: pctN4, backgroundColor: '#b45309', stack:'pct' },
+                { label: 'Corsi', data: pctN4, backgroundColor: '#b45309', stack:'pct' },
                 { label: 'Ingressi', data: pctIngressi, backgroundColor: '#2563eb', stack:'pct' },
                 { label: 'Abbonamenti', data: pctAbbonamenti, backgroundColor: '#7c3aed', stack:'pct' },
                 { label: 'Accessori', data: pctAccessori, backgroundColor: '#ea580c', stack:'pct' }
@@ -2501,12 +2506,22 @@ function renderIncassiStats() {
 }
 
 // ============ INCASSI: Riepilogo Mensile ============
-function aggregateRiepilogoIncassi(yearFilter) {
+// L'anno fiscale/stagione del centro va dal 1 settembre al 31 agosto (non anno solare)
+function getSeasonStartYear(dateStr) {
+    const [y, m] = dateStr.split('-').map(Number);
+    return m >= 9 ? y : y - 1;
+}
+function getSeasonLabel(startYear) {
+    return `${startYear}/${String(startYear + 1).slice(2)}`;
+}
+
+function aggregateRiepilogoIncassi(seasonFilter) {
     const agg = {};
     dataIncassi.forEach(d => {
         if (!d.date) return;
-        const yyyymm = d.date.slice(0,7); const y = d.date.slice(0,4);
-        if (yearFilter !== 'all' && y !== yearFilter) return;
+        const yyyymm = d.date.slice(0,7);
+        const seasonLabel = getSeasonLabel(getSeasonStartYear(d.date));
+        if (seasonFilter !== 'all' && seasonLabel !== seasonFilter) return;
         if (!agg[yyyymm]) agg[yyyymm] = { n4:0, ingressi:0, abbonamenti:0, accessori:0, tot:0 };
         agg[yyyymm].n4 += d.corsi_n4_tot||0;
         agg[yyyymm].ingressi += d.ingressi_tot||0;
@@ -2520,12 +2535,12 @@ function aggregateRiepilogoIncassi(yearFilter) {
 window.renderRiepilogoIncassi = () => {
     if (!dataIncassi) return;
     const yearSel = document.getElementById('inc-riep-year-filter');
-    const existingYears = [...new Set(dataIncassi.map(d => d.date.slice(0,4)))].sort().reverse();
+    const existingSeasons = [...new Set(dataIncassi.map(d => getSeasonLabel(getSeasonStartYear(d.date))))].sort().reverse();
     if (yearSel.options.length <= 1) {
-        existingYears.forEach(y => { const o = document.createElement('option'); o.value = y; o.innerText = y; yearSel.appendChild(o); });
+        existingSeasons.forEach(s => { const o = document.createElement('option'); o.value = s; o.innerText = 'Stagione ' + s; yearSel.appendChild(o); });
     }
-    const yearFilter = yearSel.value;
-    const agg = aggregateRiepilogoIncassi(yearFilter);
+    const seasonFilter = yearSel.value;
+    const agg = aggregateRiepilogoIncassi(seasonFilter);
     const aggAll = aggregateRiepilogoIncassi('all');
     const sortedMonths = Object.keys(agg).sort().reverse();
     const tBody = document.getElementById('tbody-riepilogo-incassi');
@@ -2541,6 +2556,7 @@ window.renderRiepilogoIncassi = () => {
         const monthLabel = new Date(parseInt(y), parseInt(m)-1, 1).toLocaleString('it-IT', {month:'long', year:'numeric'});
         grandTotal.n4 += d.n4; grandTotal.ingressi += d.ingressi; grandTotal.abbonamenti += d.abbonamenti; grandTotal.accessori += d.accessori; grandTotal.tot += d.tot;
 
+        // Confronto vs stesso mese dell'anno solare precedente (indipendente dalla stagione fiscale)
         const prevYear = String(parseInt(y)-1); const prevD = aggAll[`${prevYear}-${m}`];
         let yoyHtml = '';
         if (prevD && prevD.tot > 0) {
@@ -2559,7 +2575,7 @@ window.renderRiepilogoIncassi = () => {
     tBody.innerHTML = rows.join('');
     if (tFoot) {
         tFoot.innerHTML = `<tr style="border-top:2px solid rgba(0,0,0,0.1)">
-            <td style="font-weight:800">TOTALE${yearFilter!=='all'?' '+yearFilter:''}</td>
+            <td style="font-weight:800">TOTALE${seasonFilter!=='all'?' Stagione '+seasonFilter:''}</td>
             <td style="font-weight:800; color:#b45309">${fmt(grandTotal.n4)}</td>
             <td style="font-weight:800; color:#2563eb">${fmt(grandTotal.ingressi)}</td>
             <td style="font-weight:800; color:#7c3aed">${fmt(grandTotal.abbonamenti)}</td>
@@ -2571,11 +2587,11 @@ window.renderRiepilogoIncassi = () => {
 
 window.downloadRiepilogoIncassiCSV = () => {
     const yearSel = document.getElementById('inc-riep-year-filter');
-    const yearFilter = yearSel ? yearSel.value : 'all';
-    const agg = aggregateRiepilogoIncassi(yearFilter);
+    const seasonFilter = yearSel ? yearSel.value : 'all';
+    const agg = aggregateRiepilogoIncassi(seasonFilter);
     const sortedMonths = Object.keys(agg).sort();
     if (!sortedMonths.length) return showToast("Nessun dato da scaricare", "error");
-    let csv = "Mese;Corsi N4;Ingressi;Abbonamenti;Accessori;Incasso Totale\n";
+    let csv = "Mese;Corsi;Ingressi;Abbonamenti;Accessori;Incasso Totale\n";
     sortedMonths.forEach(mStr => {
         const d = agg[mStr]; const [y,m] = mStr.split('-');
         const label = new Date(parseInt(y), parseInt(m)-1, 1).toLocaleString('it-IT', {month:'long', year:'numeric'});
@@ -2583,7 +2599,7 @@ window.downloadRiepilogoIncassiCSV = () => {
     });
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob); link.download = `riepilogo_incassi_${yearFilter}.csv`; link.click();
+    link.href = URL.createObjectURL(blob); link.download = `riepilogo_incassi_stagione_${(seasonFilter||'tutte').replace('/','-')}.csv`; link.click();
 };
 
 // ============ INCASSI: Archivio ============
