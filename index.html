@@ -847,81 +847,13 @@
 
         <div class="cb-row">
             <div class="inp-field" style="width:140px; flex:none;"><label>Data</label><input type="date" id="inc-date" onchange="loadIncassiDayIntoForm()"></div>
-            <div class="inp-field" style="flex:1.5;"><label>Note</label><input type="text" id="inc-note" placeholder="Opzionale..."></div>
-            <div style="width:140px; flex:none;"><button id="btn-save-incassi" class="btn btn-primary" style="height:44px; width:100%" onclick="saveIncassi()">SALVA</button></div>
+            <div class="inp-field" style="flex:1;"><label>Corsi N4 (€)</label><input type="number" step="any" id="inc-n4-tot" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+            <div class="inp-field" style="flex:1;"><label>Ingressi (€)</label><input type="number" step="any" id="inc-ingressi-tot" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+            <div class="inp-field" style="flex:1;"><label>Abbonamenti (€)</label><input type="number" step="any" id="inc-abbonamenti-tot" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+            <div class="inp-field" style="flex:1;"><label>Accessori (€)</label><input type="number" step="any" id="inc-accessori-tot" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+            <div class="inp-field" style="flex:1.3;"><label>Note</label><input type="text" id="inc-note" placeholder="Opzionale..."></div>
+            <div style="width:120px; flex:none;"><button id="btn-save-incassi" class="btn btn-primary" style="height:44px; width:100%" onclick="saveIncassi()">SALVA</button></div>
         </div>
-
-        <details id="inc-detail-panel" style="margin-top:12px; border-top:1px solid rgba(0,0,0,0.08); padding-top:10px">
-            <summary style="cursor:pointer; font-weight:800; font-size:0.85rem; color:var(--primary)">📝 Dettaglio Registrazione (clicca per espandere)</summary>
-
-            <details open style="margin-top:14px">
-                <summary style="cursor:pointer; font-weight:800; font-size:0.85rem; color:#b45309; padding:6px 0">💳 Corsi N4 (Esenti IVA) — <span id="inc-sub-n4">€ 0,00</span></summary>
-                <div class="cb-row" style="margin-top:8px">
-                    <div class="inp-field"><label>POS</label><input type="number" step="any" id="inc-n4-pos" oninput="updateIncassiLiveTotal()"></div>
-                    <div class="inp-field"><label>Satispay</label><input type="number" step="any" id="inc-n4-satispay" oninput="updateIncassiLiveTotal()"></div>
-                    <div class="inp-field"><label>Bonifico</label><input type="number" step="any" id="inc-n4-bonifico" oninput="updateIncassiLiveTotal()"></div>
-                    <div class="inp-field"><label>Contanti</label><input type="number" step="any" id="inc-n4-contanti" oninput="updateIncassiLiveTotal()"></div>
-                </div>
-            </details>
-
-            <details open style="margin-top:10px">
-                <summary style="cursor:pointer; font-weight:800; font-size:0.85rem; color:#2563eb; padding:6px 0">💳 Pubblico (Ingressi + Abb. + Accessori) — <span id="inc-sub-pubblico">€ 0,00</span></summary>
-                <div class="cb-row" style="margin-top:8px">
-                    <div class="inp-field"><label>POS</label><input type="number" step="any" id="inc-pub-pos" oninput="updateIncassiLiveTotal()"></div>
-                    <div class="inp-field"><label>Satispay</label><input type="number" step="any" id="inc-pub-satispay" oninput="updateIncassiLiveTotal()"></div>
-                    <div class="inp-field"><label>Bonifico</label><input type="number" step="any" id="inc-pub-bonifico" oninput="updateIncassiLiveTotal()"></div>
-                    <div class="inp-field"><label>Contanti</label><input type="number" step="any" id="inc-pub-contanti" oninput="updateIncassiLiveTotal()"></div>
-                </div>
-            </details>
-
-            <details style="margin-top:10px">
-                <summary style="cursor:pointer; font-weight:800; font-size:0.85rem; color:#334155; padding:6px 0">🎫 Dettaglio Ingressi Singoli</summary>
-                <div class="cb-row" style="margin-top:8px; flex-wrap:wrap">
-                    <div class="inp-field"><label>Interna Intero</label><input type="number" step="1" id="inc-ing-int-intero"></div>
-                    <div class="inp-field"><label>Interna Ridotto</label><input type="number" step="1" id="inc-ing-int-ridotto"></div>
-                    <div class="inp-field"><label>Est. Feriale Intero</label><input type="number" step="1" id="inc-ing-estfer-intero"></div>
-                    <div class="inp-field"><label>Est. Feriale Ridotto</label><input type="number" step="1" id="inc-ing-estfer-ridotto"></div>
-                    <div class="inp-field"><label>Est. Sabato Intero</label><input type="number" step="1" id="inc-ing-estsab-intero"></div>
-                    <div class="inp-field"><label>Est. Sabato Ridotto</label><input type="number" step="1" id="inc-ing-estsab-ridotto"></div>
-                    <div class="inp-field"><label>Est. Domenica Intero</label><input type="number" step="1" id="inc-ing-estdom-intero"></div>
-                    <div class="inp-field"><label>Est. Domenica Ridotto</label><input type="number" step="1" id="inc-ing-estdom-ridotto"></div>
-                    <div class="inp-field"><label>Tariffa Family</label><input type="number" step="1" id="inc-ing-family"></div>
-                    <div class="inp-field"><label>Omaggio</label><input type="number" step="1" id="inc-ing-omaggio"></div>
-                    <div class="inp-field"><label>Convenzionati (€)</label><input type="number" step="any" id="inc-ing-convenz"></div>
-                </div>
-            </details>
-
-            <details style="margin-top:10px">
-                <summary style="cursor:pointer; font-weight:800; font-size:0.85rem; color:#334155; padding:6px 0">🎟️ Abbonamenti</summary>
-                <div class="cb-row" style="margin-top:8px; flex-wrap:wrap">
-                    <div class="inp-field"><label>11 Ingr. Int. Intero</label><input type="number" step="1" id="inc-abb-11int-intero"></div>
-                    <div class="inp-field"><label>11 Ingr. Int. Ridotto</label><input type="number" step="1" id="inc-abb-11int-ridotto"></div>
-                    <div class="inp-field"><label>Mensile Intero</label><input type="number" step="1" id="inc-abb-mensile-intero"></div>
-                    <div class="inp-field"><label>Mensile Ridotto</label><input type="number" step="1" id="inc-abb-mensile-ridotto"></div>
-                    <div class="inp-field"><label>Trimestrale Intero</label><input type="number" step="1" id="inc-abb-trim-intero"></div>
-                    <div class="inp-field"><label>Trimestrale Ridotto</label><input type="number" step="1" id="inc-abb-trim-ridotto"></div>
-                    <div class="inp-field"><label>Semestrale Intero</label><input type="number" step="1" id="inc-abb-sem-intero"></div>
-                    <div class="inp-field"><label>Semestrale Ridotto</label><input type="number" step="1" id="inc-abb-sem-ridotto"></div>
-                    <div class="inp-field"><label>Annuale Intero</label><input type="number" step="1" id="inc-abb-ann-intero"></div>
-                    <div class="inp-field"><label>Annuale Ridotto</label><input type="number" step="1" id="inc-abb-ann-ridotto"></div>
-                    <div class="inp-field"><label>11 Ingr. Est. Feriale</label><input type="number" step="1" id="inc-abb-11est-fer"></div>
-                    <div class="inp-field"><label>11 Ingr. Est. Weekend</label><input type="number" step="1" id="inc-abb-11est-we"></div>
-                </div>
-            </details>
-
-            <details style="margin-top:10px">
-                <summary style="cursor:pointer; font-weight:800; font-size:0.85rem; color:#334155; padding:6px 0">🛍️ Accessori</summary>
-                <div class="cb-row" style="margin-top:8px; flex-wrap:wrap">
-                    <div class="inp-field"><label>Tessere (€)</label><input type="number" step="any" id="inc-acc-tessere"></div>
-                    <div class="inp-field"><label>Noleggio (€)</label><input type="number" step="any" id="inc-acc-noleggio"></div>
-                    <div class="inp-field"><label>Cuffie (€)</label><input type="number" step="any" id="inc-acc-cuffie"></div>
-                    <div class="inp-field"><label>Occhialini (€)</label><input type="number" step="any" id="inc-acc-occhialini"></div>
-                    <div class="inp-field"><label>Copriscarpe (€)</label><input type="number" step="any" id="inc-acc-copriscarpe"></div>
-                    <div class="inp-field"><label>Altri Accessori (€)</label><input type="number" step="any" id="inc-acc-altri"></div>
-                    <div class="inp-field"><label>Borsellino Elettronico (€)</label><input type="number" step="any" id="inc-acc-borsellino"></div>
-                </div>
-            </details>
-        </details>
     </div>
 
     <div class="scroll-area">
@@ -938,7 +870,7 @@
                 <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📅 Confronto Mensile</h3>
                 <input type="month" id="inc-kpi-month-selector" class="filter-select" style="font-weight:700; background:rgba(255,255,255,0.8)" onchange="renderIncassi()">
             </div>
-            <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 25px;">
+            <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 25px;">
                 <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
                     <div class="kpi-head">💰 Incasso Totale</div>
                     <div class="kpi-val" id="inc-kpi-tot-val">-</div>
@@ -951,14 +883,24 @@
                     <div class="kpi-sub" id="inc-kpi-n4-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #2563eb">
-                    <div class="kpi-head">🎫 Pubblico</div>
-                    <div class="kpi-val" id="inc-kpi-pub-val">-</div>
-                    <div class="kpi-sub" id="inc-kpi-pub-sub">-</div>
+                    <div class="kpi-head">🎫 Ingressi</div>
+                    <div class="kpi-val" id="inc-kpi-ingressi-val">-</div>
+                    <div class="kpi-sub" id="inc-kpi-ingressi-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #7c3aed">
+                    <div class="kpi-head">🎟️ Abbonamenti</div>
+                    <div class="kpi-val" id="inc-kpi-abbonamenti-val">-</div>
+                    <div class="kpi-sub" id="inc-kpi-abbonamenti-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #ea580c">
+                    <div class="kpi-head">🛍️ Accessori</div>
+                    <div class="kpi-val" id="inc-kpi-accessori-val">-</div>
+                    <div class="kpi-sub" id="inc-kpi-accessori-sub">-</div>
                 </div>
             </div>
 
             <div class="chart-card glass-card" style="height:320px; padding:15px">
-                <div class="chart-header" style="font-size:0.85rem">💳 Composizione Metodi di Pagamento (mese)</div>
+                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Incasso (mese)</div>
                 <div class="chart-wrapper"><canvas id="chartIncPaymentMix"></canvas></div>
             </div>
         </div>
@@ -993,7 +935,9 @@
                             <tr>
                                 <th>Mese</th>
                                 <th style="color:#b45309">Corsi N4</th>
-                                <th style="color:#2563eb">Pubblico</th>
+                                <th style="color:#2563eb">Ingressi</th>
+                                <th style="color:#7c3aed">Abbonamenti</th>
+                                <th style="color:#ea580c">Accessori</th>
                                 <th style="background:rgba(22,163,74,0.08); color:#16a34a">Incasso Totale</th>
                             </tr>
                         </thead>
@@ -1009,11 +953,7 @@
             <div class="filter-row" style="margin-bottom:15px; flex-wrap:wrap; gap:10px; align-items:flex-end">
                 <div class="inp-field" style="flex:none; width:150px"><label>Da</label><input type="date" id="inc-arch-date-start" class="arch-select" onchange="renderIncassiArchive()"></div>
                 <div class="inp-field" style="flex:none; width:150px"><label>A</label><input type="date" id="inc-arch-date-end" class="arch-select" onchange="renderIncassiArchive()"></div>
-                <div style="flex:1"></div>
-                <button class="btn" style="height:38px; border:1px solid rgba(0,0,0,0.1); font-size:0.8rem" onclick="document.getElementById('inc-import-file').click()">📥 Importa da Excel</button>
-                <input type="file" id="inc-import-file" accept=".xlsx" style="display:none" onchange="handleIncassiExcelImport(event)">
             </div>
-            <div id="inc-import-status" class="hidden" style="margin-bottom:15px; padding:12px 16px; border-radius:10px; background:rgba(37,99,235,0.08); font-size:0.85rem; font-weight:600; color:#1e40af"></div>
             <div class="table-wrap glass-card">
                 <div style="overflow-x:auto;">
                     <table id="table-incassi-archive">
@@ -1021,7 +961,9 @@
                             <tr>
                                 <th>Data</th>
                                 <th style="color:#b45309">Corsi N4</th>
-                                <th style="color:#2563eb">Pubblico</th>
+                                <th style="color:#2563eb">Ingressi</th>
+                                <th style="color:#7c3aed">Abbonamenti</th>
+                                <th style="color:#ea580c">Accessori</th>
                                 <th style="background:rgba(22,163,74,0.08); color:#16a34a">Totale</th>
                                 <th>Note</th>
                                 <th style="width:90px; text-align:center">Azioni</th>
@@ -1040,7 +982,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, limit, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = { apiKey: "AIzaSyCfXF61GUht7VPwkRTTiAn-nlhqEhDTW-0", authDomain: "piscinastats-64519.firebaseapp.com", projectId: "piscinastats-64519", storageBucket: "piscinastats-64519.firebasestorage.app", messagingSenderId: "297663099794", appId: "1:297663099794:web:edd9ffc2f7a90f7549c74b" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
@@ -2168,21 +2110,19 @@ window.deleteUtenzeDate = async (date) => {
 function numVal(id) { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? 0 : v; }
 
 window.updateIncassiLiveTotal = () => {
-    const n4 = numVal('inc-n4-pos') + numVal('inc-n4-satispay') + numVal('inc-n4-bonifico') + numVal('inc-n4-contanti');
-    const pub = numVal('inc-pub-pos') + numVal('inc-pub-satispay') + numVal('inc-pub-bonifico') + numVal('inc-pub-contanti');
-    const tot = n4 + pub;
-    document.getElementById('inc-sub-n4').innerText = fmtEUR(n4);
-    document.getElementById('inc-sub-pubblico').innerText = fmtEUR(pub);
+    const n4 = numVal('inc-n4-tot');
+    const ingressi = numVal('inc-ingressi-tot');
+    const abbonamenti = numVal('inc-abbonamenti-tot');
+    const accessori = numVal('inc-accessori-tot');
+    const tot = n4 + ingressi + abbonamenti + accessori;
     document.getElementById('inc-live-total').innerText = fmtEUR(tot);
-    return { n4, pub, tot };
+    return { n4, ingressi, abbonamenti, accessori, tot };
 };
 function fmtEUR(v) { return '€ ' + (v||0).toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}); }
 
 function clearIncassiForm() {
     document.querySelectorAll('#cb-incassi input:not([type=date])').forEach(i => i.value = '');
     updateIncassiLiveTotal();
-    const panel = document.getElementById('inc-detail-panel');
-    if (panel) panel.open = false;
 }
 
 window.loadIncassiDayIntoForm = () => {
@@ -2196,37 +2136,11 @@ window.loadIncassiDayIntoForm = () => {
 function fillIncassiForm(d, isEditMode) {
     document.getElementById('inc-date').value = d.date;
     document.getElementById('inc-note').value = d.note || '';
-    const map = {
-        'inc-n4-pos':'corsi_n4_pos', 'inc-n4-satispay':'corsi_n4_satispay', 'inc-n4-bonifico':'corsi_n4_bonifico', 'inc-n4-contanti':'corsi_n4_contanti',
-        'inc-pub-pos':'pubblico_pos', 'inc-pub-satispay':'pubblico_satispay', 'inc-pub-bonifico':'pubblico_bonifico', 'inc-pub-contanti':'pubblico_contanti',
-        'inc-ing-int-intero':'ing_int_intero', 'inc-ing-int-ridotto':'ing_int_ridotto',
-        'inc-ing-estfer-intero':'ing_est_fer_intero', 'inc-ing-estfer-ridotto':'ing_est_fer_ridotto',
-        'inc-ing-estsab-intero':'ing_est_sab_intero', 'inc-ing-estsab-ridotto':'ing_est_sab_ridotto',
-        'inc-ing-estdom-intero':'ing_est_dom_intero', 'inc-ing-estdom-ridotto':'ing_est_dom_ridotto',
-        'inc-ing-family':'tariffa_family', 'inc-ing-omaggio':'omaggio', 'inc-ing-convenz':'convenzionati',
-        'inc-abb-11int-intero':'abb11_int_intero', 'inc-abb-11int-ridotto':'abb11_int_ridotto',
-        'inc-abb-mensile-intero':'abb_mensile_intero', 'inc-abb-mensile-ridotto':'abb_mensile_ridotto',
-        'inc-abb-trim-intero':'abb_trimestrale_intero', 'inc-abb-trim-ridotto':'abb_trimestrale_ridotto',
-        'inc-abb-sem-intero':'abb_semestrale_intero', 'inc-abb-sem-ridotto':'abb_semestrale_ridotto',
-        'inc-abb-ann-intero':'abb_annuale_intero', 'inc-abb-ann-ridotto':'abb_annuale_ridotto',
-        'inc-abb-11est-fer':'abb11_est_fer', 'inc-abb-11est-we':'abb11_est_weekend',
-        'inc-acc-tessere':'acc_tessere', 'inc-acc-noleggio':'acc_noleggio', 'inc-acc-cuffie':'acc_cuffie',
-        'inc-acc-occhialini':'acc_occhialini', 'inc-acc-copriscarpe':'acc_copriscarpe', 'inc-acc-altri':'acc_altri',
-        'inc-acc-borsellino':'borsellino'
-    };
-    // Eventuali importi storici "Corsi con IVA" (voce ormai non più in uso) vengono confluiti nei campi Pubblico corrispondenti
-    const mergedValues = {
-        pubblico_pos: (d.pubblico_pos||0) + (d.corsi_iva_pos||0),
-        pubblico_satispay: (d.pubblico_satispay||0) + (d.corsi_iva_satispay||0),
-        pubblico_bonifico: (d.pubblico_bonifico||0) + (d.corsi_iva_bonifico||0),
-        pubblico_contanti: (d.pubblico_contanti||0) + (d.corsi_iva_contanti||0),
-    };
-    Object.entries(map).forEach(([elId, field]) => {
-        const v = mergedValues[field] !== undefined ? mergedValues[field] : d[field];
-        document.getElementById(elId).value = (v === undefined || v === null || v === 0) ? '' : v;
-    });
+    document.getElementById('inc-n4-tot').value = d.corsi_n4_tot || '';
+    document.getElementById('inc-ingressi-tot').value = d.ingressi_tot || '';
+    document.getElementById('inc-abbonamenti-tot').value = d.abbonamenti_tot || '';
+    document.getElementById('inc-accessori-tot').value = d.accessori_tot || '';
     updateIncassiLiveTotal();
-    document.getElementById('inc-detail-panel').open = true;
     if (isEditMode) {
         document.getElementById('title-incassi').innerText = "Modifica Incasso";
         document.getElementById('btn-save-incassi').innerText = "AGGIORNA";
@@ -2239,28 +2153,15 @@ function fillIncassiForm(d, isEditMode) {
 window.saveIncassi = async () => {
     const date = document.getElementById('inc-date').value;
     if (!date) return showToast("Data mancante", "error");
-    const { n4, pub, tot } = updateIncassiLiveTotal();
+    const { n4, ingressi, abbonamenti, accessori, tot } = updateIncassiLiveTotal();
 
     const p = {
         date, note: document.getElementById('inc-note').value || '',
-        corsi_n4_pos: numVal('inc-n4-pos'), corsi_n4_satispay: numVal('inc-n4-satispay'), corsi_n4_bonifico: numVal('inc-n4-bonifico'), corsi_n4_contanti: numVal('inc-n4-contanti'), corsi_n4_tot: n4,
-        corsi_iva_pos: 0, corsi_iva_satispay: 0, corsi_iva_bonifico: 0, corsi_iva_contanti: 0, corsi_iva_tot: 0,
-        pubblico_pos: numVal('inc-pub-pos'), pubblico_satispay: numVal('inc-pub-satispay'), pubblico_bonifico: numVal('inc-pub-bonifico'), pubblico_contanti: numVal('inc-pub-contanti'), pubblico_tot: pub,
+        corsi_n4_tot: n4,
+        ingressi_tot: ingressi,
+        abbonamenti_tot: abbonamenti,
+        accessori_tot: accessori,
         incasso_totale: tot,
-        ing_int_intero: numVal('inc-ing-int-intero'), ing_int_ridotto: numVal('inc-ing-int-ridotto'),
-        ing_est_fer_intero: numVal('inc-ing-estfer-intero'), ing_est_fer_ridotto: numVal('inc-ing-estfer-ridotto'),
-        ing_est_sab_intero: numVal('inc-ing-estsab-intero'), ing_est_sab_ridotto: numVal('inc-ing-estsab-ridotto'),
-        ing_est_dom_intero: numVal('inc-ing-estdom-intero'), ing_est_dom_ridotto: numVal('inc-ing-estdom-ridotto'),
-        tariffa_family: numVal('inc-ing-family'), omaggio: numVal('inc-ing-omaggio'), convenzionati: numVal('inc-ing-convenz'),
-        abb11_int_intero: numVal('inc-abb-11int-intero'), abb11_int_ridotto: numVal('inc-abb-11int-ridotto'),
-        abb_mensile_intero: numVal('inc-abb-mensile-intero'), abb_mensile_ridotto: numVal('inc-abb-mensile-ridotto'),
-        abb_trimestrale_intero: numVal('inc-abb-trim-intero'), abb_trimestrale_ridotto: numVal('inc-abb-trim-ridotto'),
-        abb_semestrale_intero: numVal('inc-abb-sem-intero'), abb_semestrale_ridotto: numVal('inc-abb-sem-ridotto'),
-        abb_annuale_intero: numVal('inc-abb-ann-intero'), abb_annuale_ridotto: numVal('inc-abb-ann-ridotto'),
-        abb11_est_fer: numVal('inc-abb-11est-fer'), abb11_est_weekend: numVal('inc-abb-11est-we'),
-        acc_tessere: numVal('inc-acc-tessere'), acc_noleggio: numVal('inc-acc-noleggio'), acc_cuffie: numVal('inc-acc-cuffie'),
-        acc_occhialini: numVal('inc-acc-occhialini'), acc_copriscarpe: numVal('inc-acc-copriscarpe'), acc_altri: numVal('inc-acc-altri'),
-        borsellino: numVal('inc-acc-borsellino'),
     };
 
     try {
@@ -2339,13 +2240,10 @@ function renderIncassiOverview() {
 
     const sumMonth = (year, month) => {
         const rows = dataIncassi.filter(d => { const dt = new Date(d.date); return dt.getFullYear() === year && dt.getMonth() === month; });
-        const s = { tot: 0, n4: 0, pub: 0, pos: 0, satispay: 0, bonifico: 0, contanti: 0 };
+        const s = { tot: 0, n4: 0, ingressi: 0, abbonamenti: 0, accessori: 0 };
         rows.forEach(d => {
-            s.tot += d.incasso_totale || 0; s.n4 += d.corsi_n4_tot || 0; s.pub += (d.pubblico_tot || 0) + (d.corsi_iva_tot || 0);
-            s.pos += (d.corsi_n4_pos||0)+(d.corsi_iva_pos||0)+(d.pubblico_pos||0);
-            s.satispay += (d.corsi_n4_satispay||0)+(d.corsi_iva_satispay||0)+(d.pubblico_satispay||0);
-            s.bonifico += (d.corsi_n4_bonifico||0)+(d.corsi_iva_bonifico||0)+(d.pubblico_bonifico||0);
-            s.contanti += (d.corsi_n4_contanti||0)+(d.corsi_iva_contanti||0)+(d.pubblico_contanti||0);
+            s.tot += d.incasso_totale || 0; s.n4 += d.corsi_n4_tot || 0;
+            s.ingressi += d.ingressi_tot || 0; s.abbonamenti += d.abbonamenti_tot || 0; s.accessori += d.accessori_tot || 0;
         });
         return s;
     };
@@ -2359,8 +2257,12 @@ function renderIncassiOverview() {
     document.getElementById('inc-kpi-tot-context').innerHTML = yoy(curr.tot, prev.tot);
     document.getElementById('inc-kpi-n4-val').innerText = fmtEUR(curr.n4);
     document.getElementById('inc-kpi-n4-sub').innerHTML = yoy(curr.n4, prev.n4);
-    document.getElementById('inc-kpi-pub-val').innerText = fmtEUR(curr.pub);
-    document.getElementById('inc-kpi-pub-sub').innerHTML = yoy(curr.pub, prev.pub);
+    document.getElementById('inc-kpi-ingressi-val').innerText = fmtEUR(curr.ingressi);
+    document.getElementById('inc-kpi-ingressi-sub').innerHTML = yoy(curr.ingressi, prev.ingressi);
+    document.getElementById('inc-kpi-abbonamenti-val').innerText = fmtEUR(curr.abbonamenti);
+    document.getElementById('inc-kpi-abbonamenti-sub').innerHTML = yoy(curr.abbonamenti, prev.abbonamenti);
+    document.getElementById('inc-kpi-accessori-val').innerText = fmtEUR(curr.accessori);
+    document.getElementById('inc-kpi-accessori-sub').innerHTML = yoy(curr.accessori, prev.accessori);
 
     if (!isChartReady()) return;
     if (ch['chartIncPaymentMix']) ch['chartIncPaymentMix'].destroy();
@@ -2369,8 +2271,8 @@ function renderIncassiOverview() {
         ch['chartIncPaymentMix'] = new Chart(canvas, {
             type: 'doughnut',
             data: {
-                labels: ['POS', 'Satispay', 'Bonifico', 'Contanti'],
-                datasets: [{ data: [curr.pos, curr.satispay, curr.bonifico, curr.contanti], backgroundColor: ['#2563eb','#a855f7','#f59e0b','#16a34a'] }]
+                labels: ['Corsi N4', 'Ingressi', 'Abbonamenti', 'Accessori'],
+                datasets: [{ data: [curr.n4, curr.ingressi, curr.abbonamenti, curr.accessori], backgroundColor: ['#b45309','#2563eb','#7c3aed','#ea580c'] }]
             },
             options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
         });
@@ -2395,20 +2297,23 @@ function renderIncassiStats() {
         });
     }
 
-    // Composizione mensile Corsi N4 / Pubblico (stacked %)
+    // Composizione mensile Corsi N4 / Ingressi / Abbonamenti / Accessori (stacked %)
     const monthlyAgg = {};
     dataIncassi.forEach(d => {
         const ym = d.date.slice(0,7);
-        if (!monthlyAgg[ym]) monthlyAgg[ym] = { n4:0, pub:0 };
-        monthlyAgg[ym].n4 += d.corsi_n4_tot||0; monthlyAgg[ym].pub += (d.pubblico_tot||0) + (d.corsi_iva_tot||0);
+        if (!monthlyAgg[ym]) monthlyAgg[ym] = { n4:0, ingressi:0, abbonamenti:0, accessori:0 };
+        monthlyAgg[ym].n4 += d.corsi_n4_tot||0;
+        monthlyAgg[ym].ingressi += d.ingressi_tot||0;
+        monthlyAgg[ym].abbonamenti += d.abbonamenti_tot||0;
+        monthlyAgg[ym].accessori += d.accessori_tot||0;
     });
     const months = Object.keys(monthlyAgg).sort();
     const labels = months.map(m => { const [y,mm]=m.split('-'); return new Date(y,mm-1,1).toLocaleString('it-IT',{month:'short',year:'2-digit'}); });
-    const pctN4=[], pctPub=[];
+    const pctN4=[], pctIngressi=[], pctAbbonamenti=[], pctAccessori=[];
     months.forEach(m => {
-        const d = monthlyAgg[m]; const tot = d.n4+d.pub;
-        if (tot===0) { pctN4.push(0); pctPub.push(0); return; }
-        pctN4.push((d.n4/tot)*100); pctPub.push((d.pub/tot)*100);
+        const d = monthlyAgg[m]; const tot = d.n4+d.ingressi+d.abbonamenti+d.accessori;
+        if (tot===0) { pctN4.push(0); pctIngressi.push(0); pctAbbonamenti.push(0); pctAccessori.push(0); return; }
+        pctN4.push((d.n4/tot)*100); pctIngressi.push((d.ingressi/tot)*100); pctAbbonamenti.push((d.abbonamenti/tot)*100); pctAccessori.push((d.accessori/tot)*100);
     });
     if (ch['chartIncCategoryTrend']) ch['chartIncCategoryTrend'].destroy();
     const c2 = document.getElementById('chartIncCategoryTrend');
@@ -2417,7 +2322,9 @@ function renderIncassiStats() {
             type: 'bar',
             data: { labels, datasets: [
                 { label: 'Corsi N4', data: pctN4, backgroundColor: '#b45309', stack:'pct' },
-                { label: 'Pubblico', data: pctPub, backgroundColor: '#2563eb', stack:'pct' }
+                { label: 'Ingressi', data: pctIngressi, backgroundColor: '#2563eb', stack:'pct' },
+                { label: 'Abbonamenti', data: pctAbbonamenti, backgroundColor: '#7c3aed', stack:'pct' },
+                { label: 'Accessori', data: pctAccessori, backgroundColor: '#ea580c', stack:'pct' }
             ]},
             options: { animation:false, responsive:true, maintainAspectRatio:false,
                 scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true, max:100, ticks:{callback:v=>v+'%'}} },
@@ -2433,9 +2340,11 @@ function aggregateRiepilogoIncassi(yearFilter) {
         if (!d.date) return;
         const yyyymm = d.date.slice(0,7); const y = d.date.slice(0,4);
         if (yearFilter !== 'all' && y !== yearFilter) return;
-        if (!agg[yyyymm]) agg[yyyymm] = { n4:0, pub:0, tot:0 };
+        if (!agg[yyyymm]) agg[yyyymm] = { n4:0, ingressi:0, abbonamenti:0, accessori:0, tot:0 };
         agg[yyyymm].n4 += d.corsi_n4_tot||0;
-        agg[yyyymm].pub += (d.pubblico_tot||0) + (d.corsi_iva_tot||0);
+        agg[yyyymm].ingressi += d.ingressi_tot||0;
+        agg[yyyymm].abbonamenti += d.abbonamenti_tot||0;
+        agg[yyyymm].accessori += d.accessori_tot||0;
         agg[yyyymm].tot += d.incasso_totale||0;
     });
     return agg;
@@ -2456,14 +2365,14 @@ window.renderRiepilogoIncassi = () => {
     const tFoot = document.getElementById('tfoot-riepilogo-incassi');
     const fmt = (v) => fmtEUR(v);
 
-    if (sortedMonths.length === 0) { tBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px">Nessun dato</td></tr>'; if(tFoot) tFoot.innerHTML=''; return; }
+    if (sortedMonths.length === 0) { tBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px">Nessun dato</td></tr>'; if(tFoot) tFoot.innerHTML=''; return; }
 
     const rows = [];
-    const grandTotal = { n4:0, pub:0, tot:0 };
+    const grandTotal = { n4:0, ingressi:0, abbonamenti:0, accessori:0, tot:0 };
     sortedMonths.forEach(mStr => {
         const d = agg[mStr]; const [y,m] = mStr.split('-');
         const monthLabel = new Date(parseInt(y), parseInt(m)-1, 1).toLocaleString('it-IT', {month:'long', year:'numeric'});
-        grandTotal.n4 += d.n4; grandTotal.pub += d.pub; grandTotal.tot += d.tot;
+        grandTotal.n4 += d.n4; grandTotal.ingressi += d.ingressi; grandTotal.abbonamenti += d.abbonamenti; grandTotal.accessori += d.accessori; grandTotal.tot += d.tot;
 
         const prevYear = String(parseInt(y)-1); const prevD = aggAll[`${prevYear}-${m}`];
         let yoyHtml = '';
@@ -2474,7 +2383,9 @@ window.renderRiepilogoIncassi = () => {
         rows.push(`<tr>
             <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
             <td style="color:#b45309">${fmt(d.n4)}</td>
-            <td style="color:#2563eb">${fmt(d.pub)}</td>
+            <td style="color:#2563eb">${fmt(d.ingressi)}</td>
+            <td style="color:#7c3aed">${fmt(d.abbonamenti)}</td>
+            <td style="color:#ea580c">${fmt(d.accessori)}</td>
             <td style="font-weight:800; color:#16a34a; background:rgba(22,163,74,0.05)">${fmt(d.tot)}${yoyHtml}</td>
         </tr>`);
     });
@@ -2483,7 +2394,9 @@ window.renderRiepilogoIncassi = () => {
         tFoot.innerHTML = `<tr style="border-top:2px solid rgba(0,0,0,0.1)">
             <td style="font-weight:800">TOTALE${yearFilter!=='all'?' '+yearFilter:''}</td>
             <td style="font-weight:800; color:#b45309">${fmt(grandTotal.n4)}</td>
-            <td style="font-weight:800; color:#2563eb">${fmt(grandTotal.pub)}</td>
+            <td style="font-weight:800; color:#2563eb">${fmt(grandTotal.ingressi)}</td>
+            <td style="font-weight:800; color:#7c3aed">${fmt(grandTotal.abbonamenti)}</td>
+            <td style="font-weight:800; color:#ea580c">${fmt(grandTotal.accessori)}</td>
             <td style="font-weight:900; color:#16a34a; background:rgba(22,163,74,0.1)">${fmt(grandTotal.tot)}</td>
         </tr>`;
     }
@@ -2495,11 +2408,11 @@ window.downloadRiepilogoIncassiCSV = () => {
     const agg = aggregateRiepilogoIncassi(yearFilter);
     const sortedMonths = Object.keys(agg).sort();
     if (!sortedMonths.length) return showToast("Nessun dato da scaricare", "error");
-    let csv = "Mese;Corsi N4;Pubblico;Incasso Totale\n";
+    let csv = "Mese;Corsi N4;Ingressi;Abbonamenti;Accessori;Incasso Totale\n";
     sortedMonths.forEach(mStr => {
         const d = agg[mStr]; const [y,m] = mStr.split('-');
         const label = new Date(parseInt(y), parseInt(m)-1, 1).toLocaleString('it-IT', {month:'long', year:'numeric'});
-        csv += `${label};${d.n4.toFixed(2)};${d.pub.toFixed(2)};${d.tot.toFixed(2)}\n`;
+        csv += `${label};${d.n4.toFixed(2)};${d.ingressi.toFixed(2)};${d.abbonamenti.toFixed(2)};${d.accessori.toFixed(2)};${d.tot.toFixed(2)}\n`;
     });
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const link = document.createElement('a');
@@ -2516,15 +2429,16 @@ window.renderIncassiArchive = () => {
     f.sort((a,b) => a.date < b.date ? 1 : -1);
 
     const t = document.getElementById('tbody-incassi-archive');
-    if (f.length === 0) { t.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px">Nessun dato trovato.</td></tr>'; return; }
+    if (f.length === 0) { t.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px">Nessun dato trovato.</td></tr>'; return; }
 
     t.innerHTML = f.map(d => {
         const dateLabel = d.date.split('-').reverse().join('/');
-        const pubTot = (d.pubblico_tot||0) + (d.corsi_iva_tot||0);
         return `<tr>
             <td style="font-weight:700">${dateLabel}</td>
             <td style="color:#b45309">${fmtEUR(d.corsi_n4_tot)}</td>
-            <td style="color:#2563eb">${fmtEUR(pubTot)}</td>
+            <td style="color:#2563eb">${fmtEUR(d.ingressi_tot)}</td>
+            <td style="color:#7c3aed">${fmtEUR(d.abbonamenti_tot)}</td>
+            <td style="color:#ea580c">${fmtEUR(d.accessori_tot)}</td>
             <td style="font-weight:800; color:#16a34a">${fmtEUR(d.incasso_totale)}</td>
             <td style="font-size:0.8rem; color:#64748b">${d.note||''}</td>
             <td style="text-align:right; min-width:80px">
@@ -2533,344 +2447,6 @@ window.renderIncassiArchive = () => {
             </td>
         </tr>`;
     }).join('');
-};
-
-
-// ============ INCASSI: Import da Excel (client-side, porting della logica Python validata) ============
-function normHeaderJS(s) {
-    if (s === null || s === undefined) return '';
-    return String(s).replace(/\s+/g, ' ').trim().toUpperCase();
-}
-function findColByHeaderJS(matrix, headerRowsIdx, targets, maxCol, minCol) {
-    maxCol = maxCol || 60;
-    minCol = minCol || 0;
-    for (let col = minCol; col < maxCol; col++) {
-        for (let hi = 0; hi < headerRowsIdx.length; hi++) {
-            const row = matrix[headerRowsIdx[hi]];
-            if (!row) continue;
-            const v = normHeaderJS(row[col]);
-            if (!v) continue;
-            for (let ti = 0; ti < targets.length; ti++) {
-                if (v.indexOf(targets[ti]) !== -1) return col;
-            }
-        }
-    }
-    return null;
-}
-function getValMatrixJS(matrix, rowIdx, colIdx) {
-    if (colIdx === null || colIdx === undefined) return 0;
-    const row = matrix[rowIdx];
-    if (!row) return 0;
-    const v = row[colIdx];
-    if (v === null || v === undefined || v === '') return 0;
-    if (typeof v === 'string') return 0;
-    return v;
-}
-function detectFormatJS(matrix) {
-    const row1 = matrix[0] || [];
-    const b1 = normHeaderJS(row1[1]);
-    if (b1 === 'LIBRO IVA') return 'C';
-    const row1all = row1.map(normHeaderJS).join(' ');
-    if (row1all.indexOf('INGRESSI SINGOLI') !== -1) return 'B';
-    return 'A';
-}
-function emptyIncassoRecord() {
-    return {
-        corsi_n4_tot:0, corsi_n4_pos:0, corsi_n4_satispay:0, corsi_n4_bonifico:0, corsi_n4_contanti:0,
-        corsi_iva_tot:0, corsi_iva_pos:0, corsi_iva_satispay:0, corsi_iva_bonifico:0, corsi_iva_contanti:0,
-        pubblico_tot:0, pubblico_pos:0, pubblico_satispay:0, pubblico_bonifico:0, pubblico_contanti:0,
-        incasso_totale:0,
-        ing_int_intero:0, ing_int_ridotto:0,
-        ing_est_fer_intero:0, ing_est_fer_ridotto:0,
-        ing_est_sab_intero:0, ing_est_sab_ridotto:0,
-        ing_est_dom_intero:0, ing_est_dom_ridotto:0,
-        tariffa_family:0, omaggio:0, convenzionati:0,
-        acc_tessere:0, acc_noleggio:0, acc_cuffie:0, acc_occhialini:0, acc_copriscarpe:0, acc_altri:0,
-        abb11_int_intero:0, abb11_int_ridotto:0,
-        abb_mensile_intero:0, abb_mensile_ridotto:0,
-        abb_trimestrale_intero:0, abb_trimestrale_ridotto:0,
-        abb_semestrale_intero:0, abb_semestrale_ridotto:0,
-        abb_annuale_intero:0, abb_annuale_ridotto:0,
-        abb11_est_fer:0, abb11_est_weekend:0,
-        borsellino:0, note: '',
-    };
-}
-function excelDateToISOJS(v) {
-    if (v instanceof Date && !isNaN(v.getTime())) {
-        const y = v.getFullYear(), m = String(v.getMonth()+1).padStart(2,'0'), d = String(v.getDate()).padStart(2,'0');
-        return y + '-' + m + '-' + d;
-    }
-    return null;
-}
-function sameYMD(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
-
-function parseFormatA_JS(matrix, sheetName) {
-    const records = [];
-    let colDate = findColByHeaderJS(matrix, [3], ['DATA'], 5);
-    if (colDate === null) colDate = 0;
-    const sec3 = matrix[2] || [];
-    let esenteStart=null, conIvaStart=null, pubblicoStart=null;
-    for (let col=0; col<20; col++) {
-        const v = normHeaderJS(sec3[col]);
-        if (!v) continue;
-        if (v.indexOf('CORSI ESENTE')!==-1 && esenteStart===null) esenteStart = col;
-        if (v.indexOf('CORSI CON IVA')!==-1 && conIvaStart===null) conIvaStart = col;
-        if (v.indexOf('PUBBLICO')===0 && pubblicoStart===null) pubblicoStart = col;
-    }
-    let prevDate = null;
-    for (let r = 4; r < matrix.length; r++) {
-        const row = matrix[r]; if (!row) continue;
-        const dcell = row[colDate];
-        if (!(dcell instanceof Date) || isNaN(dcell.getTime())) continue;
-        if (prevDate !== null) {
-            const expected = new Date(prevDate.getTime()); expected.setDate(expected.getDate()+1);
-            if (!sameYMD(dcell, expected)) break;
-        }
-        prevDate = dcell;
-        const rec = emptyIncassoRecord();
-        rec.date = excelDateToISOJS(dcell); rec.formato_origine = 'A'; rec.sheet_origine = sheetName;
-        if (esenteStart !== null) {
-            rec.corsi_n4_pos = getValMatrixJS(matrix, r, esenteStart);
-            rec.corsi_n4_contanti = getValMatrixJS(matrix, r, esenteStart+1);
-            rec.corsi_n4_bonifico = getValMatrixJS(matrix, r, esenteStart+2);
-            rec.corsi_n4_tot = getValMatrixJS(matrix, r, esenteStart+3);
-        }
-        if (conIvaStart !== null) {
-            rec.corsi_iva_pos = getValMatrixJS(matrix, r, conIvaStart);
-            rec.corsi_iva_contanti = getValMatrixJS(matrix, r, conIvaStart+1);
-            rec.corsi_iva_bonifico = getValMatrixJS(matrix, r, conIvaStart+2);
-        }
-        if (pubblicoStart !== null) {
-            rec.pubblico_pos = getValMatrixJS(matrix, r, pubblicoStart);
-            rec.pubblico_contanti = getValMatrixJS(matrix, r, pubblicoStart+1);
-            rec.pubblico_bonifico = getValMatrixJS(matrix, r, pubblicoStart+2);
-            rec.pubblico_tot = rec.pubblico_pos + rec.pubblico_contanti + rec.pubblico_bonifico;
-        }
-        rec.corsi_iva_tot = rec.corsi_iva_pos + rec.corsi_iva_contanti + rec.corsi_iva_bonifico;
-        rec.incasso_totale = rec.corsi_n4_tot + rec.corsi_iva_tot + rec.pubblico_tot;
-        records.push(rec);
-    }
-    return records;
-}
-
-function parseFormatC_JS(matrix, sheetName) {
-    const colDate = 0;
-    const colImportoOperazioni = findColByHeaderJS(matrix, [2], ['IMPORTO DELLE']);
-    const colImportoOp = colImportoOperazioni === null ? 1 : colImportoOperazioni;
-    const colTotIva = findColByHeaderJS(matrix, [1], ['TOT. ENTRATE']);
-    const colCorsiN4Tot = findColByHeaderJS(matrix, [1], ['CORSI (ESENTI']);
-    const colCorsiN4Pos = findColByHeaderJS(matrix, [3], ['POS'], 12);
-    const colCorsiN4Sat = findColByHeaderJS(matrix, [3], ['SATISPAY'], 12);
-    const colCorsiN4Bon = findColByHeaderJS(matrix, [3], ['BONIFICO'], 12);
-    const colCorsiN4Cnt = findColByHeaderJS(matrix, [3], ['CONTANTI'], 12);
-    const colPubblicoIva = findColByHeaderJS(matrix, [1], ['CON IVA'], 17);
-    // Corsi con IVA: POS/BONIFICO/CONTANTI in riga indice2 (Python riga3), subito dopo la sezione Corsi N4
-    const baseAfterN4 = (colCorsiN4Cnt !== null ? colCorsiN4Cnt : 10) + 1;
-    const colCorsiIvaPos = findColByHeaderJS(matrix, [2], ['POS'], baseAfterN4+6, baseAfterN4);
-    const colCorsiIvaBon = findColByHeaderJS(matrix, [2], ['BONIFICO'], baseAfterN4+6, baseAfterN4);
-    const colCorsiIvaCnt = findColByHeaderJS(matrix, [2], ['CONTANTI'], baseAfterN4+6, baseAfterN4);
-    // Pubblico: POS/SATISPAY/CONTANTI in riga indice3 (Python riga4), subito dopo la sezione Corsi IVA
-    const baseAfterIva = (colCorsiIvaCnt !== null ? colCorsiIvaCnt : (baseAfterN4+2)) + 1;
-    const colPubPos = findColByHeaderJS(matrix, [3], ['POS'], baseAfterIva+6, baseAfterIva);
-    const colPubSat = findColByHeaderJS(matrix, [3], ['SATISPAY'], baseAfterIva+6, baseAfterIva);
-    const colPubCnt = findColByHeaderJS(matrix, [3], ['CONTANTI'], baseAfterIva+6, baseAfterIva);
-
-    const colIngIntIntero = findColByHeaderJS(matrix, [1,2], ['INGRESSO INTERNA'], 25);
-    const colIngEstFer = findColByHeaderJS(matrix, [1], ['ESTERNA FER'], 30);
-    const colIngEstSab = findColByHeaderJS(matrix, [1], ['ESTERNA SAB'], 30);
-    const colIngEstDom = findColByHeaderJS(matrix, [1], ['ESTERNA DOM'], 30);
-    const colFamily = findColByHeaderJS(matrix, [1], ['TAR. FAMILY'], 30);
-    const colConvenz = findColByHeaderJS(matrix, [1], ['CONVENZ'], 32);
-    const colOmaggio = findColByHeaderJS(matrix, [1], ['OMAGGIO'], 32);
-
-    const colAccTessere = findColByHeaderJS(matrix, [1], ['TESSERE'], 40);
-    const colAccNoleggio = findColByHeaderJS(matrix, [1], ['NOLEGGIO'], 40);
-    const colAccCuffie = findColByHeaderJS(matrix, [1], ['CUFFIE'], 40);
-    const colAccOcchialini = findColByHeaderJS(matrix, [1], ['OCCHIALINI'], 40);
-    const colAccCopriscarpe = findColByHeaderJS(matrix, [1], ['COPRISCARPE'], 40);
-    const colAccAltri = findColByHeaderJS(matrix, [1], ['ALTRI ACCESSORI'], 40);
-
-    const colAbb11Int = findColByHeaderJS(matrix, [1], ['11 INGRESSI'], 45);
-    const colAbbMens = findColByHeaderJS(matrix, [1], ['MENSILE'], 45);
-    const colAbbTrim = findColByHeaderJS(matrix, [1], ['TRIMESTRALE'], 48);
-    const colAbbSem = findColByHeaderJS(matrix, [1], ['SEMESTRALE'], 48);
-    const colAbbAnn = findColByHeaderJS(matrix, [1], ['ANNUALE'], 50);
-    const colAbb11EstFer = findColByHeaderJS(matrix, [1], ['11 INGRESSI FERIALE'], 54);
-    const colAbb11EstWe = findColByHeaderJS(matrix, [1], ['11 INGRESSI SAB'], 54);
-    const colBorsellino = findColByHeaderJS(matrix, [0], ['BORSELLINO'], 54);
-
-    const records = [];
-    for (let r = 4; r < matrix.length; r++) {
-        const row = matrix[r]; if (!row) continue;
-        const dcell = row[colDate];
-        if (!(dcell instanceof Date) || isNaN(dcell.getTime())) continue;
-        const rec = emptyIncassoRecord();
-        rec.date = excelDateToISOJS(dcell); rec.formato_origine = 'C'; rec.sheet_origine = sheetName;
-
-        rec.corsi_n4_pos = getValMatrixJS(matrix, r, colCorsiN4Pos);
-        rec.corsi_n4_satispay = getValMatrixJS(matrix, r, colCorsiN4Sat);
-        rec.corsi_n4_bonifico = getValMatrixJS(matrix, r, colCorsiN4Bon);
-        rec.corsi_n4_contanti = getValMatrixJS(matrix, r, colCorsiN4Cnt);
-        rec.corsi_n4_tot = rec.corsi_n4_pos + rec.corsi_n4_satispay + rec.corsi_n4_bonifico + rec.corsi_n4_contanti;
-
-        rec.corsi_iva_pos = getValMatrixJS(matrix, r, colCorsiIvaPos);
-        rec.corsi_iva_bonifico = getValMatrixJS(matrix, r, colCorsiIvaBon);
-        rec.corsi_iva_contanti = getValMatrixJS(matrix, r, colCorsiIvaCnt);
-        rec.corsi_iva_tot = rec.corsi_iva_pos + rec.corsi_iva_bonifico + rec.corsi_iva_contanti;
-
-        rec.pubblico_tot = getValMatrixJS(matrix, r, colPubblicoIva);
-        rec.pubblico_pos = getValMatrixJS(matrix, r, colPubPos);
-        rec.pubblico_satispay = getValMatrixJS(matrix, r, colPubSat);
-        rec.pubblico_contanti = getValMatrixJS(matrix, r, colPubCnt);
-
-        rec.incasso_totale = getValMatrixJS(matrix, r, colImportoOp);
-
-        rec.ing_int_intero = getValMatrixJS(matrix, r, colIngIntIntero);
-        rec.ing_int_ridotto = colIngIntIntero!==null ? getValMatrixJS(matrix, r, colIngIntIntero+1) : 0;
-        rec.ing_est_fer_intero = getValMatrixJS(matrix, r, colIngEstFer);
-        rec.ing_est_fer_ridotto = colIngEstFer!==null ? getValMatrixJS(matrix, r, colIngEstFer+1) : 0;
-        rec.ing_est_sab_intero = getValMatrixJS(matrix, r, colIngEstSab);
-        rec.ing_est_sab_ridotto = colIngEstSab!==null ? getValMatrixJS(matrix, r, colIngEstSab+1) : 0;
-        rec.ing_est_dom_intero = getValMatrixJS(matrix, r, colIngEstDom);
-        rec.ing_est_dom_ridotto = colIngEstDom!==null ? getValMatrixJS(matrix, r, colIngEstDom+1) : 0;
-        rec.tariffa_family = getValMatrixJS(matrix, r, colFamily);
-        rec.convenzionati = getValMatrixJS(matrix, r, colConvenz);
-        rec.omaggio = getValMatrixJS(matrix, r, colOmaggio);
-
-        rec.acc_tessere = getValMatrixJS(matrix, r, colAccTessere);
-        rec.acc_noleggio = getValMatrixJS(matrix, r, colAccNoleggio);
-        rec.acc_cuffie = getValMatrixJS(matrix, r, colAccCuffie);
-        rec.acc_occhialini = getValMatrixJS(matrix, r, colAccOcchialini);
-        rec.acc_copriscarpe = getValMatrixJS(matrix, r, colAccCopriscarpe);
-        rec.acc_altri = getValMatrixJS(matrix, r, colAccAltri);
-
-        rec.abb11_int_intero = getValMatrixJS(matrix, r, colAbb11Int);
-        rec.abb11_int_ridotto = colAbb11Int!==null ? getValMatrixJS(matrix, r, colAbb11Int+1) : 0;
-        rec.abb_mensile_intero = getValMatrixJS(matrix, r, colAbbMens);
-        rec.abb_mensile_ridotto = colAbbMens!==null ? getValMatrixJS(matrix, r, colAbbMens+1) : 0;
-        rec.abb_trimestrale_intero = getValMatrixJS(matrix, r, colAbbTrim);
-        rec.abb_trimestrale_ridotto = colAbbTrim!==null ? getValMatrixJS(matrix, r, colAbbTrim+1) : 0;
-        rec.abb_semestrale_intero = getValMatrixJS(matrix, r, colAbbSem);
-        rec.abb_semestrale_ridotto = colAbbSem!==null ? getValMatrixJS(matrix, r, colAbbSem+1) : 0;
-        rec.abb_annuale_intero = getValMatrixJS(matrix, r, colAbbAnn);
-        rec.abb_annuale_ridotto = colAbbAnn!==null ? getValMatrixJS(matrix, r, colAbbAnn+1) : 0;
-        rec.abb11_est_fer = getValMatrixJS(matrix, r, colAbb11EstFer);
-        rec.abb11_est_weekend = getValMatrixJS(matrix, r, colAbb11EstWe);
-        rec.borsellino = getValMatrixJS(matrix, r, colBorsellino);
-
-        records.push(rec);
-    }
-    return records;
-}
-
-function parseFormatB_JS(matrix, sheetName) {
-    const colDate = 0;
-    const records = [];
-    for (let r = 7; r < matrix.length; r++) {
-        const row = matrix[r]; if (!row) continue;
-        const dcell = row[colDate];
-        if (!(dcell instanceof Date) || isNaN(dcell.getTime())) continue;
-        const rec = emptyIncassoRecord();
-        rec.date = excelDateToISOJS(dcell); rec.formato_origine = 'B'; rec.sheet_origine = sheetName;
-
-        rec.corsi_n4_pos = getValMatrixJS(matrix, r, 1);
-        rec.corsi_n4_bonifico = getValMatrixJS(matrix, r, 2);
-        rec.corsi_n4_contanti = getValMatrixJS(matrix, r, 3);
-        rec.corsi_n4_tot = rec.corsi_n4_pos + rec.corsi_n4_bonifico + rec.corsi_n4_contanti;
-
-        rec.corsi_iva_pos = getValMatrixJS(matrix, r, 4);
-        rec.corsi_iva_bonifico = getValMatrixJS(matrix, r, 5);
-        rec.corsi_iva_contanti = getValMatrixJS(matrix, r, 6);
-        rec.corsi_iva_tot = rec.corsi_iva_pos + rec.corsi_iva_bonifico + rec.corsi_iva_contanti;
-
-        rec.pubblico_pos = getValMatrixJS(matrix, r, 7);
-        rec.pubblico_contanti = getValMatrixJS(matrix, r, 8);
-        rec.pubblico_tot = rec.pubblico_pos + rec.pubblico_contanti;
-
-        rec.ing_int_intero = getValMatrixJS(matrix, r, 11);
-        rec.ing_int_ridotto = getValMatrixJS(matrix, r, 12);
-        rec.ing_est_fer_intero = getValMatrixJS(matrix, r, 13);
-        rec.ing_est_fer_ridotto = getValMatrixJS(matrix, r, 14);
-        rec.ing_est_dom_intero = getValMatrixJS(matrix, r, 15);
-        rec.ing_est_dom_ridotto = getValMatrixJS(matrix, r, 16);
-        rec.tariffa_family = getValMatrixJS(matrix, r, 17);
-        rec.omaggio = getValMatrixJS(matrix, r, 18);
-        rec.convenzionati = getValMatrixJS(matrix, r, 19);
-
-        rec.incasso_totale = rec.corsi_n4_tot + rec.corsi_iva_tot + rec.pubblico_tot;
-        records.push(rec);
-    }
-    return records;
-}
-
-window.handleIncassiExcelImport = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    const statusBox = document.getElementById('inc-import-status');
-    statusBox.classList.remove('hidden');
-    statusBox.innerText = '📖 Lettura del file in corso...';
-
-    try {
-        const buf = await file.arrayBuffer();
-        const wb = XLSX.read(buf, { type: 'array', cellDates: true });
-
-        let allRecords = [];
-        const perSheetCounts = [];
-        wb.SheetNames.forEach(sheetName => {
-            const ws = wb.Sheets[sheetName];
-            const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null });
-            const fmt = detectFormatJS(matrix);
-            let recs = [];
-            if (fmt === 'A') recs = parseFormatA_JS(matrix, sheetName);
-            else if (fmt === 'B') recs = parseFormatB_JS(matrix, sheetName);
-            else recs = parseFormatC_JS(matrix, sheetName);
-            perSheetCounts.push(sheetName + ': ' + recs.length + ' giorni (fmt ' + fmt + ')');
-            allRecords = allRecords.concat(recs);
-        });
-
-        if (allRecords.length === 0) {
-            statusBox.innerText = '⚠️ Nessun dato riconosciuto nel file.';
-            event.target.value = '';
-            return;
-        }
-
-        const existingCount = dataIncassi.length;
-        let msg = 'Trovati ' + allRecords.length + ' giorni in ' + wb.SheetNames.length + ' fogli.\n';
-        if (existingCount > 0) {
-            msg += 'Attenzione: nel gestionale sono già presenti ' + existingCount + ' record. L\'import potrebbe creare duplicati per date già inserite manualmente.\n';
-        }
-        msg += 'Procedere con l\'importazione in Firestore?';
-        if (!confirm(msg)) {
-            statusBox.innerText = 'Import annullato.';
-            event.target.value = '';
-            return;
-        }
-
-        statusBox.innerText = '⬆️ Importazione in corso: 0 / ' + allRecords.length + '...';
-
-        const BATCH_SIZE = 400;
-        let written = 0;
-        for (let i = 0; i < allRecords.length; i += BATCH_SIZE) {
-            const chunk = allRecords.slice(i, i + BATCH_SIZE);
-            const batch = writeBatch(db);
-            chunk.forEach(rec => {
-                const ref = doc(collection(db, "incassi_log"));
-                batch.set(ref, rec);
-            });
-            await batch.commit();
-            written += chunk.length;
-            statusBox.innerText = '⬆️ Importazione in corso: ' + written + ' / ' + allRecords.length + '...';
-        }
-
-        statusBox.innerText = '✅ Import completato: ' + written + ' giorni importati da ' + wb.SheetNames.length + ' fogli.';
-        showToast('Import completato: ' + written + ' giorni');
-        event.target.value = '';
-    } catch (e) {
-        console.error(e);
-        statusBox.innerText = '❌ Errore durante l\'import: ' + e.message;
-        showToast('Errore import: ' + e.message, 'error');
-        event.target.value = '';
-    }
 };
 
 // NEW FUNCTION: Toggle Custom Inputs for Utenze Charts
