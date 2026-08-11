@@ -838,105 +838,20 @@
 </div>
 
 <div id="module-incassi" class="module-container hidden" style="display:flex; flex-direction:column; height:100%">
-    <div class="control-bar" id="cb-incassi">
-        <div class="cb-header">
-            <span class="cb-title" id="title-incassi">Registrazione Incassi</span>
-            <span id="inc-live-total" style="font-weight:900; font-size:1.15rem; color:#16a34a">€ 0,00</span>
-            <button class="btn btn-danger hidden" id="cancel-incassi" style="height:30px; font-size:0.7rem; padding:0 15px" onclick="cancelEditIncassi()">Annulla Modifica</button>
+    <div class="control-bar" id="cb-incassi" style="padding:16px 20px">
+        <div class="cb-header" style="margin:0">
+            <span class="cb-title">💰 Incassi</span>
         </div>
-
-        <div class="cb-row">
-            <div class="inp-field" style="width:140px; flex:none;"><label>Data</label><input type="date" id="inc-date" onchange="loadIncassiDayIntoForm()"></div>
-            <div class="inp-field" style="flex:1.5;"><label>Note</label><input type="text" id="inc-note" placeholder="Opzionale..."></div>
-            <div style="width:140px; flex:none;"><button id="btn-save-incassi" class="btn btn-primary" style="height:44px; width:100%" onclick="saveIncassi()">SALVA</button></div>
-        </div>
-
-        <details id="inc-detail-panel" style="margin-top:12px; border-top:1px solid rgba(0,0,0,0.08); padding-top:10px">
-            <summary style="cursor:pointer; font-weight:800; font-size:0.85rem; color:var(--primary)">📝 Dettaglio Registrazione (clicca per espandere)</summary>
-
-            <div style="max-height:55vh; overflow-y:auto; padding-right:6px">
-
-            <!-- CORSI ESENTI IVA -->
-            <div style="margin-top:14px; padding:12px; border-radius:10px; background:rgba(180,83,9,0.05); border:1px solid rgba(180,83,9,0.15)">
-                <div style="font-weight:800; font-size:0.85rem; color:#b45309; margin-bottom:8px">💳 Corsi (Esenti IVA)</div>
-                <div class="cb-row">
-                    <div class="inp-field" style="flex:1.3"><label>Totale (€)</label><input type="number" step="any" id="inc-n4-tot" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Carta</label><input type="number" step="any" id="inc-n4-pos" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Satispay</label><input type="number" step="any" id="inc-n4-satispay" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Bonifico</label><input type="number" step="any" id="inc-n4-bonifico" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Contanti</label><input type="number" step="any" id="inc-n4-contanti" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                </div>
-                <div id="inc-n4-check" style="margin-top:6px; font-size:0.75rem; font-weight:700"></div>
-            </div>
-
-            <!-- INGRESSI & ABBONAMENTI (sempre visibili) -->
-            <div style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(37,99,235,0.05); border:1px solid rgba(37,99,235,0.15)">
-                <div style="font-weight:800; font-size:0.85rem; color:#2563eb; margin-bottom:8px">🎫 Ingressi & Abbonamenti (IVA)</div>
-                <div class="cb-row" style="flex-wrap:wrap">
-                    <div class="inp-field"><label>Ingresso Sing. Intero</label><input type="number" step="any" id="inc-ing-int-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Ingresso Sing. Ridotto</label><input type="number" step="any" id="inc-ing-int-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>11 Ingressi Intero</label><input type="number" step="any" id="inc-abb11-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>11 Ingressi Ridotto</label><input type="number" step="any" id="inc-abb11-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Mensile Intero</label><input type="number" step="any" id="inc-abb-mensile-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Mensile Ridotto</label><input type="number" step="any" id="inc-abb-mensile-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Trimestrale Intero</label><input type="number" step="any" id="inc-abb-trim-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Semestrale Intero</label><input type="number" step="any" id="inc-abb-sem-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Semestrale Ridotto</label><input type="number" step="any" id="inc-abb-sem-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Annuale Intero</label><input type="number" step="any" id="inc-abb-ann-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Annuale Ridotto</label><input type="number" step="any" id="inc-abb-ann-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                </div>
-            </div>
-
-            <!-- STAGIONALE (solo maggio-settembre) -->
-            <div id="inc-seasonal-section" style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(234,88,12,0.05); border:1px solid rgba(234,88,12,0.15)">
-                <div style="font-weight:800; font-size:0.85rem; color:#ea580c; margin-bottom:8px">☀️ Vasca Esterna — Stagionale (Mag-Set)</div>
-                <div class="cb-row" style="flex-wrap:wrap">
-                    <div class="inp-field"><label>Feriale Intero</label><input type="number" step="any" id="inc-ing-estfer-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Feriale Ridotto</label><input type="number" step="any" id="inc-ing-estfer-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Sabato Intero</label><input type="number" step="any" id="inc-ing-estsab-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Sabato Ridotto</label><input type="number" step="any" id="inc-ing-estsab-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Domenica Intero</label><input type="number" step="any" id="inc-ing-estdom-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Domenica Ridotto</label><input type="number" step="any" id="inc-ing-estdom-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Abbonamenti Estivi</label><input type="number" step="any" id="inc-abb-estivi" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                </div>
-            </div>
-
-            <!-- ACCESSORI -->
-            <div style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(124,58,237,0.05); border:1px solid rgba(124,58,237,0.15)">
-                <div style="font-weight:800; font-size:0.85rem; color:#7c3aed; margin-bottom:4px">🛍️ Accessori</div>
-                <div style="font-size:0.75rem; color:#64748b; margin-bottom:8px">Totale calcolato: <b id="inc-accessori-calc-tot">€ 0,00</b></div>
-                <div class="cb-row">
-                    <div class="inp-field"><label>Crediti</label><input type="number" step="any" id="inc-acc-crediti" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Tessere</label><input type="number" step="any" id="inc-acc-tessere" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Cuffie</label><input type="number" step="any" id="inc-acc-cuffie" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Noleggio</label><input type="number" step="any" id="inc-acc-noleggio" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Altro</label><input type="number" step="any" id="inc-acc-altro" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                </div>
-            </div>
-
-            <!-- METODI PAGAMENTO PARTE IVA -->
-            <div style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(22,163,74,0.05); border:1px solid rgba(22,163,74,0.15)">
-                <div style="font-weight:800; font-size:0.85rem; color:#16a34a; margin-bottom:4px">💳 Metodi di Pagamento — Parte IVA</div>
-                <div style="font-size:0.75rem; color:#64748b; margin-bottom:8px">Ingressi + Abbonamenti + Accessori — Totale calcolato: <b id="inc-iva-calc-tot">€ 0,00</b></div>
-                <div class="cb-row">
-                    <div class="inp-field"><label>Carta</label><input type="number" step="any" id="inc-iva-pos" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Satispay</label><input type="number" step="any" id="inc-iva-satispay" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Bonifico</label><input type="number" step="any" id="inc-iva-bonifico" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                    <div class="inp-field"><label>Contanti</label><input type="number" step="any" id="inc-iva-contanti" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                </div>
-                <div id="inc-iva-check" style="margin-top:6px; font-size:0.75rem; font-weight:700"></div>
-            </div>
-
-            </div>
-        </details>
     </div>
 
     <div class="scroll-area">
-        <div class="filter-row" style="margin-bottom:20px; justify-content:center">
+        <div class="filter-row" style="margin-bottom:20px; justify-content:center; flex-wrap:wrap">
             <button class="btn btn-primary" id="btn-sub-inc-overview" onclick="switchSubViewIncassi('overview')">Panoramica</button>
             <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-stats" onclick="switchSubViewIncassi('stats')">Statistiche</button>
+            <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-weekly" onclick="switchSubViewIncassi('weekly')">Settimanale</button>
             <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-riepilogo" onclick="switchSubViewIncassi('riepilogo')">Riepilogo</button>
             <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-archive" onclick="switchSubViewIncassi('archive')">Archivio</button>
+            <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-register" onclick="switchSubViewIncassi('register')">➕ Registra Incasso</button>
         </div>
 
         <!-- Incassi Sub-View: Panoramica -->
@@ -989,6 +904,59 @@
             <div class="chart-card glass-card" style="height:320px; padding:15px">
                 <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori (mensile)</div>
                 <div class="chart-wrapper"><canvas id="chartIncCategoryTrend"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Incassi Sub-View: Settimanale -->
+        <div id="sub-inc-weekly" class="hidden">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px">
+                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📅 Confronto Settimanale</h3>
+                <input type="week" id="inc-weekly-week-selector" class="filter-select" style="font-weight:700; background:rgba(255,255,255,0.8)" onchange="renderIncassiWeekly()">
+            </div>
+            <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 25px;">
+                <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
+                    <div class="kpi-head">💰 Incasso Totale</div>
+                    <div class="kpi-val" id="inc-wk-tot-val">-</div>
+                    <div class="kpi-sub" id="inc-wk-tot-sub">-</div>
+                    <div class="kpi-context" id="inc-wk-tot-context"></div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #b45309">
+                    <div class="kpi-head">📚 Corsi</div>
+                    <div class="kpi-val" id="inc-wk-n4-val">-</div>
+                    <div class="kpi-sub" id="inc-wk-n4-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #2563eb">
+                    <div class="kpi-head">🎫 Ingressi</div>
+                    <div class="kpi-val" id="inc-wk-ingressi-val">-</div>
+                    <div class="kpi-sub" id="inc-wk-ingressi-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #7c3aed">
+                    <div class="kpi-head">🎟️ Abbonamenti</div>
+                    <div class="kpi-val" id="inc-wk-abbonamenti-val">-</div>
+                    <div class="kpi-sub" id="inc-wk-abbonamenti-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #ea580c">
+                    <div class="kpi-head">🛍️ Accessori</div>
+                    <div class="kpi-val" id="inc-wk-accessori-val">-</div>
+                    <div class="kpi-sub" id="inc-wk-accessori-sub">-</div>
+                </div>
+            </div>
+            <div class="table-wrap glass-card">
+                <div style="overflow-x:auto;">
+                    <table id="table-incassi-weekly">
+                        <thead>
+                            <tr>
+                                <th>Giorno</th>
+                                <th style="color:#b45309">Corsi</th>
+                                <th style="color:#2563eb">Ingressi</th>
+                                <th style="color:#7c3aed">Abbonamenti</th>
+                                <th style="color:#ea580c">Accessori</th>
+                                <th style="background:rgba(22,163,74,0.08); color:#16a34a">Totale</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-incassi-weekly"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -1046,6 +1014,96 @@
                         </thead>
                         <tbody id="tbody-incassi-archive"></tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incassi Sub-View: Registrazione -->
+        <div id="sub-inc-register" class="hidden">
+            <div class="glass-card" style="padding:20px">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:15px; flex-wrap:wrap; gap:10px">
+                    <h3 style="margin:0; font-size:1.1rem" id="title-incassi">➕ Registra Incasso</h3>
+                    <div style="display:flex; align-items:center; gap:12px">
+                        <span id="inc-live-total" style="font-weight:900; font-size:1.2rem; color:#16a34a">€ 0,00</span>
+                        <button class="btn btn-danger hidden" id="cancel-incassi" style="height:34px; font-size:0.75rem; padding:0 15px" onclick="cancelEditIncassi()">Annulla Modifica</button>
+                    </div>
+                </div>
+
+                <div class="cb-row">
+                    <div class="inp-field" style="width:160px; flex:none;"><label>Data</label><input type="date" id="inc-date" onchange="loadIncassiDayIntoForm()"></div>
+                    <div class="inp-field" style="flex:1.5;"><label>Note</label><input type="text" id="inc-note" placeholder="Opzionale..."></div>
+                    <div style="width:160px; flex:none;"><button id="btn-save-incassi" class="btn btn-primary" style="height:44px; width:100%" onclick="saveIncassi()">SALVA</button></div>
+                </div>
+
+                <!-- CORSI ESENTI IVA -->
+                <div style="margin-top:16px; padding:12px; border-radius:10px; background:rgba(180,83,9,0.05); border:1px solid rgba(180,83,9,0.15)">
+                    <div style="font-weight:800; font-size:0.85rem; color:#b45309; margin-bottom:8px">💳 Corsi (Esenti IVA)</div>
+                    <div class="cb-row">
+                        <div class="inp-field" style="flex:1.3"><label>Totale (€)</label><input type="number" step="any" id="inc-n4-tot" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Carta</label><input type="number" step="any" id="inc-n4-pos" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Satispay</label><input type="number" step="any" id="inc-n4-satispay" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Bonifico</label><input type="number" step="any" id="inc-n4-bonifico" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Contanti</label><input type="number" step="any" id="inc-n4-contanti" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    </div>
+                    <div id="inc-n4-check" style="margin-top:6px; font-size:0.75rem; font-weight:700"></div>
+                </div>
+
+                <!-- INGRESSI & ABBONAMENTI (sempre visibili) -->
+                <div style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(37,99,235,0.05); border:1px solid rgba(37,99,235,0.15)">
+                    <div style="font-weight:800; font-size:0.85rem; color:#2563eb; margin-bottom:8px">🎫 Ingressi & Abbonamenti (IVA)</div>
+                    <div class="cb-row" style="flex-wrap:wrap">
+                        <div class="inp-field"><label>Ingresso Sing. Intero</label><input type="number" step="any" id="inc-ing-int-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Ingresso Sing. Ridotto</label><input type="number" step="any" id="inc-ing-int-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>11 Ingressi Intero</label><input type="number" step="any" id="inc-abb11-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>11 Ingressi Ridotto</label><input type="number" step="any" id="inc-abb11-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Mensile Intero</label><input type="number" step="any" id="inc-abb-mensile-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Mensile Ridotto</label><input type="number" step="any" id="inc-abb-mensile-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Trimestrale Intero</label><input type="number" step="any" id="inc-abb-trim-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Semestrale Intero</label><input type="number" step="any" id="inc-abb-sem-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Semestrale Ridotto</label><input type="number" step="any" id="inc-abb-sem-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Annuale Intero</label><input type="number" step="any" id="inc-abb-ann-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Annuale Ridotto</label><input type="number" step="any" id="inc-abb-ann-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    </div>
+                </div>
+
+                <!-- STAGIONALE (solo maggio-settembre) -->
+                <div id="inc-seasonal-section" style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(234,88,12,0.05); border:1px solid rgba(234,88,12,0.15)">
+                    <div style="font-weight:800; font-size:0.85rem; color:#ea580c; margin-bottom:8px">☀️ Vasca Esterna — Stagionale (Mag-Set)</div>
+                    <div class="cb-row" style="flex-wrap:wrap">
+                        <div class="inp-field"><label>Feriale Intero</label><input type="number" step="any" id="inc-ing-estfer-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Feriale Ridotto</label><input type="number" step="any" id="inc-ing-estfer-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Sabato Intero</label><input type="number" step="any" id="inc-ing-estsab-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Sabato Ridotto</label><input type="number" step="any" id="inc-ing-estsab-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Domenica Intero</label><input type="number" step="any" id="inc-ing-estdom-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Domenica Ridotto</label><input type="number" step="any" id="inc-ing-estdom-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Abbonamenti Estivi</label><input type="number" step="any" id="inc-abb-estivi" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    </div>
+                </div>
+
+                <!-- ACCESSORI -->
+                <div style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(124,58,237,0.05); border:1px solid rgba(124,58,237,0.15)">
+                    <div style="font-weight:800; font-size:0.85rem; color:#7c3aed; margin-bottom:4px">🛍️ Accessori</div>
+                    <div style="font-size:0.75rem; color:#64748b; margin-bottom:8px">Totale calcolato: <b id="inc-accessori-calc-tot">€ 0,00</b></div>
+                    <div class="cb-row">
+                        <div class="inp-field"><label>Crediti</label><input type="number" step="any" id="inc-acc-crediti" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Tessere</label><input type="number" step="any" id="inc-acc-tessere" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Cuffie</label><input type="number" step="any" id="inc-acc-cuffie" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Noleggio</label><input type="number" step="any" id="inc-acc-noleggio" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Altro</label><input type="number" step="any" id="inc-acc-altro" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    </div>
+                </div>
+
+                <!-- METODI PAGAMENTO PARTE IVA -->
+                <div style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(22,163,74,0.05); border:1px solid rgba(22,163,74,0.15)">
+                    <div style="font-weight:800; font-size:0.85rem; color:#16a34a; margin-bottom:4px">💳 Metodi di Pagamento — Parte IVA</div>
+                    <div style="font-size:0.75rem; color:#64748b; margin-bottom:8px">Ingressi + Abbonamenti + Accessori — Totale calcolato: <b id="inc-iva-calc-tot">€ 0,00</b></div>
+                    <div class="cb-row">
+                        <div class="inp-field"><label>Carta</label><input type="number" step="any" id="inc-iva-pos" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Satispay</label><input type="number" step="any" id="inc-iva-satispay" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Bonifico</label><input type="number" step="any" id="inc-iva-bonifico" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Contanti</label><input type="number" step="any" id="inc-iva-contanti" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    </div>
+                    <div id="inc-iva-check" style="margin-top:6px; font-size:0.75rem; font-weight:700"></div>
                 </div>
             </div>
         </div>
@@ -2250,9 +2308,7 @@ window.updateIncassiLiveTotal = () => {
 };
 
 function clearIncassiForm() {
-    document.querySelectorAll('#cb-incassi input:not([type=date])').forEach(i => i.value = '');
-    const panel = document.getElementById('inc-detail-panel');
-    if (panel) panel.open = false;
+    document.querySelectorAll('#sub-inc-register input:not([type=date])').forEach(i => i.value = '');
     toggleSeasonalFields();
 }
 
@@ -2292,12 +2348,10 @@ function fillIncassiForm(d, isEditMode) {
         el.value = (v === undefined || v === null || v === 0) ? '' : v;
     });
     updateIncassiLiveTotal();
-    document.getElementById('inc-detail-panel').open = true;
     if (isEditMode) {
-        document.getElementById('title-incassi').innerText = "Modifica Incasso";
+        document.getElementById('title-incassi').innerText = "✏️ Modifica Incasso";
         document.getElementById('btn-save-incassi').innerText = "AGGIORNA";
         document.getElementById('btn-save-incassi').style.background = "#f59e0b";
-        document.getElementById('cb-incassi').classList.add('editing');
         document.getElementById('cancel-incassi').classList.remove('hidden');
     }
 }
@@ -2355,16 +2409,16 @@ window.saveIncassi = async () => {
 window.editIncassi = (id) => {
     const d = dataIncassi.find(x => x.id === id); if (!d) return;
     editIdIncassi = id;
+    switchSubViewIncassi('register');
     fillIncassiForm(d, true);
     window.scrollTo({top:0, behavior:'smooth'});
 };
 
 window.cancelEditIncassi = () => {
     editIdIncassi = null;
-    document.getElementById('title-incassi').innerText = "Registrazione Incassi";
+    document.getElementById('title-incassi').innerText = "➕ Registra Incasso";
     document.getElementById('btn-save-incassi').innerText = "SALVA";
     document.getElementById('btn-save-incassi').style.background = "";
-    document.getElementById('cb-incassi').classList.remove('editing');
     document.getElementById('cancel-incassi').classList.add('hidden');
     clearIncassiForm();
 };
@@ -2376,7 +2430,7 @@ window.switchSubViewUtenze=(s)=>{
 };
 
 window.switchSubViewIncassi=(s)=>{
-    ['overview','stats','riepilogo','archive'].forEach(v=>{ document.getElementById('sub-inc-'+v).classList.add('hidden'); document.getElementById('btn-sub-inc-'+v).classList.remove('btn-primary'); });
+    ['overview','stats','weekly','riepilogo','archive','register'].forEach(v=>{ document.getElementById('sub-inc-'+v).classList.add('hidden'); document.getElementById('btn-sub-inc-'+v).classList.remove('btn-primary'); });
     document.getElementById('sub-inc-'+s).classList.remove('hidden'); document.getElementById('btn-sub-inc-'+s).classList.add('btn-primary');
     renderIncassi();
 };
@@ -2386,13 +2440,17 @@ window.renderIncassi = () => {
     if (!dataIncassi) return;
     const overviewVisible = !document.getElementById('sub-inc-overview').classList.contains('hidden');
     const statsVisible = !document.getElementById('sub-inc-stats').classList.contains('hidden');
+    const weeklyVisible = !document.getElementById('sub-inc-weekly').classList.contains('hidden');
     const riepilogoVisible = !document.getElementById('sub-inc-riepilogo').classList.contains('hidden');
     const archiveVisible = !document.getElementById('sub-inc-archive').classList.contains('hidden');
+    const registerVisible = !document.getElementById('sub-inc-register').classList.contains('hidden');
 
     if (overviewVisible) renderIncassiOverview();
     if (statsVisible) renderIncassiStats();
+    if (weeklyVisible) renderIncassiWeekly();
     if (riepilogoVisible) renderRiepilogoIncassi();
     if (archiveVisible) renderIncassiArchive();
+    if (registerVisible) { toggleSeasonalFields(); updateIncassiLiveTotal(); }
 };
 
 function renderIncassiOverview() {
@@ -2504,6 +2562,88 @@ function renderIncassiStats() {
         });
     }
 }
+
+// ============ INCASSI: Settimanale ============
+function getISOWeekInfo(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return { year: d.getUTCFullYear(), week: weekNo };
+}
+function getCurrentISOWeekString() {
+    const info = getISOWeekInfo(new Date());
+    return `${info.year}-W${String(info.week).padStart(2, '0')}`;
+}
+function isoWeekToMonday(isoWeekStr) {
+    const [yearStr, weekStr] = isoWeekStr.split('-W');
+    const year = parseInt(yearStr, 10), week = parseInt(weekStr, 10);
+    const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+    const dow = simple.getUTCDay();
+    const monday = new Date(simple);
+    const diff = (dow <= 4) ? (1 - dow) : (8 - dow);
+    monday.setUTCDate(simple.getUTCDate() + diff);
+    return monday;
+}
+function fmtDateISO(d) {
+    return d.toISOString().slice(0, 10);
+}
+
+window.renderIncassiWeekly = () => {
+    if (!dataIncassi) return;
+    const sel = document.getElementById('inc-weekly-week-selector');
+    if (!sel.value) sel.value = getCurrentISOWeekString();
+    const monday = isoWeekToMonday(sel.value);
+    const days = [];
+    for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setUTCDate(monday.getUTCDate() + i); days.push(fmtDateISO(d)); }
+    const prevMonday = new Date(monday); prevMonday.setUTCDate(monday.getUTCDate() - 7);
+    const prevDays = [];
+    for (let i = 0; i < 7; i++) { const d = new Date(prevMonday); d.setUTCDate(prevMonday.getUTCDate() + i); prevDays.push(fmtDateISO(d)); }
+
+    const byDate = {};
+    dataIncassi.forEach(d => { byDate[d.date] = d; });
+
+    const sumDays = (dateList) => {
+        const s = { tot: 0, n4: 0, ingressi: 0, abbonamenti: 0, accessori: 0 };
+        dateList.forEach(ds => {
+            const r = byDate[ds]; if (!r) return;
+            s.tot += r.incasso_totale || 0; s.n4 += r.corsi_n4_tot || 0;
+            s.ingressi += r.ingressi_tot || 0; s.abbonamenti += r.abbonamenti_tot || 0; s.accessori += r.accessori_tot || 0;
+        });
+        return s;
+    };
+    const curr = sumDays(days);
+    const prev = sumDays(prevDays);
+    const wow = (c, p) => { if (!p) return ''; const delta = ((c-p)/p)*100; const sign = delta>=0?'+':''; const col = delta>=0?'#16a34a':'#dc2626'; const arr = delta>=0?'▲':'▼'; return `<span style="color:${col}">${arr} ${sign}${delta.toFixed(1)}% vs sett. prec.</span>`; };
+
+    const dayLabel = (ds) => { const d = new Date(ds+'T00:00:00'); return d.toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'short'}); };
+    document.getElementById('inc-wk-tot-val').innerText = fmtEUR(curr.tot);
+    document.getElementById('inc-wk-tot-sub').innerText = `${dayLabel(days[0])} — ${dayLabel(days[6])}`;
+    document.getElementById('inc-wk-tot-context').innerHTML = wow(curr.tot, prev.tot);
+    document.getElementById('inc-wk-n4-val').innerText = fmtEUR(curr.n4);
+    document.getElementById('inc-wk-n4-sub').innerHTML = wow(curr.n4, prev.n4);
+    document.getElementById('inc-wk-ingressi-val').innerText = fmtEUR(curr.ingressi);
+    document.getElementById('inc-wk-ingressi-sub').innerHTML = wow(curr.ingressi, prev.ingressi);
+    document.getElementById('inc-wk-abbonamenti-val').innerText = fmtEUR(curr.abbonamenti);
+    document.getElementById('inc-wk-abbonamenti-sub').innerHTML = wow(curr.abbonamenti, prev.abbonamenti);
+    document.getElementById('inc-wk-accessori-val').innerText = fmtEUR(curr.accessori);
+    document.getElementById('inc-wk-accessori-sub').innerHTML = wow(curr.accessori, prev.accessori);
+
+    const tBody = document.getElementById('tbody-incassi-weekly');
+    tBody.innerHTML = days.map(ds => {
+        const r = byDate[ds];
+        const label = new Date(ds+'T00:00:00').toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long'});
+        if (!r) return `<tr><td style="font-weight:700; text-transform:capitalize; color:#94a3b8">${label}</td><td colspan="5" style="color:#cbd5e1; text-align:center">Nessun dato</td></tr>`;
+        return `<tr>
+            <td style="font-weight:700; text-transform:capitalize">${label}</td>
+            <td style="color:#b45309">${fmtEUR(r.corsi_n4_tot)}</td>
+            <td style="color:#2563eb">${fmtEUR(r.ingressi_tot)}</td>
+            <td style="color:#7c3aed">${fmtEUR(r.abbonamenti_tot)}</td>
+            <td style="color:#ea580c">${fmtEUR(r.accessori_tot)}</td>
+            <td style="font-weight:800; color:#16a34a; background:rgba(22,163,74,0.05)">${fmtEUR(r.incasso_totale)}</td>
+        </tr>`;
+    }).join('');
+};
 
 // ============ INCASSI: Riepilogo Mensile ============
 // L'anno fiscale/stagione del centro va dal 1 settembre al 31 agosto (non anno solare)
@@ -3720,7 +3860,7 @@ window.downloadRiepilogoCSV = () => {
     document.body.removeChild(link);
 };
 
-window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')debouncedRefresh(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); if(m==='incassi'){ toggleSeasonalFields(); renderIncassi(); } };
+window.switchModule=(m)=>{ document.querySelectorAll('.module-container').forEach(e=>e.classList.add('hidden')); document.getElementById('module-'+m).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); document.getElementById('nav-module-'+m).classList.add('active'); if(m==='ingressi')debouncedRefresh(); if(m==='dae')renderDae(); if(m==='utenze')renderUtenze(); if(m==='incassi'){ switchSubViewIncassi('overview'); } };
 window.switchSubView=(s)=>{ ['overview','stats','riepilogo','archive'].forEach(v=>{ document.getElementById('sub-'+v).classList.add('hidden'); document.getElementById('btn-sub-'+v).classList.remove('btn-primary'); }); document.getElementById('sub-'+s).classList.remove('hidden'); document.getElementById('btn-sub-'+s).classList.add('btn-primary'); debouncedRefresh(); };
 function refreshCurrentView(){ if(!document.getElementById('sub-overview').classList.contains('hidden')) renderOverview(); if(!document.getElementById('sub-stats').classList.contains('hidden')) renderStats(); if(!document.getElementById('sub-riepilogo').classList.contains('hidden')) renderRiepilogoMensile(); if(!document.getElementById('sub-archive').classList.contains('hidden')) renderIngressiArchive(); }
 setInterval(()=>{ const n=new Date(); const s=n.getHours().toString().padStart(2,'0')+":"+n.getMinutes().toString().padStart(2,'0'); if(document.getElementById('d-time')) document.getElementById('d-time').value=s; },1000);
