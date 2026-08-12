@@ -2958,7 +2958,8 @@ window.renderUtenze = () => {
                 if (!prevD || !prevVal) return '';
                 const delta = ((curr - prevVal) / prevVal) * 100;
                 const sign = delta >= 0 ? '+' : '';
-                const col = delta >= 0 ? '#16a34a' : '#dc2626';
+                // Per i consumi: meno consumo = positivo (verde), più consumo = negativo (rosso) — logica opposta rispetto a un incasso
+                const col = delta >= 0 ? '#dc2626' : '#16a34a';
                 const arr = delta >= 0 ? '▲' : '▼';
                 return `<div style="font-size:0.7rem; font-weight:700; color:${col}; margin-top:1px">${arr} ${sign}${delta.toFixed(1)}%</div>`;
             };
