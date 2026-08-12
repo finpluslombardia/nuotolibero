@@ -950,6 +950,40 @@
 
         <!-- Incassi Sub-View: Statistiche -->
         <div id="sub-inc-stats" class="hidden">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px; flex-wrap:wrap">
+                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📆 Confronto Stesso Mese — Tutti gli Anni</h3>
+                <select id="inc-stats-month-selector" class="filter-select" style="font-weight:700" onchange="renderIncassiStats()"></select>
+            </div>
+            <div id="inc-stats-multiyear-cards" class="kpi-grid" style="margin-bottom:25px"></div>
+
+            <div class="chart-card glass-card" style="height:340px; padding:15px; margin-bottom:20px">
+                <div class="chart-header" style="font-size:0.85rem">📊 Stagionalità — Confronto tra Anni</div>
+                <div class="chart-wrapper"><canvas id="chartIncYearCompare"></canvas></div>
+            </div>
+
+            <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 25px;">
+                <div class="kpi-card glass-card" style="border-left: 4px solid #7c3aed">
+                    <div class="kpi-head">📈 Trend Stagione in Corso</div>
+                    <div class="kpi-val" id="inc-stats-season-val">-</div>
+                    <div class="kpi-sub" id="inc-stats-season-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
+                    <div class="kpi-head">🏆 Record Giornaliero</div>
+                    <div class="kpi-val" id="inc-stats-record-val">-</div>
+                    <div class="kpi-sub" id="inc-stats-record-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #dc2626">
+                    <div class="kpi-head">📉 Giorno Più Debole</div>
+                    <div class="kpi-val" id="inc-stats-min-val">-</div>
+                    <div class="kpi-sub" id="inc-stats-min-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #ea580c">
+                    <div class="kpi-head">📅 Miglior Giorno Settimana</div>
+                    <div class="kpi-val" id="inc-stats-bestday-val">-</div>
+                    <div class="kpi-sub" id="inc-stats-bestday-sub">-</div>
+                </div>
+            </div>
+
             <div class="chart-card glass-card" style="height:340px; padding:15px; margin-bottom:20px">
                 <div class="chart-header" style="font-size:0.85rem">📈 Andamento Incasso Giornaliero</div>
                 <div class="chart-wrapper"><canvas id="chartIncTrend"></canvas></div>
@@ -2532,6 +2566,120 @@ function renderIncassiOverview() {
 function renderIncassiStats() {
     if (!isChartReady()) return;
     const sorted = [...dataIncassi].sort((a,b) => a.date < b.date ? -1 : 1);
+    if (sorted.length === 0) return;
+
+    // ===== Confronto Stesso Mese — Tutti gli Anni =====
+    const monthSel = document.getElementById('inc-stats-month-selector');
+    if (monthSel.options.length === 0) {
+        const monthNames = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+        monthNames.forEach((name, idx) => { const o = document.createElement('option'); o.value = String(idx+1).padStart(2,'0'); o.innerText = name; monthSel.appendChild(o); });
+        monthSel.value = sorted[sorted.length-1].date.slice(5,7);
+    }
+    const selMonth = monthSel.value;
+
+    const sumByYearMonth = {}; // "YYYY-MM" -> totale
+    dataIncassi.forEach(d => {
+        const ym = d.date.slice(0,7);
+        sumByYearMonth[ym] = (sumByYearMonth[ym] || 0) + (d.incasso_totale || 0);
+    });
+    const yearsWithThisMonth = [...new Set(dataIncassi.filter(d => d.date.slice(5,7) === selMonth).map(d => d.date.slice(0,4)))].sort().reverse();
+    const monthNameLabel = monthSel.options[monthSel.selectedIndex] ? monthSel.options[monthSel.selectedIndex].innerText : '';
+    const cardsHtml = yearsWithThisMonth.map(y => {
+        const curr = sumByYearMonth[`${y}-${selMonth}`] || 0;
+        const prevY = String(parseInt(y)-1);
+        const prev = sumByYearMonth[`${prevY}-${selMonth}`];
+        let deltaHtml = '';
+        if (prev) {
+            const delta = ((curr-prev)/prev)*100; const sign = delta>=0?'+':''; const col = delta>=0?'#16a34a':'#dc2626'; const arr = delta>=0?'▲':'▼';
+            deltaHtml = `<div class="kpi-sub" style="color:${col}">${arr} ${sign}${delta.toFixed(1)}% vs ${prevY}</div>`;
+        }
+        return `<div class="kpi-card glass-card" style="border-left: 4px solid #2563eb">
+            <div class="kpi-head">${monthNameLabel} ${y}</div>
+            <div class="kpi-val">${fmtEUR(curr)}</div>
+            ${deltaHtml}
+        </div>`;
+    }).join('');
+    document.getElementById('inc-stats-multiyear-cards').innerHTML = cardsHtml || '<div style="color:#94a3b8; padding:10px">Nessun dato per questo mese</div>';
+    document.getElementById('inc-stats-multiyear-cards').style.gridTemplateColumns = `repeat(${Math.min(yearsWithThisMonth.length||1, 5)}, 1fr)`;
+
+    // ===== Grafico Stagionalità — Confronto tra Anni =====
+    const allYears = [...new Set(dataIncassi.map(d => d.date.slice(0,4)))].sort();
+    const monthLabelsShort = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+    const yearColors = ['#94a3b8','#2563eb','#16a34a','#ea580c','#7c3aed','#dc2626'];
+    const yearDatasets = allYears.map((y, idx) => ({
+        label: y,
+        data: monthLabelsShort.map((_, mi) => sumByYearMonth[`${y}-${String(mi+1).padStart(2,'0')}`] || null),
+        backgroundColor: yearColors[idx % yearColors.length]
+    }));
+    if (ch['chartIncYearCompare']) ch['chartIncYearCompare'].destroy();
+    const cYear = document.getElementById('chartIncYearCompare');
+    if (cYear) {
+        ch['chartIncYearCompare'] = new Chart(cYear, {
+            type: 'bar',
+            data: { labels: monthLabelsShort, datasets: yearDatasets },
+            options: { animation:false, responsive:true, maintainAspectRatio:false,
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    // ===== Trend Stagione in Corso (season-to-date) =====
+    const lastDate = sorted[sorted.length-1].date;
+    const currSeasonStart = getSeasonStartYear(lastDate);
+    const currSeasonLabel = getSeasonLabel(currSeasonStart);
+    const prevSeasonLabel = getSeasonLabel(currSeasonStart - 1);
+    // giorni trascorsi dall'inizio della stagione corrente fino all'ultima data disponibile
+    const seasonStartDate = `${currSeasonStart}-09-01`;
+    const daysElapsedInSeason = Math.floor((new Date(lastDate) - new Date(seasonStartDate)) / 86400000) + 1;
+    const prevSeasonStartDate = `${currSeasonStart-1}-09-01`;
+    const prevSeasonCutoffDate = new Date(prevSeasonStartDate); prevSeasonCutoffDate.setDate(prevSeasonCutoffDate.getDate() + daysElapsedInSeason - 1);
+    const prevSeasonCutoffStr = fmtDateISO(prevSeasonCutoffDate);
+
+    let sumCurrSeason = 0, sumPrevSeasonToDate = 0;
+    dataIncassi.forEach(d => {
+        const s = getSeasonLabel(getSeasonStartYear(d.date));
+        if (s === currSeasonLabel) sumCurrSeason += d.incasso_totale || 0;
+        if (s === prevSeasonLabel && d.date <= prevSeasonCutoffStr) sumPrevSeasonToDate += d.incasso_totale || 0;
+    });
+    document.getElementById('inc-stats-season-val').innerText = fmtEUR(sumCurrSeason);
+    if (sumPrevSeasonToDate > 0) {
+        const delta = ((sumCurrSeason - sumPrevSeasonToDate)/sumPrevSeasonToDate)*100; const sign = delta>=0?'+':''; const col = delta>=0?'#16a34a':'#dc2626'; const arr = delta>=0?'▲':'▼';
+        document.getElementById('inc-stats-season-sub').innerHTML = `<span style="color:${col}">${arr} ${sign}${delta.toFixed(1)}%</span> vs Stagione ${prevSeasonLabel} (stesso periodo)`;
+    } else {
+        document.getElementById('inc-stats-season-sub').innerText = `Stagione ${currSeasonLabel} in corso`;
+    }
+
+    // ===== Record e Giorno Più Debole (stagione corrente) =====
+    const currSeasonDays = dataIncassi.filter(d => getSeasonLabel(getSeasonStartYear(d.date)) === currSeasonLabel);
+    if (currSeasonDays.length > 0) {
+        const record = currSeasonDays.reduce((a,b) => (a.incasso_totale||0) >= (b.incasso_totale||0) ? a : b);
+        document.getElementById('inc-stats-record-val').innerText = fmtEUR(record.incasso_totale);
+        document.getElementById('inc-stats-record-sub').innerText = new Date(record.date+'T00:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'});
+
+        const openDays = currSeasonDays.filter(d => (d.incasso_totale||0) > 0);
+        if (openDays.length > 0) {
+            const weakest = openDays.reduce((a,b) => (a.incasso_totale||0) <= (b.incasso_totale||0) ? a : b);
+            document.getElementById('inc-stats-min-val').innerText = fmtEUR(weakest.incasso_totale);
+            document.getElementById('inc-stats-min-sub').innerText = new Date(weakest.date+'T00:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'});
+        }
+    }
+
+    // ===== Miglior Giorno della Settimana (media su tutto lo storico) =====
+    const weekdaySum = [0,0,0,0,0,0,0], weekdayCount = [0,0,0,0,0,0,0];
+    dataIncassi.forEach(d => {
+        if (!(d.incasso_totale > 0)) return;
+        const wd = new Date(d.date+'T00:00:00').getDay(); // 0=Dom..6=Sab
+        weekdaySum[wd] += d.incasso_totale; weekdayCount[wd]++;
+    });
+    const weekdayNames = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+    let bestWd = -1, bestAvg = -1;
+    for (let i=0;i<7;i++) { if (weekdayCount[i]>0) { const avg = weekdaySum[i]/weekdayCount[i]; if (avg>bestAvg) { bestAvg=avg; bestWd=i; } } }
+    if (bestWd >= 0) {
+        document.getElementById('inc-stats-bestday-val').innerText = weekdayNames[bestWd];
+        document.getElementById('inc-stats-bestday-sub').innerText = `Media ${fmtEUR(bestAvg)} (${weekdayCount[bestWd]} giorni)`;
+    }
+
+    // ===== Andamento Incasso Giornaliero (ultimi 90gg) =====
     const last90 = sorted.slice(-90);
 
     if (ch['chartIncTrend']) ch['chartIncTrend'].destroy();
