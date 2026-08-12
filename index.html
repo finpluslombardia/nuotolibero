@@ -968,12 +968,12 @@
                     <div class="kpi-sub" id="inc-stats-season-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
-                    <div class="kpi-head">🏆 Record Giornaliero</div>
+                    <div class="kpi-head">🎯 Proiezione Fine Stagione</div>
                     <div class="kpi-val" id="inc-stats-record-val">-</div>
                     <div class="kpi-sub" id="inc-stats-record-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #dc2626">
-                    <div class="kpi-head">📉 Giorno Più Debole</div>
+                    <div class="kpi-head">📊 Media per Giorno Aperto</div>
                     <div class="kpi-val" id="inc-stats-min-val">-</div>
                     <div class="kpi-sub" id="inc-stats-min-sub">-</div>
                 </div>
@@ -2649,19 +2649,38 @@ function renderIncassiStats() {
         document.getElementById('inc-stats-season-sub').innerText = `Stagione ${currSeasonLabel} in corso`;
     }
 
-    // ===== Record e Giorno Più Debole (stagione corrente) =====
+    // ===== Proiezione Fine Stagione (31 agosto) basata su media storica per giorno della settimana =====
     const currSeasonDays = dataIncassi.filter(d => getSeasonLabel(getSeasonStartYear(d.date)) === currSeasonLabel);
-    if (currSeasonDays.length > 0) {
-        const record = currSeasonDays.reduce((a,b) => (a.incasso_totale||0) >= (b.incasso_totale||0) ? a : b);
-        document.getElementById('inc-stats-record-val').innerText = fmtEUR(record.incasso_totale);
-        document.getElementById('inc-stats-record-sub').innerText = new Date(record.date+'T00:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'});
+    const seasonEndDate = `${currSeasonStart+1}-08-31`;
+    const histForForecast = dataIncassi.filter(d => getSeasonLabel(getSeasonStartYear(d.date)) !== currSeasonLabel);
+    const weekdaySumsF = new Array(7).fill(0), weekdayCountF = new Array(7).fill(0);
+    histForForecast.forEach(d => {
+        if (!(d.incasso_totale > 0)) return;
+        const wd = new Date(d.date+'T00:00:00').getDay();
+        weekdaySumsF[wd] += d.incasso_totale; weekdayCountF[wd]++;
+    });
+    const weekdayAvgF = weekdaySumsF.map((sum, wd) => weekdayCountF[wd] > 0 ? sum / weekdayCountF[wd] : null);
 
-        const openDays = currSeasonDays.filter(d => (d.incasso_totale||0) > 0);
-        if (openDays.length > 0) {
-            const weakest = openDays.reduce((a,b) => (a.incasso_totale||0) <= (b.incasso_totale||0) ? a : b);
-            document.getElementById('inc-stats-min-val').innerText = fmtEUR(weakest.incasso_totale);
-            document.getElementById('inc-stats-min-sub').innerText = new Date(weakest.date+'T00:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'});
-        }
+    let estimatedRemaining = 0, hasHistoricalBasis = true;
+    const overallAvg = sumCurrSeason / Math.max(daysElapsedInSeason, 1);
+    let cursor = new Date(lastDate+'T00:00:00'); cursor.setDate(cursor.getDate()+1);
+    const endD = new Date(seasonEndDate+'T00:00:00');
+    while (cursor <= endD) {
+        const wd = cursor.getDay();
+        if (weekdayAvgF[wd] !== null) estimatedRemaining += weekdayAvgF[wd];
+        else { hasHistoricalBasis = false; estimatedRemaining += overallAvg; }
+        cursor.setDate(cursor.getDate()+1);
+    }
+    const forecastTotal = sumCurrSeason + estimatedRemaining;
+    document.getElementById('inc-stats-record-val').innerText = fmtEUR(forecastTotal);
+    const basisLabel = hasHistoricalBasis ? 'su trend storico' : 'su trend storico (parziale)';
+    document.getElementById('inc-stats-record-sub').innerText = `entro il 31 agosto (${basisLabel})`;
+
+    // ===== Media per Giorno Aperto (stagione corrente) =====
+    const openDaysCount = currSeasonDays.filter(d => (d.incasso_totale||0) > 0).length;
+    if (openDaysCount > 0) {
+        document.getElementById('inc-stats-min-val').innerText = fmtEUR(sumCurrSeason / openDaysCount);
+        document.getElementById('inc-stats-min-sub').innerText = `su ${openDaysCount} giorni aperti`;
     }
 
     // ===== Miglior Giorno della Settimana (media su tutto lo storico) =====
