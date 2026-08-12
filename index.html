@@ -1101,6 +1101,15 @@
                     </div>
                     <div id="inc-iva-check" style="margin-top:6px; font-size:0.75rem; font-weight:700"></div>
                 </div>
+
+                <!-- BORSELLINI E CORREZIONI (sottrae dal totale) -->
+                <div style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(220,38,38,0.05); border:1px solid rgba(220,38,38,0.15)">
+                    <div style="font-weight:800; font-size:0.85rem; color:#dc2626; margin-bottom:4px">➖ Borsellini e Correzioni</div>
+                    <div style="font-size:0.75rem; color:#64748b; margin-bottom:8px">Importo sottratto dal totale della giornata</div>
+                    <div class="cb-row">
+                        <div class="inp-field" style="flex:1"><label>Totale (€)</label><input type="number" step="any" id="inc-borsellini-correzioni" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2287,7 +2296,8 @@ window.updateIncassiLiveTotal = () => {
     const ivaPos = numVal('inc-iva-pos'), ivaSat = numVal('inc-iva-satispay'), ivaBon = numVal('inc-iva-bonifico'), ivaCnt = numVal('inc-iva-contanti');
     const ivaPaySum = ivaPos + ivaSat + ivaBon + ivaCnt;
 
-    const incassoTotale = n4Tot + ivaDetailTot;
+    const borselliniCorrezioni = numVal('inc-borsellini-correzioni');
+    const incassoTotale = n4Tot + ivaDetailTot - borselliniCorrezioni;
 
     document.getElementById('inc-live-total').innerText = fmtEUR(incassoTotale);
     const ivaCalcEl = document.getElementById('inc-iva-calc-tot');
@@ -2309,7 +2319,7 @@ window.updateIncassiLiveTotal = () => {
         else { ivaCheck.innerHTML = `<span style="color:#dc2626">⚠️ Metodi pagamento: ${fmtEUR(ivaPaySum)} — differenza ${fmtEUR(ivaPaySum - ivaDetailTot)}</span>`; }
     }
 
-    return { n4Tot, n4Pos, n4Sat, n4Bon, n4Cnt, n4PaySum, ingressiTot, abbonamentiTot, accessoriTot, ivaDetailTot, ivaPos, ivaSat, ivaBon, ivaCnt, ivaPaySum, incassoTotale };
+    return { n4Tot, n4Pos, n4Sat, n4Bon, n4Cnt, n4PaySum, ingressiTot, abbonamentiTot, accessoriTot, ivaDetailTot, ivaPos, ivaSat, ivaBon, ivaCnt, ivaPaySum, borselliniCorrezioni, incassoTotale };
 };
 
 function clearIncassiForm() {
@@ -2340,6 +2350,7 @@ const INCASSI_FIELD_MAP = {
     'inc-abb-estivi':'abb_estivi',
     'inc-acc-crediti':'acc_crediti', 'inc-acc-tessere':'acc_tessere', 'inc-acc-cuffie':'acc_cuffie', 'inc-acc-noleggio':'acc_noleggio', 'inc-acc-altro':'acc_altro',
     'inc-iva-pos':'iva_pos', 'inc-iva-satispay':'iva_satispay', 'inc-iva-bonifico':'iva_bonifico', 'inc-iva-contanti':'iva_contanti',
+    'inc-borsellini-correzioni':'borsellini_correzioni',
 };
 
 function fillIncassiForm(d, isEditMode) {
@@ -2392,6 +2403,7 @@ window.saveIncassi = async () => {
         iva_pos: v.ivaPos, iva_satispay: v.ivaSat, iva_bonifico: v.ivaBon, iva_contanti: v.ivaCnt,
         // aggregati per il reporting (Panoramica/Riepilogo/Archivio)
         ingressi_tot: v.ingressiTot, abbonamenti_tot: v.abbonamentiTot,
+        borsellini_correzioni: v.borselliniCorrezioni,
         incasso_totale: v.incassoTotale,
     };
 
