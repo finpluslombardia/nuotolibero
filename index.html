@@ -2335,11 +2335,14 @@ window.updateIncassiLiveTotal = () => {
     const ivaPaySum = ivaPos + ivaSat + ivaBon + ivaCnt;
 
     const borselliniCorrezioni = numVal('inc-borsellini-correzioni');
+    const ivaNetTarget = ivaDetailTot - borselliniCorrezioni; // netto da riconciliare con i metodi di pagamento
     const incassoTotale = n4Tot + ivaDetailTot - borselliniCorrezioni;
 
     document.getElementById('inc-live-total').innerText = fmtEUR(incassoTotale);
     const ivaCalcEl = document.getElementById('inc-iva-calc-tot');
-    if (ivaCalcEl) ivaCalcEl.innerText = fmtEUR(ivaDetailTot);
+    if (ivaCalcEl) ivaCalcEl.innerText = borselliniCorrezioni > 0
+        ? `${fmtEUR(ivaDetailTot)} − ${fmtEUR(borselliniCorrezioni)} = ${fmtEUR(ivaNetTarget)}`
+        : fmtEUR(ivaDetailTot);
     const accCalcEl = document.getElementById('inc-accessori-calc-tot');
     if (accCalcEl) accCalcEl.innerText = fmtEUR(accessoriTot);
 
@@ -2352,12 +2355,12 @@ window.updateIncassiLiveTotal = () => {
     }
     const ivaCheck = document.getElementById('inc-iva-check');
     if (ivaCheck) {
-        if (ivaDetailTot === 0 && ivaPaySum === 0) { ivaCheck.innerText = ''; }
-        else if (Math.abs(ivaPaySum - ivaDetailTot) < EPS) { ivaCheck.innerHTML = `<span style="color:#16a34a">✅ Metodi di pagamento combaciano (${fmtEUR(ivaPaySum)})</span>`; }
-        else { ivaCheck.innerHTML = `<span style="color:#dc2626">⚠️ Metodi pagamento: ${fmtEUR(ivaPaySum)} — differenza ${fmtEUR(ivaPaySum - ivaDetailTot)}</span>`; }
+        if (ivaNetTarget === 0 && ivaPaySum === 0) { ivaCheck.innerText = ''; }
+        else if (Math.abs(ivaPaySum - ivaNetTarget) < EPS) { ivaCheck.innerHTML = `<span style="color:#16a34a">✅ Metodi di pagamento combaciano (${fmtEUR(ivaPaySum)})</span>`; }
+        else { ivaCheck.innerHTML = `<span style="color:#dc2626">⚠️ Metodi pagamento: ${fmtEUR(ivaPaySum)} — differenza ${fmtEUR(ivaPaySum - ivaNetTarget)}</span>`; }
     }
 
-    return { n4Tot, n4Pos, n4Sat, n4Bon, n4Cnt, n4PaySum, ingressiTot, abbonamentiTot, accessoriTot, ivaDetailTot, ivaPos, ivaSat, ivaBon, ivaCnt, ivaPaySum, borselliniCorrezioni, incassoTotale };
+    return { n4Tot, n4Pos, n4Sat, n4Bon, n4Cnt, n4PaySum, ingressiTot, abbonamentiTot, accessoriTot, ivaDetailTot, ivaNetTarget, ivaPos, ivaSat, ivaBon, ivaCnt, ivaPaySum, borselliniCorrezioni, incassoTotale };
 };
 
 function clearIncassiForm() {
@@ -2419,8 +2422,8 @@ window.saveIncassi = async () => {
     if (Math.abs(v.n4PaySum - v.n4Tot) >= EPS) {
         return showToast(`Corsi: i metodi di pagamento (${fmtEUR(v.n4PaySum)}) non combaciano con il totale (${fmtEUR(v.n4Tot)})`, "error");
     }
-    if (Math.abs(v.ivaPaySum - v.ivaDetailTot) >= EPS) {
-        return showToast(`Parte IVA: i metodi di pagamento (${fmtEUR(v.ivaPaySum)}) non combaciano con il totale calcolato (${fmtEUR(v.ivaDetailTot)})`, "error");
+    if (Math.abs(v.ivaPaySum - v.ivaNetTarget) >= EPS) {
+        return showToast(`Parte IVA: i metodi di pagamento (${fmtEUR(v.ivaPaySum)}) non combaciano con il totale al netto di borsellini/correzioni (${fmtEUR(v.ivaNetTarget)})`, "error");
     }
 
     const p = {
