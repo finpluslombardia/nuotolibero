@@ -111,6 +111,7 @@
     .kpi-card { @extend .glass-card; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 24px; box-shadow: var(--glass-shadow); border: var(--glass-border); padding: 20px; height: 130px; justify-content: center; background: rgba(255,255,255,0.55); display: flex; flex-direction: column; }
     .kpi-head { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
     .kpi-val { font-size: 2.4rem; font-weight: 800; color: var(--text-main); line-height: 1; margin-bottom: 5px; }
+    .kpi-val-money { font-size: 1.5rem; white-space: nowrap; }
     .kpi-sub { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px; }
     .kpi-context { font-size: 0.75rem; color: #64748b; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(0,0,0,0.05); width: 100%; display: flex; justify-content: space-between; font-weight: 500; }
     
@@ -866,28 +867,28 @@
             <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 25px;">
                 <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
                     <div class="kpi-head">💰 Incasso Totale</div>
-                    <div class="kpi-val" id="inc-kpi-tot-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-kpi-tot-val">-</div>
                     <div class="kpi-sub" id="inc-kpi-tot-sub">-</div>
                     <div class="kpi-context" id="inc-kpi-tot-context"></div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #b45309">
                     <div class="kpi-head">📚 Corsi</div>
-                    <div class="kpi-val" id="inc-kpi-n4-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-kpi-n4-val">-</div>
                     <div class="kpi-sub" id="inc-kpi-n4-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #2563eb">
                     <div class="kpi-head">🎫 Ingressi</div>
-                    <div class="kpi-val" id="inc-kpi-ingressi-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-kpi-ingressi-val">-</div>
                     <div class="kpi-sub" id="inc-kpi-ingressi-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #7c3aed">
                     <div class="kpi-head">🎟️ Abbonamenti</div>
-                    <div class="kpi-val" id="inc-kpi-abbonamenti-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-kpi-abbonamenti-val">-</div>
                     <div class="kpi-sub" id="inc-kpi-abbonamenti-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #ea580c">
                     <div class="kpi-head">🛍️ Accessori</div>
-                    <div class="kpi-val" id="inc-kpi-accessori-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-kpi-accessori-val">-</div>
                     <div class="kpi-sub" id="inc-kpi-accessori-sub">-</div>
                 </div>
             </div>
@@ -904,28 +905,28 @@
             <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 25px;">
                 <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
                     <div class="kpi-head">💰 Incasso Totale</div>
-                    <div class="kpi-val" id="inc-wk-tot-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-wk-tot-val">-</div>
                     <div class="kpi-sub" id="inc-wk-tot-sub">-</div>
                     <div class="kpi-context" id="inc-wk-tot-context"></div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #b45309">
                     <div class="kpi-head">📚 Corsi</div>
-                    <div class="kpi-val" id="inc-wk-n4-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-wk-n4-val">-</div>
                     <div class="kpi-sub" id="inc-wk-n4-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #2563eb">
                     <div class="kpi-head">🎫 Ingressi</div>
-                    <div class="kpi-val" id="inc-wk-ingressi-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-wk-ingressi-val">-</div>
                     <div class="kpi-sub" id="inc-wk-ingressi-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #7c3aed">
                     <div class="kpi-head">🎟️ Abbonamenti</div>
-                    <div class="kpi-val" id="inc-wk-abbonamenti-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-wk-abbonamenti-val">-</div>
                     <div class="kpi-sub" id="inc-wk-abbonamenti-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #ea580c">
                     <div class="kpi-head">🛍️ Accessori</div>
-                    <div class="kpi-val" id="inc-wk-accessori-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-wk-accessori-val">-</div>
                     <div class="kpi-sub" id="inc-wk-accessori-sub">-</div>
                 </div>
             </div>
@@ -964,22 +965,22 @@
             <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 25px;">
                 <div class="kpi-card glass-card" style="border-left: 4px solid #7c3aed">
                     <div class="kpi-head">📈 Trend Stagione in Corso</div>
-                    <div class="kpi-val" id="inc-stats-season-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-stats-season-val">-</div>
                     <div class="kpi-sub" id="inc-stats-season-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
                     <div class="kpi-head">🎯 Proiezione Fine Stagione</div>
-                    <div class="kpi-val" id="inc-stats-record-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-stats-record-val">-</div>
                     <div class="kpi-sub" id="inc-stats-record-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #dc2626">
                     <div class="kpi-head">📊 Media per Giorno Aperto</div>
-                    <div class="kpi-val" id="inc-stats-min-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-stats-min-val">-</div>
                     <div class="kpi-sub" id="inc-stats-min-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #ea580c">
                     <div class="kpi-head">📅 Miglior Giorno Settimana</div>
-                    <div class="kpi-val" id="inc-stats-bestday-val">-</div>
+                    <div class="kpi-val kpi-val-money" id="inc-stats-bestday-val">-</div>
                     <div class="kpi-sub" id="inc-stats-bestday-sub">-</div>
                 </div>
             </div>
@@ -2598,7 +2599,7 @@ function renderIncassiStats() {
         }
         return `<div class="kpi-card glass-card" style="border-left: 4px solid #2563eb">
             <div class="kpi-head">${monthNameLabel} ${y}</div>
-            <div class="kpi-val">${fmtEUR(curr)}</div>
+            <div class="kpi-val kpi-val-money">${fmtEUR(curr)}</div>
             ${deltaHtml}
         </div>`;
     }).join('');
