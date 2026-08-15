@@ -2955,9 +2955,11 @@ window.renderIncassiArchive = () => {
             <td style="color:#ea580c">${fmtEUR(d.accessori_tot)}</td>
             <td style="font-weight:800; color:#16a34a">${fmtEUR(d.incasso_totale)}</td>
             <td style="font-size:0.8rem; color:#64748b">${d.note||''}</td>
-            <td style="text-align:right; min-width:80px">
-                <button class="btn btn-icon" style="color:var(--primary); background:#eef2ff" onclick="editIncassi('${d.id}')">✏️</button>
-                <button class="btn btn-icon" style="color:#ef4444; background:#fef2f2" onclick="delDoc('incassi_log','${d.id}')">🗑️</button>
+            <td style="min-width:90px">
+                <div style="display:flex; gap:6px; justify-content:flex-end">
+                    <button class="btn btn-icon" style="color:var(--primary); background:#eef2ff" onclick="editIncassi('${d.id}')">✏️</button>
+                    <button class="btn btn-icon" style="color:#ef4444; background:#fef2f2" onclick="delDoc('incassi_log','${d.id}')">🗑️</button>
+                </div>
             </td>
         </tr>`;
     }).join('');
