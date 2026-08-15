@@ -1087,13 +1087,14 @@
                 <div style="margin-top:12px; padding:12px; border-radius:10px; background:rgba(37,99,235,0.05); border:1px solid rgba(37,99,235,0.15)">
                     <div style="font-weight:800; font-size:0.85rem; color:#2563eb; margin-bottom:8px">🎫 Ingressi & Abbonamenti (IVA)</div>
                     <div class="cb-row" style="flex-wrap:wrap">
-                        <div class="inp-field"><label>Ingresso Sing. Intero</label><input type="number" step="any" id="inc-ing-int-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
-                        <div class="inp-field"><label>Ingresso Sing. Ridotto</label><input type="number" step="any" id="inc-ing-int-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Singolo Intero</label><input type="number" step="any" id="inc-ing-int-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Singolo Ridotto</label><input type="number" step="any" id="inc-ing-int-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                         <div class="inp-field"><label>11 Ingressi Intero</label><input type="number" step="any" id="inc-abb11-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                         <div class="inp-field"><label>11 Ingressi Ridotto</label><input type="number" step="any" id="inc-abb11-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                         <div class="inp-field"><label>Mensile Intero</label><input type="number" step="any" id="inc-abb-mensile-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                         <div class="inp-field"><label>Mensile Ridotto</label><input type="number" step="any" id="inc-abb-mensile-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                         <div class="inp-field"><label>Trimestrale Intero</label><input type="number" step="any" id="inc-abb-trim-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
+                        <div class="inp-field"><label>Trimestrale Ridotto</label><input type="number" step="any" id="inc-abb-trim-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                         <div class="inp-field"><label>Semestrale Intero</label><input type="number" step="any" id="inc-abb-sem-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                         <div class="inp-field"><label>Semestrale Ridotto</label><input type="number" step="any" id="inc-abb-sem-ridotto" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                         <div class="inp-field"><label>Annuale Intero</label><input type="number" step="any" id="inc-abb-ann-intero" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
@@ -2325,7 +2326,7 @@ window.updateIncassiLiveTotal = () => {
         + numVal('inc-ing-estdom-intero') + numVal('inc-ing-estdom-ridotto');
     const abbonamentiTot = numVal('inc-abb11-intero') + numVal('inc-abb11-ridotto')
         + numVal('inc-abb-mensile-intero') + numVal('inc-abb-mensile-ridotto')
-        + numVal('inc-abb-trim-intero')
+        + numVal('inc-abb-trim-intero') + numVal('inc-abb-trim-ridotto')
         + numVal('inc-abb-sem-intero') + numVal('inc-abb-sem-ridotto')
         + numVal('inc-abb-ann-intero') + numVal('inc-abb-ann-ridotto')
         + numVal('inc-abb-estivi');
@@ -2383,7 +2384,7 @@ const INCASSI_FIELD_MAP = {
     'inc-ing-int-intero':'ing_int_intero', 'inc-ing-int-ridotto':'ing_int_ridotto',
     'inc-abb11-intero':'abb11_intero', 'inc-abb11-ridotto':'abb11_ridotto',
     'inc-abb-mensile-intero':'abb_mensile_intero', 'inc-abb-mensile-ridotto':'abb_mensile_ridotto',
-    'inc-abb-trim-intero':'abb_trimestrale_intero',
+    'inc-abb-trim-intero':'abb_trimestrale_intero', 'inc-abb-trim-ridotto':'abb_trimestrale_ridotto',
     'inc-abb-sem-intero':'abb_semestrale_intero', 'inc-abb-sem-ridotto':'abb_semestrale_ridotto',
     'inc-abb-ann-intero':'abb_annuale_intero', 'inc-abb-ann-ridotto':'abb_annuale_ridotto',
     'inc-ing-estfer-intero':'ing_est_fer_intero', 'inc-ing-estfer-ridotto':'ing_est_fer_ridotto',
@@ -2433,7 +2434,7 @@ window.saveIncassi = async () => {
         ing_int_intero: numVal('inc-ing-int-intero'), ing_int_ridotto: numVal('inc-ing-int-ridotto'),
         abb11_intero: numVal('inc-abb11-intero'), abb11_ridotto: numVal('inc-abb11-ridotto'),
         abb_mensile_intero: numVal('inc-abb-mensile-intero'), abb_mensile_ridotto: numVal('inc-abb-mensile-ridotto'),
-        abb_trimestrale_intero: numVal('inc-abb-trim-intero'),
+        abb_trimestrale_intero: numVal('inc-abb-trim-intero'), abb_trimestrale_ridotto: numVal('inc-abb-trim-ridotto'),
         abb_semestrale_intero: numVal('inc-abb-sem-intero'), abb_semestrale_ridotto: numVal('inc-abb-sem-ridotto'),
         abb_annuale_intero: numVal('inc-abb-ann-intero'), abb_annuale_ridotto: numVal('inc-abb-ann-ridotto'),
         ing_est_fer_intero: numVal('inc-ing-estfer-intero'), ing_est_fer_ridotto: numVal('inc-ing-estfer-ridotto'),
