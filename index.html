@@ -991,7 +991,7 @@
             </div>
 
             <div class="chart-card glass-card" style="height:320px; padding:15px; margin-bottom:30px">
-                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori — Stagione in Corso</div>
+                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori (€) — Stagione in Corso</div>
                 <div class="chart-wrapper"><canvas id="chartIncCategoryTrend"></canvas></div>
             </div>
 
@@ -2739,7 +2739,7 @@ function renderIncassiStats() {
         });
     }
 
-    // Composizione Corsi/Ingressi/Abbonamenti/Accessori — SOLO stagione in corso, ordine Set-Ago (stacked %)
+    // Composizione Corsi/Ingressi/Abbonamenti/Accessori — SOLO stagione in corso, ordine Set-Ago (valori assoluti in €)
     const monthlyAgg = {};
     dataIncassi.forEach(d => {
         const ym = d.date.slice(0,7);
@@ -2751,11 +2751,10 @@ function renderIncassiStats() {
     });
     const months = monthOrderSeason.map(m => `${m >= 9 ? currSeasonStart : currSeasonStart + 1}-${String(m).padStart(2,'0')}`);
     const labels = monthLabelsSeason;
-    const pctN4=[], pctIngressi=[], pctAbbonamenti=[], pctAccessori=[];
+    const eurN4=[], eurIngressi=[], eurAbbonamenti=[], eurAccessori=[];
     months.forEach(m => {
-        const d = monthlyAgg[m] || { n4:0, ingressi:0, abbonamenti:0, accessori:0 }; const tot = d.n4+d.ingressi+d.abbonamenti+d.accessori;
-        if (tot===0) { pctN4.push(0); pctIngressi.push(0); pctAbbonamenti.push(0); pctAccessori.push(0); return; }
-        pctN4.push((d.n4/tot)*100); pctIngressi.push((d.ingressi/tot)*100); pctAbbonamenti.push((d.abbonamenti/tot)*100); pctAccessori.push((d.accessori/tot)*100);
+        const d = monthlyAgg[m] || { n4:0, ingressi:0, abbonamenti:0, accessori:0 };
+        eurN4.push(d.n4); eurIngressi.push(d.ingressi); eurAbbonamenti.push(d.abbonamenti); eurAccessori.push(d.accessori);
     });
     if (ch['chartIncCategoryTrend']) ch['chartIncCategoryTrend'].destroy();
     const c2 = document.getElementById('chartIncCategoryTrend');
@@ -2763,14 +2762,14 @@ function renderIncassiStats() {
         ch['chartIncCategoryTrend'] = new Chart(c2, {
             type: 'bar',
             data: { labels, datasets: [
-                { label: 'Corsi', data: pctN4, backgroundColor: '#b45309', stack:'pct' },
-                { label: 'Ingressi', data: pctIngressi, backgroundColor: '#2563eb', stack:'pct' },
-                { label: 'Abbonamenti', data: pctAbbonamenti, backgroundColor: '#7c3aed', stack:'pct' },
-                { label: 'Accessori', data: pctAccessori, backgroundColor: '#ea580c', stack:'pct' }
+                { label: 'Corsi', data: eurN4, backgroundColor: '#b45309', stack:'eur' },
+                { label: 'Ingressi', data: eurIngressi, backgroundColor: '#2563eb', stack:'eur' },
+                { label: 'Abbonamenti', data: eurAbbonamenti, backgroundColor: '#7c3aed', stack:'eur' },
+                { label: 'Accessori', data: eurAccessori, backgroundColor: '#ea580c', stack:'eur' }
             ]},
             options: { animation:false, responsive:true, maintainAspectRatio:false,
-                scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true, max:100, ticks:{callback:v=>v+'%'}} },
-                plugins: { legend:{display:true}, tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`}} } }
+                scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true, ticks:{callback:v=>fmtEUR(v)}} },
+                plugins: { legend:{display:true}, tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmtEUR(ctx.parsed.y)}`}} } }
         });
     }
 
