@@ -952,22 +952,6 @@
         <!-- Incassi Sub-View: Statistiche -->
         <div id="sub-inc-stats" class="hidden">
 
-            <!-- ============ SEZIONE: STATISTICHE MENSILI ============ -->
-            <div style="padding:10px 16px; margin-bottom:20px; border-radius:10px; background:rgba(37,99,235,0.08); border-left:4px solid #2563eb">
-                <h2 style="margin:0; font-size:1.05rem; color:#1e40af">📅 Statistiche Mensili</h2>
-            </div>
-
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px; flex-wrap:wrap">
-                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📆 Confronto Stesso Mese — Tutti gli Anni</h3>
-                <select id="inc-stats-month-selector" class="filter-select" style="font-weight:700" onchange="renderIncassiStats()"></select>
-            </div>
-            <div id="inc-stats-multiyear-cards" class="kpi-grid" style="margin-bottom:25px"></div>
-
-            <div class="chart-card glass-card" style="height:320px; padding:15px; margin-bottom:40px">
-                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori (mensile)</div>
-                <div class="chart-wrapper"><canvas id="chartIncCategoryTrend"></canvas></div>
-            </div>
-
             <!-- ============ SEZIONE: STATISTICHE DI STAGIONE ============ -->
             <div style="padding:10px 16px; margin-bottom:20px; border-radius:10px; background:rgba(124,58,237,0.08); border-left:4px solid #7c3aed">
                 <h2 style="margin:0; font-size:1.05rem; color:#5b21b6">🗓️ Statistiche di Stagione (Settembre — Agosto)</h2>
@@ -1004,6 +988,11 @@
             <div class="chart-card glass-card" style="height:340px; padding:15px; margin-bottom:30px">
                 <div class="chart-header" style="font-size:0.85rem">📈 Andamento Incasso Giornaliero — Stagione in Corso</div>
                 <div class="chart-wrapper"><canvas id="chartIncTrend"></canvas></div>
+            </div>
+
+            <div class="chart-card glass-card" style="height:320px; padding:15px; margin-bottom:30px">
+                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori — Stagione in Corso</div>
+                <div class="chart-wrapper"><canvas id="chartIncCategoryTrend"></canvas></div>
             </div>
 
             <h3 style="margin:0 0 15px; font-size:1.1rem; color:var(--text-main)">🛍️ Dettaglio Accessori — Stagione in Corso</h3>
@@ -2624,39 +2613,12 @@ function renderIncassiStats() {
     const sorted = [...dataIncassi].sort((a,b) => a.date < b.date ? -1 : 1);
     if (sorted.length === 0) return;
 
-    // ===== Confronto Stesso Mese — Tutti gli Anni =====
-    const monthSel = document.getElementById('inc-stats-month-selector');
-    if (monthSel.options.length === 0) {
-        const monthNames = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-        monthNames.forEach((name, idx) => { const o = document.createElement('option'); o.value = String(idx+1).padStart(2,'0'); o.innerText = name; monthSel.appendChild(o); });
-        monthSel.value = sorted[sorted.length-1].date.slice(5,7);
-    }
-    const selMonth = monthSel.value;
-
-    const sumByYearMonth = {}; // "YYYY-MM" -> totale
+    // sumByYearMonth: totale per "YYYY-MM", usato dal grafico Stagionalità
+    const sumByYearMonth = {};
     dataIncassi.forEach(d => {
         const ym = d.date.slice(0,7);
         sumByYearMonth[ym] = (sumByYearMonth[ym] || 0) + (d.incasso_totale || 0);
     });
-    const yearsWithThisMonth = [...new Set(dataIncassi.filter(d => d.date.slice(5,7) === selMonth).map(d => d.date.slice(0,4)))].sort().reverse();
-    const monthNameLabel = monthSel.options[monthSel.selectedIndex] ? monthSel.options[monthSel.selectedIndex].innerText : '';
-    const cardsHtml = yearsWithThisMonth.map(y => {
-        const curr = sumByYearMonth[`${y}-${selMonth}`] || 0;
-        const prevY = String(parseInt(y)-1);
-        const prev = sumByYearMonth[`${prevY}-${selMonth}`];
-        let deltaHtml = '';
-        if (prev) {
-            const delta = ((curr-prev)/prev)*100; const sign = delta>=0?'+':''; const col = delta>=0?'#16a34a':'#dc2626'; const arr = delta>=0?'▲':'▼';
-            deltaHtml = `<div class="kpi-sub" style="color:${col}">${arr} ${sign}${delta.toFixed(1)}% vs ${prevY}</div>`;
-        }
-        return `<div class="kpi-card glass-card" style="border-left: 4px solid #2563eb">
-            <div class="kpi-head">${monthNameLabel} ${y}</div>
-            <div class="kpi-val kpi-val-money">${fmtEUR(curr)}</div>
-            ${deltaHtml}
-        </div>`;
-    }).join('');
-    document.getElementById('inc-stats-multiyear-cards').innerHTML = cardsHtml || '<div style="color:#94a3b8; padding:10px">Nessun dato per questo mese</div>';
-    document.getElementById('inc-stats-multiyear-cards').style.gridTemplateColumns = `repeat(${Math.min(yearsWithThisMonth.length||1, 5)}, 1fr)`;
 
     // ===== Grafico Stagionalità — Confronto tra Stagioni (Set-Ago) =====
     const allSeasonsForChart = [...new Set(dataIncassi.map(d => getSeasonLabel(getSeasonStartYear(d.date))))].sort();
@@ -2777,7 +2739,7 @@ function renderIncassiStats() {
         });
     }
 
-    // Composizione mensile Corsi N4 / Ingressi / Abbonamenti / Accessori (stacked %)
+    // Composizione Corsi/Ingressi/Abbonamenti/Accessori — SOLO stagione in corso, ordine Set-Ago (stacked %)
     const monthlyAgg = {};
     dataIncassi.forEach(d => {
         const ym = d.date.slice(0,7);
@@ -2787,11 +2749,11 @@ function renderIncassiStats() {
         monthlyAgg[ym].abbonamenti += d.abbonamenti_tot||0;
         monthlyAgg[ym].accessori += d.accessori_tot||0;
     });
-    const months = Object.keys(monthlyAgg).sort();
-    const labels = months.map(m => { const [y,mm]=m.split('-'); return new Date(y,mm-1,1).toLocaleString('it-IT',{month:'short',year:'2-digit'}); });
+    const months = monthOrderSeason.map(m => `${m >= 9 ? currSeasonStart : currSeasonStart + 1}-${String(m).padStart(2,'0')}`);
+    const labels = monthLabelsSeason;
     const pctN4=[], pctIngressi=[], pctAbbonamenti=[], pctAccessori=[];
     months.forEach(m => {
-        const d = monthlyAgg[m]; const tot = d.n4+d.ingressi+d.abbonamenti+d.accessori;
+        const d = monthlyAgg[m] || { n4:0, ingressi:0, abbonamenti:0, accessori:0 }; const tot = d.n4+d.ingressi+d.abbonamenti+d.accessori;
         if (tot===0) { pctN4.push(0); pctIngressi.push(0); pctAbbonamenti.push(0); pctAccessori.push(0); return; }
         pctN4.push((d.n4/tot)*100); pctIngressi.push((d.ingressi/tot)*100); pctAbbonamenti.push((d.abbonamenti/tot)*100); pctAccessori.push((d.accessori/tot)*100);
     });
