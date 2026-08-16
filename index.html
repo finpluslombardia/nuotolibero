@@ -852,6 +852,7 @@
     <div class="scroll-area">
         <div class="filter-row" style="margin-bottom:20px; justify-content:center; flex-wrap:wrap">
             <button class="btn btn-primary" id="btn-sub-inc-overview" onclick="switchSubViewIncassi('overview')">Panoramica</button>
+            <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-seasondetail" onclick="switchSubViewIncassi('seasondetail')">Stat Stagione</button>
             <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-stats" onclick="switchSubViewIncassi('stats')">Statistiche</button>
             <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-riepilogo" onclick="switchSubViewIncassi('riepilogo')">Riepilogo</button>
             <button class="btn" style="border:1px solid rgba(0,0,0,0.1)" id="btn-sub-inc-archive" onclick="switchSubViewIncassi('archive')">Archivio</button>
@@ -860,6 +861,42 @@
 
         <!-- Incassi Sub-View: Panoramica -->
         <div id="sub-inc-overview">
+            <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
+                <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
+                    <div class="kpi-head">💰 Incasso Mese Corrente</div>
+                    <div class="kpi-val kpi-val-money" id="ov-month-mtd-val">-</div>
+                    <div class="kpi-sub" id="ov-month-mtd-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #7c3aed">
+                    <div class="kpi-head">🗓️ Incasso Stagione Corrente</div>
+                    <div class="kpi-val kpi-val-money" id="ov-season-tot-val">-</div>
+                    <div class="kpi-sub" id="ov-season-tot-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #dc2626">
+                    <div class="kpi-head">📊 Media per Giorno Aperto</div>
+                    <div class="kpi-val kpi-val-money" id="ov-avg-open-val">-</div>
+                    <div class="kpi-sub" id="ov-avg-open-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #ea580c">
+                    <div class="kpi-head">📅 Miglior Giorno Settimana</div>
+                    <div class="kpi-val kpi-val-money" id="ov-bestday-val">-</div>
+                    <div class="kpi-sub" id="ov-bestday-sub">-</div>
+                </div>
+            </div>
+
+            <div class="kpi-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 30px;">
+                <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
+                    <div class="kpi-head">🎯 Proiezione Fine Mese</div>
+                    <div class="kpi-val kpi-val-money" id="ov-forecast-month-val">-</div>
+                    <div class="kpi-sub" id="ov-forecast-month-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
+                    <div class="kpi-head">🎯 Proiezione Fine Stagione</div>
+                    <div class="kpi-val kpi-val-money" id="ov-forecast-season-val">-</div>
+                    <div class="kpi-sub" id="ov-forecast-season-sub">-</div>
+                </div>
+            </div>
+
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px">
                 <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📅 Confronto Mensile</h3>
                 <input type="month" id="inc-kpi-month-selector" class="filter-select" style="font-weight:700; background:rgba(255,255,255,0.8)" onchange="renderIncassi()">
@@ -893,12 +930,12 @@
                 </div>
             </div>
 
-            <div class="chart-card glass-card" style="height:320px; padding:15px">
+            <div class="chart-card glass-card" style="height:320px; padding:15px; margin-bottom:30px">
                 <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Incasso (mese)</div>
                 <div class="chart-wrapper"><canvas id="chartIncPaymentMix"></canvas></div>
             </div>
 
-            <div style="display:flex; align-items:center; gap:10px; margin:30px 0 15px">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px">
                 <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📅 Confronto Settimanale</h3>
                 <input type="week" id="inc-weekly-week-selector" class="filter-select" style="font-weight:700; background:rgba(255,255,255,0.8)" onchange="renderIncassiWeekly()">
             </div>
@@ -930,7 +967,7 @@
                     <div class="kpi-sub" id="inc-wk-accessori-sub">-</div>
                 </div>
             </div>
-            <div class="table-wrap glass-card">
+            <div class="table-wrap glass-card" style="margin-bottom:30px">
                 <div style="overflow-x:auto;">
                     <table id="table-incassi-weekly">
                         <thead>
@@ -947,55 +984,45 @@
                     </table>
                 </div>
             </div>
+
+            <div class="chart-card glass-card" style="height:340px; padding:15px">
+                <div class="chart-header" style="font-size:0.85rem">📈 Andamento Incasso Giornaliero — Ultimi 90 gg (Stagione in Corso)</div>
+                <div class="chart-wrapper"><canvas id="chartIncTrend"></canvas></div>
+            </div>
         </div>
 
-        <!-- Incassi Sub-View: Statistiche -->
-        <div id="sub-inc-stats" class="hidden">
-
-            <!-- ============ SEZIONE: STATISTICHE DI STAGIONE ============ -->
-            <div style="padding:10px 16px; margin-bottom:20px; border-radius:10px; background:rgba(124,58,237,0.08); border-left:4px solid #7c3aed">
-                <h2 style="margin:0; font-size:1.05rem; color:#5b21b6">🗓️ Statistiche di Stagione (Settembre — Agosto)</h2>
+        <!-- Incassi Sub-View: Stat Stagione -->
+        <div id="sub-inc-seasondetail" class="hidden">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap">
+                <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">🗓️ Statistiche di Stagione</h3>
+                <select id="inc-season-detail-selector" class="filter-select" style="font-weight:700" onchange="renderIncassiSeasonDetail()"></select>
             </div>
 
-            <div class="chart-card glass-card" style="height:340px; padding:15px; margin-bottom:20px">
-                <div class="chart-header" style="font-size:0.85rem">📊 Stagionalità — Confronto tra Stagioni</div>
-                <div class="chart-wrapper"><canvas id="chartIncYearCompare"></canvas></div>
-            </div>
-
-            <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 25px;">
-                <div class="kpi-card glass-card" style="border-left: 4px solid #7c3aed">
-                    <div class="kpi-head">📈 Trend Stagione in Corso</div>
-                    <div class="kpi-val kpi-val-money" id="inc-stats-season-val">-</div>
-                    <div class="kpi-sub" id="inc-stats-season-sub">-</div>
+            <div class="table-wrap glass-card" style="margin-bottom:30px">
+                <div style="overflow-x:auto;">
+                    <table id="table-season-detail-monthly">
+                        <thead>
+                            <tr>
+                                <th>Mese</th>
+                                <th style="color:#b45309">Corsi</th>
+                                <th style="color:#2563eb">Ingressi</th>
+                                <th style="color:#7c3aed">Abbonamenti</th>
+                                <th style="color:#ea580c">Accessori</th>
+                                <th style="background:rgba(22,163,74,0.08); color:#16a34a">Incasso Totale</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-season-detail-monthly"></tbody>
+                        <tfoot id="tfoot-season-detail-monthly"></tfoot>
+                    </table>
                 </div>
-                <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
-                    <div class="kpi-head">🎯 Proiezione Fine Stagione</div>
-                    <div class="kpi-val kpi-val-money" id="inc-stats-record-val">-</div>
-                    <div class="kpi-sub" id="inc-stats-record-sub">-</div>
-                </div>
-                <div class="kpi-card glass-card" style="border-left: 4px solid #dc2626">
-                    <div class="kpi-head">📊 Media per Giorno Aperto</div>
-                    <div class="kpi-val kpi-val-money" id="inc-stats-min-val">-</div>
-                    <div class="kpi-sub" id="inc-stats-min-sub">-</div>
-                </div>
-                <div class="kpi-card glass-card" style="border-left: 4px solid #ea580c">
-                    <div class="kpi-head">📅 Miglior Giorno Settimana</div>
-                    <div class="kpi-val kpi-val-money" id="inc-stats-bestday-val">-</div>
-                    <div class="kpi-sub" id="inc-stats-bestday-sub">-</div>
-                </div>
-            </div>
-
-            <div class="chart-card glass-card" style="height:340px; padding:15px; margin-bottom:30px">
-                <div class="chart-header" style="font-size:0.85rem">📈 Andamento Incasso Giornaliero — Stagione in Corso</div>
-                <div class="chart-wrapper"><canvas id="chartIncTrend"></canvas></div>
             </div>
 
             <div class="chart-card glass-card" style="height:320px; padding:15px; margin-bottom:30px">
-                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori (€) — Stagione in Corso</div>
+                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori (€)</div>
                 <div class="chart-wrapper"><canvas id="chartIncCategoryTrend"></canvas></div>
             </div>
 
-            <h3 style="margin:0 0 15px; font-size:1.1rem; color:var(--text-main)">🛍️ Dettaglio Accessori — Stagione in Corso</h3>
+            <h3 style="margin:0 0 15px; font-size:1.1rem; color:var(--text-main)">🛍️ Dettaglio Accessori</h3>
             <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 25px;">
                 <div class="kpi-card glass-card" style="border-left: 4px solid #7c3aed">
                     <div class="kpi-head">💳 Crediti</div>
@@ -1025,13 +1052,22 @@
             </div>
             <div style="display:grid; grid-template-columns: 1fr 1.6fr; gap:20px">
                 <div class="chart-card glass-card" style="height:320px; padding:15px">
-                    <div class="chart-header" style="font-size:0.85rem">🥧 Composizione Accessori (stagione)</div>
+                    <div class="chart-header" style="font-size:0.85rem">🥧 Composizione Accessori</div>
                     <div class="chart-wrapper"><canvas id="chartIncAccessoriMix"></canvas></div>
                 </div>
                 <div class="chart-card glass-card" style="height:320px; padding:15px">
                     <div class="chart-header" style="font-size:0.85rem">📊 Andamento Mensile Accessori</div>
                     <div class="chart-wrapper"><canvas id="chartIncAccessoriTrend"></canvas></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Incassi Sub-View: Statistiche (confronto tra stagioni) -->
+        <div id="sub-inc-stats" class="hidden">
+            <h3 style="margin:0 0 15px; font-size:1.1rem; color:var(--text-main)">📊 Confronto tra Stagioni</h3>
+            <div class="chart-card glass-card" style="height:400px; padding:15px">
+                <div class="chart-header" style="font-size:0.85rem">Stagionalità — Tutte le Stagioni a Confronto</div>
+                <div class="chart-wrapper"><canvas id="chartIncYearCompare"></canvas></div>
             </div>
         </div>
 
@@ -1247,7 +1283,7 @@ window.showToast = (msg, type='success') => { const c = document.getElementById(
 window.doLogin = async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); } catch(e) { document.getElementById('login-error').innerText = e.message; } };
 window.doLogout = () => signOut(auth);
 function applyIncassiPermissions() {
-    const restrictedButtons = ['btn-sub-inc-overview', 'btn-sub-inc-stats', 'btn-sub-inc-riepilogo'];
+    const restrictedButtons = ['btn-sub-inc-overview', 'btn-sub-inc-seasondetail', 'btn-sub-inc-stats', 'btn-sub-inc-riepilogo'];
     restrictedButtons.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -2530,22 +2566,24 @@ window.switchSubViewUtenze=(s)=>{
 };
 
 window.switchSubViewIncassi=(s)=>{
-    if (isRestrictedIncassiUser && ['overview','stats','riepilogo'].includes(s)) s = 'archive';
-    ['overview','stats','riepilogo','archive','register'].forEach(v=>{ document.getElementById('sub-inc-'+v).classList.add('hidden'); document.getElementById('btn-sub-inc-'+v).classList.remove('btn-primary'); });
+    if (isRestrictedIncassiUser && ['overview','seasondetail','stats','riepilogo'].includes(s)) s = 'archive';
+    ['overview','seasondetail','stats','riepilogo','archive','register'].forEach(v=>{ document.getElementById('sub-inc-'+v).classList.add('hidden'); document.getElementById('btn-sub-inc-'+v).classList.remove('btn-primary'); });
     document.getElementById('sub-inc-'+s).classList.remove('hidden'); document.getElementById('btn-sub-inc-'+s).classList.add('btn-primary');
     renderIncassi();
 };
 
-// ============ INCASSI: render Panoramica + Statistiche ============
+// ============ INCASSI: render dispatcher ============
 window.renderIncassi = () => {
     if (!dataIncassi) return;
     const overviewVisible = !document.getElementById('sub-inc-overview').classList.contains('hidden');
+    const seasonDetailVisible = !document.getElementById('sub-inc-seasondetail').classList.contains('hidden');
     const statsVisible = !document.getElementById('sub-inc-stats').classList.contains('hidden');
     const riepilogoVisible = !document.getElementById('sub-inc-riepilogo').classList.contains('hidden');
     const archiveVisible = !document.getElementById('sub-inc-archive').classList.contains('hidden');
     const registerVisible = !document.getElementById('sub-inc-register').classList.contains('hidden');
 
     if (overviewVisible) { renderIncassiOverview(); renderIncassiWeekly(); }
+    if (seasonDetailVisible) renderIncassiSeasonDetail();
     if (statsVisible) renderIncassiStats();
     if (riepilogoVisible) renderRiepilogoIncassi();
     if (archiveVisible) renderIncassiArchive();
@@ -2553,18 +2591,126 @@ window.renderIncassi = () => {
 };
 
 function renderIncassiOverview() {
+    if (!dataIncassi || dataIncassi.length === 0) return;
     const sorted = [...dataIncassi].sort((a,b) => a.date < b.date ? -1 : 1);
+    const yoy = (c, p) => { if (!p) return ''; const delta = ((c-p)/p)*100; const sign = delta>=0?'+':''; const col = delta>=0?'#16a34a':'#dc2626'; const arr = delta>=0?'\u25b2':'\u25bc'; return `<span style="color:${col}">${arr} ${sign}${delta.toFixed(1)}%</span>`; };
 
+    // ===== Incasso Mese Corrente (MTD) vs stesso periodo mese anno precedente =====
+    const realToday = new Date();
+    const todayStr = fmtDateISO(realToday);
+    const curYear = realToday.getFullYear(), curMonthIdx = realToday.getMonth(), curDay = realToday.getDate();
+    const monthStartStr = `${curYear}-${String(curMonthIdx+1).padStart(2,'0')}-01`;
+    const mtdCurrSum = dataIncassi.filter(d => d.date >= monthStartStr && d.date <= todayStr).reduce((s,d)=>s+(d.incasso_totale||0),0);
+
+    const prevY = curYear - 1;
+    const prevMonthStartStr = `${prevY}-${String(curMonthIdx+1).padStart(2,'0')}-01`;
+    const prevSameDayStr = fmtDateISO(new Date(prevY, curMonthIdx, curDay));
+    const mtdPrevSum = dataIncassi.filter(d => d.date >= prevMonthStartStr && d.date <= prevSameDayStr).reduce((s,d)=>s+(d.incasso_totale||0),0);
+
+    const monthNameNow = realToday.toLocaleString('it-IT', {month:'long'});
+    document.getElementById('ov-month-mtd-val').innerText = fmtEUR(mtdCurrSum);
+    document.getElementById('ov-month-mtd-sub').innerHTML = `${monthNameNow.charAt(0).toUpperCase()+monthNameNow.slice(1)} 1-${curDay} &middot; ${mtdPrevSum>0 ? yoy(mtdCurrSum, mtdPrevSum)+' vs '+prevY : 'nessun dato anno prec.'}`;
+
+    // ===== Incasso Stagione Corrente + Media per Giorno Aperto + Miglior Giorno Settimana =====
+    const lastDate = sorted[sorted.length-1].date;
+    const currSeasonStart = getSeasonStartYear(lastDate);
+    const currSeasonLabel = getSeasonLabel(currSeasonStart);
+    const prevSeasonLabel = getSeasonLabel(currSeasonStart - 1);
+    const seasonStartDate = `${currSeasonStart}-09-01`;
+    const daysElapsedInSeason = Math.floor((new Date(lastDate) - new Date(seasonStartDate)) / 86400000) + 1;
+    const prevSeasonStartDate = `${currSeasonStart-1}-09-01`;
+    const prevSeasonCutoffDate = new Date(prevSeasonStartDate); prevSeasonCutoffDate.setDate(prevSeasonCutoffDate.getDate() + daysElapsedInSeason - 1);
+    const prevSeasonCutoffStr = fmtDateISO(prevSeasonCutoffDate);
+
+    const currSeasonDays = dataIncassi.filter(d => getSeasonLabel(getSeasonStartYear(d.date)) === currSeasonLabel);
+    let sumCurrSeason = 0, sumPrevSeasonToDate = 0;
+    dataIncassi.forEach(d => {
+        const s = getSeasonLabel(getSeasonStartYear(d.date));
+        if (s === currSeasonLabel) sumCurrSeason += d.incasso_totale || 0;
+        if (s === prevSeasonLabel && d.date <= prevSeasonCutoffStr) sumPrevSeasonToDate += d.incasso_totale || 0;
+    });
+    document.getElementById('ov-season-tot-val').innerText = fmtEUR(sumCurrSeason);
+    document.getElementById('ov-season-tot-sub').innerHTML = sumPrevSeasonToDate > 0
+        ? `${yoy(sumCurrSeason, sumPrevSeasonToDate)} vs Stagione ${prevSeasonLabel}`
+        : `Stagione ${currSeasonLabel} in corso`;
+
+    const openDaysCount = currSeasonDays.filter(d => (d.incasso_totale||0) > 0).length;
+    if (openDaysCount > 0) {
+        document.getElementById('ov-avg-open-val').innerText = fmtEUR(sumCurrSeason / openDaysCount);
+        document.getElementById('ov-avg-open-sub').innerText = `su ${openDaysCount} giorni aperti (stagione)`;
+    }
+
+    const weekdaySum = [0,0,0,0,0,0,0], weekdayCount = [0,0,0,0,0,0,0];
+    dataIncassi.forEach(d => {
+        if (!(d.incasso_totale > 0)) return;
+        const wd = new Date(d.date+'T00:00:00').getDay();
+        weekdaySum[wd] += d.incasso_totale; weekdayCount[wd]++;
+    });
+    const weekdayNames = ['Domenica','Luned\u00ec','Marted\u00ec','Mercoled\u00ec','Gioved\u00ec','Venerd\u00ec','Sabato'];
+    let bestWd = -1, bestAvg = -1;
+    for (let i=0;i<7;i++) { if (weekdayCount[i]>0) { const avg = weekdaySum[i]/weekdayCount[i]; if (avg>bestAvg) { bestAvg=avg; bestWd=i; } } }
+    if (bestWd >= 0) {
+        document.getElementById('ov-bestday-val').innerText = weekdayNames[bestWd];
+        document.getElementById('ov-bestday-sub').innerText = `Media ${fmtEUR(bestAvg)} (${weekdayCount[bestWd]} giorni, storico)`;
+    }
+
+    // ===== Proiezione Fine Mese =====
+    const monthEndDate = new Date(curYear, curMonthIdx+1, 0);
+    const monthEndStr = fmtDateISO(monthEndDate);
+    const histForMonthForecast = dataIncassi.filter(d => !(d.date >= monthStartStr && d.date <= monthEndStr));
+    const wkSumM = new Array(7).fill(0), wkCountM = new Array(7).fill(0);
+    histForMonthForecast.forEach(d => {
+        if (!(d.incasso_totale > 0)) return;
+        const wd = new Date(d.date+'T00:00:00').getDay();
+        wkSumM[wd] += d.incasso_totale; wkCountM[wd]++;
+    });
+    const wkAvgM = wkSumM.map((s,wd) => wkCountM[wd] > 0 ? s / wkCountM[wd] : null);
+    let estRemainMonth = 0, hasBasisMonth = true;
+    const overallAvgMonth = mtdCurrSum / Math.max(curDay, 1);
+    let curM = new Date(todayStr+'T00:00:00'); curM.setDate(curM.getDate()+1);
+    const endM = new Date(monthEndStr+'T00:00:00');
+    while (curM <= endM) {
+        const wd = curM.getDay();
+        if (wkAvgM[wd] !== null) estRemainMonth += wkAvgM[wd]; else { hasBasisMonth = false; estRemainMonth += overallAvgMonth; }
+        curM.setDate(curM.getDate()+1);
+    }
+    const forecastMonthTotal = mtdCurrSum + estRemainMonth;
+    document.getElementById('ov-forecast-month-val').innerText = fmtEUR(forecastMonthTotal);
+    document.getElementById('ov-forecast-month-sub').innerText = `entro fine mese (${hasBasisMonth ? 'su trend storico' : 'su trend storico (parziale)'})`;
+
+    // ===== Proiezione Fine Stagione =====
+    const seasonEndDate = `${currSeasonStart+1}-08-31`;
+    const histForSeasonForecast = dataIncassi.filter(d => getSeasonLabel(getSeasonStartYear(d.date)) !== currSeasonLabel);
+    const wkSumS = new Array(7).fill(0), wkCountS = new Array(7).fill(0);
+    histForSeasonForecast.forEach(d => {
+        if (!(d.incasso_totale > 0)) return;
+        const wd = new Date(d.date+'T00:00:00').getDay();
+        wkSumS[wd] += d.incasso_totale; wkCountS[wd]++;
+    });
+    const wkAvgS = wkSumS.map((s,wd) => wkCountS[wd] > 0 ? s / wkCountS[wd] : null);
+    let estRemainSeason = 0, hasBasisSeason = true;
+    const overallAvgSeason = sumCurrSeason / Math.max(daysElapsedInSeason, 1);
+    let curS = new Date(lastDate+'T00:00:00'); curS.setDate(curS.getDate()+1);
+    const endS = new Date(seasonEndDate+'T00:00:00');
+    while (curS <= endS) {
+        const wd = curS.getDay();
+        if (wkAvgS[wd] !== null) estRemainSeason += wkAvgS[wd]; else { hasBasisSeason = false; estRemainSeason += overallAvgSeason; }
+        curS.setDate(curS.getDate()+1);
+    }
+    const forecastSeasonTotal = sumCurrSeason + estRemainSeason;
+    document.getElementById('ov-forecast-season-val').innerText = fmtEUR(forecastSeasonTotal);
+    document.getElementById('ov-forecast-season-sub').innerText = `entro il 31 agosto (${hasBasisSeason ? 'su trend storico' : 'su trend storico (parziale)'})`;
+
+    // ===== Confronto Mensile (selettore mese) =====
     let kpiDateObj = new Date();
     const selectedMonthVal = document.getElementById('inc-kpi-month-selector').value;
     if (selectedMonthVal) {
         kpiDateObj = new Date(selectedMonthVal + "-01");
-    } else if (sorted.length > 0) {
-        const lastDate = sorted[sorted.length - 1].date;
+    } else {
         document.getElementById('inc-kpi-month-selector').value = lastDate.slice(0, 7);
         kpiDateObj = new Date(lastDate);
     }
-    const thisMonth = kpiDateObj.getMonth(), thisYear = kpiDateObj.getFullYear(), prevYear = thisYear - 1;
+    const thisMonth = kpiDateObj.getMonth(), thisYear = kpiDateObj.getFullYear(), prevYearM = thisYear - 1;
     const monthName = kpiDateObj.toLocaleString('it-IT', { month: 'long' });
 
     const sumMonth = (year, month) => {
@@ -2578,26 +2724,26 @@ function renderIncassiOverview() {
     };
 
     const curr = sumMonth(thisYear, thisMonth);
-    const prev = sumMonth(prevYear, thisMonth);
-    const yoy = (c, p) => { if (!p) return ''; const delta = ((c-p)/p)*100; const sign = delta>=0?'+':''; const col = delta>=0?'#16a34a':'#dc2626'; const arr = delta>=0?'▲':'▼'; return `<span style="color:${col}">${arr} ${sign}${delta.toFixed(1)}% vs ${prevYear}</span>`; };
+    const prev = sumMonth(prevYearM, thisMonth);
+    const yoyFull = (c, p) => { if (!p) return ''; const delta = ((c-p)/p)*100; const sign = delta>=0?'+':''; const col = delta>=0?'#16a34a':'#dc2626'; const arr = delta>=0?'\u25b2':'\u25bc'; return `<span style="color:${col}">${arr} ${sign}${delta.toFixed(1)}% vs ${prevYearM}</span>`; };
 
     document.getElementById('inc-kpi-tot-val').innerText = fmtEUR(curr.tot);
     document.getElementById('inc-kpi-tot-sub').innerText = monthName.charAt(0).toUpperCase()+monthName.slice(1) + ' ' + thisYear;
-    document.getElementById('inc-kpi-tot-context').innerHTML = yoy(curr.tot, prev.tot);
+    document.getElementById('inc-kpi-tot-context').innerHTML = yoyFull(curr.tot, prev.tot);
     document.getElementById('inc-kpi-n4-val').innerText = fmtEUR(curr.n4);
-    document.getElementById('inc-kpi-n4-sub').innerHTML = yoy(curr.n4, prev.n4);
+    document.getElementById('inc-kpi-n4-sub').innerHTML = yoyFull(curr.n4, prev.n4);
     document.getElementById('inc-kpi-ingressi-val').innerText = fmtEUR(curr.ingressi);
-    document.getElementById('inc-kpi-ingressi-sub').innerHTML = yoy(curr.ingressi, prev.ingressi);
+    document.getElementById('inc-kpi-ingressi-sub').innerHTML = yoyFull(curr.ingressi, prev.ingressi);
     document.getElementById('inc-kpi-abbonamenti-val').innerText = fmtEUR(curr.abbonamenti);
-    document.getElementById('inc-kpi-abbonamenti-sub').innerHTML = yoy(curr.abbonamenti, prev.abbonamenti);
+    document.getElementById('inc-kpi-abbonamenti-sub').innerHTML = yoyFull(curr.abbonamenti, prev.abbonamenti);
     document.getElementById('inc-kpi-accessori-val').innerText = fmtEUR(curr.accessori);
-    document.getElementById('inc-kpi-accessori-sub').innerHTML = yoy(curr.accessori, prev.accessori);
+    document.getElementById('inc-kpi-accessori-sub').innerHTML = yoyFull(curr.accessori, prev.accessori);
 
     if (!isChartReady()) return;
     if (ch['chartIncPaymentMix']) ch['chartIncPaymentMix'].destroy();
-    const canvas = document.getElementById('chartIncPaymentMix');
-    if (canvas) {
-        ch['chartIncPaymentMix'] = new Chart(canvas, {
+    const canvasPM = document.getElementById('chartIncPaymentMix');
+    if (canvasPM) {
+        ch['chartIncPaymentMix'] = new Chart(canvasPM, {
             type: 'doughnut',
             data: {
                 labels: ['Corsi', 'Ingressi', 'Abbonamenti', 'Accessori'],
@@ -2606,21 +2752,176 @@ function renderIncassiOverview() {
             options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
         });
     }
+
+    // ===== Andamento Incasso Giornaliero: ultimi 90gg della stagione in corso =====
+    const seasonDaysSorted = [...currSeasonDays].sort((a,b) => a.date < b.date ? -1 : 1);
+    const last90SeasonDays = seasonDaysSorted.slice(-90);
+    if (ch['chartIncTrend']) ch['chartIncTrend'].destroy();
+    const c1 = document.getElementById('chartIncTrend');
+    if (c1) {
+        ch['chartIncTrend'] = new Chart(c1, {
+            type: 'bar',
+            data: {
+                labels: last90SeasonDays.map(d => d.date.split('-').reverse().slice(0,2).join('/')),
+                datasets: [{ label: 'Incasso Giornaliero (\u20ac)', data: last90SeasonDays.map(d => d.incasso_totale || 0), backgroundColor: '#16a34a' }]
+            },
+            options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    }
 }
 
-function renderIncassiStats() {
-    if (!isChartReady()) return;
-    const sorted = [...dataIncassi].sort((a,b) => a.date < b.date ? -1 : 1);
-    if (sorted.length === 0) return;
+// ============ INCASSI: Stat Stagione (dettaglio singola stagione selezionabile) ============
+window.renderIncassiSeasonDetail = () => {
+    if (!dataIncassi || dataIncassi.length === 0 || !isChartReady()) return;
+    const sel = document.getElementById('inc-season-detail-selector');
+    const existingSeasons = [...new Set(dataIncassi.map(d => getSeasonLabel(getSeasonStartYear(d.date))))].sort().reverse();
+    if (sel.options.length === 0) {
+        existingSeasons.forEach(s => { const o = document.createElement('option'); o.value = s; o.innerText = 'Stagione ' + s; sel.appendChild(o); });
+        const sorted2 = [...dataIncassi].sort((a,b)=>a.date<b.date?-1:1);
+        const lastD = sorted2[sorted2.length-1].date;
+        sel.value = getSeasonLabel(getSeasonStartYear(lastD));
+    }
+    const selectedSeason = sel.value;
+    const seasonStartY = parseInt(selectedSeason.split('/')[0], 10);
+    const monthOrderSeason = [9,10,11,12,1,2,3,4,5,6,7,8];
+    const monthLabelsSeason = ['Set','Ott','Nov','Dic','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago'];
+    const orderedMonthKeys = monthOrderSeason.map(m => `${m>=9?seasonStartY:seasonStartY+1}-${String(m).padStart(2,'0')}`);
 
-    // sumByYearMonth: totale per "YYYY-MM", usato dal grafico Stagionalità
+    // ===== Tabella mensile per la stagione selezionata =====
+    const agg = aggregateRiepilogoIncassi(selectedSeason);
+    const aggAll = aggregateRiepilogoIncassi('all');
+    const tBody = document.getElementById('tbody-season-detail-monthly');
+    const tFoot = document.getElementById('tfoot-season-detail-monthly');
+    const fmt = (v) => fmtEUR(v);
+    const rows = [];
+    const grandTotal = { n4:0, ingressi:0, abbonamenti:0, accessori:0, tot:0 };
+    let anyData = false;
+    orderedMonthKeys.forEach(mStr => {
+        const d = agg[mStr];
+        if (!d) return;
+        anyData = true;
+        const [y,m] = mStr.split('-');
+        const monthLabel = new Date(parseInt(y), parseInt(m)-1, 1).toLocaleString('it-IT', {month:'long', year:'numeric'});
+        grandTotal.n4+=d.n4; grandTotal.ingressi+=d.ingressi; grandTotal.abbonamenti+=d.abbonamenti; grandTotal.accessori+=d.accessori; grandTotal.tot+=d.tot;
+        const prevYear = String(parseInt(y)-1); const prevD = aggAll[`${prevYear}-${m}`];
+        let yoyHtml = '';
+        if (prevD && prevD.tot>0) {
+            const delta=((d.tot-prevD.tot)/prevD.tot)*100; const sign=delta>=0?'+':''; const col=delta>=0?'#16a34a':'#dc2626'; const arr=delta>=0?'\u25b2':'\u25bc';
+            yoyHtml = `<div style="font-size:0.72rem;font-weight:700;color:${col};margin-top:2px">${arr} ${sign}${delta.toFixed(1)}% vs ${prevYear}</div>`;
+        }
+        rows.push(`<tr>
+            <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
+            <td style="color:#b45309">${fmt(d.n4)}</td>
+            <td style="color:#2563eb">${fmt(d.ingressi)}</td>
+            <td style="color:#7c3aed">${fmt(d.abbonamenti)}</td>
+            <td style="color:#ea580c">${fmt(d.accessori)}</td>
+            <td style="font-weight:800; color:#16a34a; background:rgba(22,163,74,0.05)">${fmt(d.tot)}${yoyHtml}</td>
+        </tr>`);
+    });
+    tBody.innerHTML = anyData ? rows.join('') : '<tr><td colspan="6" style="text-align:center;padding:20px">Nessun dato per questa stagione</td></tr>';
+    if (tFoot) tFoot.innerHTML = anyData ? `<tr style="border-top:2px solid rgba(0,0,0,0.1)">
+        <td style="font-weight:800">TOTALE Stagione ${selectedSeason}</td>
+        <td style="font-weight:800; color:#b45309">${fmt(grandTotal.n4)}</td>
+        <td style="font-weight:800; color:#2563eb">${fmt(grandTotal.ingressi)}</td>
+        <td style="font-weight:800; color:#7c3aed">${fmt(grandTotal.abbonamenti)}</td>
+        <td style="font-weight:800; color:#ea580c">${fmt(grandTotal.accessori)}</td>
+        <td style="font-weight:900; color:#16a34a; background:rgba(22,163,74,0.1)">${fmt(grandTotal.tot)}</td>
+    </tr>` : '';
+
+    // ===== Grafico composizione (\u20ac) per la stagione selezionata =====
+    const monthlyAggX = {};
+    dataIncassi.forEach(d => {
+        if (getSeasonLabel(getSeasonStartYear(d.date)) !== selectedSeason) return;
+        const ym = d.date.slice(0,7);
+        if (!monthlyAggX[ym]) monthlyAggX[ym] = {n4:0,ingressi:0,abbonamenti:0,accessori:0};
+        monthlyAggX[ym].n4 += d.corsi_n4_tot||0; monthlyAggX[ym].ingressi += d.ingressi_tot||0;
+        monthlyAggX[ym].abbonamenti += d.abbonamenti_tot||0; monthlyAggX[ym].accessori += d.accessori_tot||0;
+    });
+    const eurN4=[], eurIngressi=[], eurAbbonamenti=[], eurAccessori=[];
+    orderedMonthKeys.forEach(m => {
+        const d = monthlyAggX[m] || {n4:0,ingressi:0,abbonamenti:0,accessori:0};
+        eurN4.push(d.n4); eurIngressi.push(d.ingressi); eurAbbonamenti.push(d.abbonamenti); eurAccessori.push(d.accessori);
+    });
+    if (ch['chartIncCategoryTrend']) ch['chartIncCategoryTrend'].destroy();
+    const c2 = document.getElementById('chartIncCategoryTrend');
+    if (c2) {
+        ch['chartIncCategoryTrend'] = new Chart(c2, {
+            type: 'bar',
+            data: { labels: monthLabelsSeason, datasets: [
+                { label:'Corsi', data:eurN4, backgroundColor:'#b45309', stack:'eur' },
+                { label:'Ingressi', data:eurIngressi, backgroundColor:'#2563eb', stack:'eur' },
+                { label:'Abbonamenti', data:eurAbbonamenti, backgroundColor:'#7c3aed', stack:'eur' },
+                { label:'Accessori', data:eurAccessori, backgroundColor:'#ea580c', stack:'eur' }
+            ]},
+            options: { animation:false, responsive:true, maintainAspectRatio:false,
+                scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true, ticks:{callback:v=>fmtEUR(v)}} },
+                plugins: { legend:{display:true}, tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmtEUR(ctx.parsed.y)}`}} } }
+        });
+    }
+
+    // ===== Dettaglio Accessori per la stagione selezionata =====
+    const accSeasonSumX = {crediti:0,tessere:0,cuffie:0,noleggio:0,altro:0};
+    const accMonthlyAggX = {};
+    dataIncassi.forEach(d => {
+        if (getSeasonLabel(getSeasonStartYear(d.date)) !== selectedSeason) return;
+        const ym = d.date.slice(0,7);
+        if (!accMonthlyAggX[ym]) accMonthlyAggX[ym] = {crediti:0,tessere:0,cuffie:0,noleggio:0,altro:0};
+        accMonthlyAggX[ym].crediti += d.acc_crediti||0; accMonthlyAggX[ym].tessere += d.acc_tessere||0;
+        accMonthlyAggX[ym].cuffie += d.acc_cuffie||0; accMonthlyAggX[ym].noleggio += d.acc_noleggio||0; accMonthlyAggX[ym].altro += d.acc_altro||0;
+        accSeasonSumX.crediti += d.acc_crediti||0; accSeasonSumX.tessere += d.acc_tessere||0;
+        accSeasonSumX.cuffie += d.acc_cuffie||0; accSeasonSumX.noleggio += d.acc_noleggio||0; accSeasonSumX.altro += d.acc_altro||0;
+    });
+    const accTotX = accSeasonSumX.crediti+accSeasonSumX.tessere+accSeasonSumX.cuffie+accSeasonSumX.noleggio+accSeasonSumX.altro;
+    const accPctX = v => accTotX>0 ? `${((v/accTotX)*100).toFixed(1)}% del totale` : '-';
+    document.getElementById('inc-acc-stats-crediti-val').innerText = fmtEUR(accSeasonSumX.crediti);
+    document.getElementById('inc-acc-stats-crediti-sub').innerText = accPctX(accSeasonSumX.crediti);
+    document.getElementById('inc-acc-stats-tessere-val').innerText = fmtEUR(accSeasonSumX.tessere);
+    document.getElementById('inc-acc-stats-tessere-sub').innerText = accPctX(accSeasonSumX.tessere);
+    document.getElementById('inc-acc-stats-cuffie-val').innerText = fmtEUR(accSeasonSumX.cuffie);
+    document.getElementById('inc-acc-stats-cuffie-sub').innerText = accPctX(accSeasonSumX.cuffie);
+    document.getElementById('inc-acc-stats-noleggio-val').innerText = fmtEUR(accSeasonSumX.noleggio);
+    document.getElementById('inc-acc-stats-noleggio-sub').innerText = accPctX(accSeasonSumX.noleggio);
+    document.getElementById('inc-acc-stats-altro-val').innerText = fmtEUR(accSeasonSumX.altro);
+    document.getElementById('inc-acc-stats-altro-sub').innerText = accPctX(accSeasonSumX.altro);
+
+    if (ch['chartIncAccessoriMix']) ch['chartIncAccessoriMix'].destroy();
+    const cAccMix = document.getElementById('chartIncAccessoriMix');
+    if (cAccMix) {
+        ch['chartIncAccessoriMix'] = new Chart(cAccMix, {
+            type: 'doughnut',
+            data: { labels:['Crediti','Tessere','Cuffie','Noleggio','Altro'],
+                datasets:[{ data:[accSeasonSumX.crediti,accSeasonSumX.tessere,accSeasonSumX.cuffie,accSeasonSumX.noleggio,accSeasonSumX.altro],
+                    backgroundColor:['#7c3aed','#2563eb','#16a34a','#ea580c','#64748b'] }] },
+            options: { animation:false, responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right'}} }
+        });
+    }
+    if (ch['chartIncAccessoriTrend']) ch['chartIncAccessoriTrend'].destroy();
+    const cAccTrend = document.getElementById('chartIncAccessoriTrend');
+    if (cAccTrend) {
+        ch['chartIncAccessoriTrend'] = new Chart(cAccTrend, {
+            type: 'bar',
+            data: { labels: monthLabelsSeason, datasets: [
+                { label:'Crediti', data: orderedMonthKeys.map(m=>accMonthlyAggX[m]?accMonthlyAggX[m].crediti:0), backgroundColor:'#7c3aed', stack:'acc' },
+                { label:'Tessere', data: orderedMonthKeys.map(m=>accMonthlyAggX[m]?accMonthlyAggX[m].tessere:0), backgroundColor:'#2563eb', stack:'acc' },
+                { label:'Cuffie', data: orderedMonthKeys.map(m=>accMonthlyAggX[m]?accMonthlyAggX[m].cuffie:0), backgroundColor:'#16a34a', stack:'acc' },
+                { label:'Noleggio', data: orderedMonthKeys.map(m=>accMonthlyAggX[m]?accMonthlyAggX[m].noleggio:0), backgroundColor:'#ea580c', stack:'acc' },
+                { label:'Altro', data: orderedMonthKeys.map(m=>accMonthlyAggX[m]?accMonthlyAggX[m].altro:0), backgroundColor:'#64748b', stack:'acc' }
+            ]},
+            options: { animation:false, responsive:true, maintainAspectRatio:false,
+                scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true} },
+                plugins: { legend:{display:true} } }
+        });
+    }
+};
+
+// ============ INCASSI: Statistiche (confronto tra stagioni) ============
+function renderIncassiStats() {
+    if (!isChartReady() || !dataIncassi || dataIncassi.length === 0) return;
     const sumByYearMonth = {};
     dataIncassi.forEach(d => {
         const ym = d.date.slice(0,7);
         sumByYearMonth[ym] = (sumByYearMonth[ym] || 0) + (d.incasso_totale || 0);
     });
-
-    // ===== Grafico Stagionalità — Confronto tra Stagioni (Set-Ago) =====
     const allSeasonsForChart = [...new Set(dataIncassi.map(d => getSeasonLabel(getSeasonStartYear(d.date))))].sort();
     const monthOrderSeason = [9,10,11,12,1,2,3,4,5,6,7,8];
     const monthLabelsSeason = ['Set','Ott','Nov','Dic','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago'];
@@ -2645,189 +2946,6 @@ function renderIncassiStats() {
             options: { animation:false, responsive:true, maintainAspectRatio:false,
                 plugins: { legend: { display: true } },
                 scales: { y: { beginAtZero: true } } }
-        });
-    }
-
-    // ===== Trend Stagione in Corso (season-to-date) =====
-    const lastDate = sorted[sorted.length-1].date;
-    const currSeasonStart = getSeasonStartYear(lastDate);
-    const currSeasonLabel = getSeasonLabel(currSeasonStart);
-    const prevSeasonLabel = getSeasonLabel(currSeasonStart - 1);
-    // giorni trascorsi dall'inizio della stagione corrente fino all'ultima data disponibile
-    const seasonStartDate = `${currSeasonStart}-09-01`;
-    const daysElapsedInSeason = Math.floor((new Date(lastDate) - new Date(seasonStartDate)) / 86400000) + 1;
-    const prevSeasonStartDate = `${currSeasonStart-1}-09-01`;
-    const prevSeasonCutoffDate = new Date(prevSeasonStartDate); prevSeasonCutoffDate.setDate(prevSeasonCutoffDate.getDate() + daysElapsedInSeason - 1);
-    const prevSeasonCutoffStr = fmtDateISO(prevSeasonCutoffDate);
-
-    let sumCurrSeason = 0, sumPrevSeasonToDate = 0;
-    dataIncassi.forEach(d => {
-        const s = getSeasonLabel(getSeasonStartYear(d.date));
-        if (s === currSeasonLabel) sumCurrSeason += d.incasso_totale || 0;
-        if (s === prevSeasonLabel && d.date <= prevSeasonCutoffStr) sumPrevSeasonToDate += d.incasso_totale || 0;
-    });
-    document.getElementById('inc-stats-season-val').innerText = fmtEUR(sumCurrSeason);
-    if (sumPrevSeasonToDate > 0) {
-        const delta = ((sumCurrSeason - sumPrevSeasonToDate)/sumPrevSeasonToDate)*100; const sign = delta>=0?'+':''; const col = delta>=0?'#16a34a':'#dc2626'; const arr = delta>=0?'▲':'▼';
-        document.getElementById('inc-stats-season-sub').innerHTML = `<span style="color:${col}">${arr} ${sign}${delta.toFixed(1)}%</span> vs Stagione ${prevSeasonLabel} (stesso periodo)`;
-    } else {
-        document.getElementById('inc-stats-season-sub').innerText = `Stagione ${currSeasonLabel} in corso`;
-    }
-
-    // ===== Proiezione Fine Stagione (31 agosto) basata su media storica per giorno della settimana =====
-    const currSeasonDays = dataIncassi.filter(d => getSeasonLabel(getSeasonStartYear(d.date)) === currSeasonLabel);
-    const seasonEndDate = `${currSeasonStart+1}-08-31`;
-    const histForForecast = dataIncassi.filter(d => getSeasonLabel(getSeasonStartYear(d.date)) !== currSeasonLabel);
-    const weekdaySumsF = new Array(7).fill(0), weekdayCountF = new Array(7).fill(0);
-    histForForecast.forEach(d => {
-        if (!(d.incasso_totale > 0)) return;
-        const wd = new Date(d.date+'T00:00:00').getDay();
-        weekdaySumsF[wd] += d.incasso_totale; weekdayCountF[wd]++;
-    });
-    const weekdayAvgF = weekdaySumsF.map((sum, wd) => weekdayCountF[wd] > 0 ? sum / weekdayCountF[wd] : null);
-
-    let estimatedRemaining = 0, hasHistoricalBasis = true;
-    const overallAvg = sumCurrSeason / Math.max(daysElapsedInSeason, 1);
-    let cursor = new Date(lastDate+'T00:00:00'); cursor.setDate(cursor.getDate()+1);
-    const endD = new Date(seasonEndDate+'T00:00:00');
-    while (cursor <= endD) {
-        const wd = cursor.getDay();
-        if (weekdayAvgF[wd] !== null) estimatedRemaining += weekdayAvgF[wd];
-        else { hasHistoricalBasis = false; estimatedRemaining += overallAvg; }
-        cursor.setDate(cursor.getDate()+1);
-    }
-    const forecastTotal = sumCurrSeason + estimatedRemaining;
-    document.getElementById('inc-stats-record-val').innerText = fmtEUR(forecastTotal);
-    const basisLabel = hasHistoricalBasis ? 'su trend storico' : 'su trend storico (parziale)';
-    document.getElementById('inc-stats-record-sub').innerText = `entro il 31 agosto (${basisLabel})`;
-
-    // ===== Media per Giorno Aperto (stagione corrente) =====
-    const openDaysCount = currSeasonDays.filter(d => (d.incasso_totale||0) > 0).length;
-    if (openDaysCount > 0) {
-        document.getElementById('inc-stats-min-val').innerText = fmtEUR(sumCurrSeason / openDaysCount);
-        document.getElementById('inc-stats-min-sub').innerText = `su ${openDaysCount} giorni aperti`;
-    }
-
-    // ===== Miglior Giorno della Settimana (media su tutto lo storico) =====
-    const weekdaySum = [0,0,0,0,0,0,0], weekdayCount = [0,0,0,0,0,0,0];
-    dataIncassi.forEach(d => {
-        if (!(d.incasso_totale > 0)) return;
-        const wd = new Date(d.date+'T00:00:00').getDay(); // 0=Dom..6=Sab
-        weekdaySum[wd] += d.incasso_totale; weekdayCount[wd]++;
-    });
-    const weekdayNames = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
-    let bestWd = -1, bestAvg = -1;
-    for (let i=0;i<7;i++) { if (weekdayCount[i]>0) { const avg = weekdaySum[i]/weekdayCount[i]; if (avg>bestAvg) { bestAvg=avg; bestWd=i; } } }
-    if (bestWd >= 0) {
-        document.getElementById('inc-stats-bestday-val').innerText = weekdayNames[bestWd];
-        document.getElementById('inc-stats-bestday-sub').innerText = `Media ${fmtEUR(bestAvg)} (${weekdayCount[bestWd]} giorni)`;
-    }
-
-    // ===== Andamento Incasso Giornaliero (stagione in corso, Set-Ago) =====
-    const seasonDaysSorted = [...currSeasonDays].sort((a,b) => a.date < b.date ? -1 : 1);
-
-    if (ch['chartIncTrend']) ch['chartIncTrend'].destroy();
-    const c1 = document.getElementById('chartIncTrend');
-    if (c1) {
-        ch['chartIncTrend'] = new Chart(c1, {
-            type: 'bar',
-            data: {
-                labels: seasonDaysSorted.map(d => d.date.split('-').reverse().slice(0,2).join('/')),
-                datasets: [{ label: 'Incasso Giornaliero (€)', data: seasonDaysSorted.map(d => d.incasso_totale || 0), backgroundColor: '#16a34a' }]
-            },
-            options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-    }
-
-    // Composizione Corsi/Ingressi/Abbonamenti/Accessori — SOLO stagione in corso, ordine Set-Ago (valori assoluti in €)
-    const monthlyAgg = {};
-    dataIncassi.forEach(d => {
-        const ym = d.date.slice(0,7);
-        if (!monthlyAgg[ym]) monthlyAgg[ym] = { n4:0, ingressi:0, abbonamenti:0, accessori:0 };
-        monthlyAgg[ym].n4 += d.corsi_n4_tot||0;
-        monthlyAgg[ym].ingressi += d.ingressi_tot||0;
-        monthlyAgg[ym].abbonamenti += d.abbonamenti_tot||0;
-        monthlyAgg[ym].accessori += d.accessori_tot||0;
-    });
-    const months = monthOrderSeason.map(m => `${m >= 9 ? currSeasonStart : currSeasonStart + 1}-${String(m).padStart(2,'0')}`);
-    const labels = monthLabelsSeason;
-    const eurN4=[], eurIngressi=[], eurAbbonamenti=[], eurAccessori=[];
-    months.forEach(m => {
-        const d = monthlyAgg[m] || { n4:0, ingressi:0, abbonamenti:0, accessori:0 };
-        eurN4.push(d.n4); eurIngressi.push(d.ingressi); eurAbbonamenti.push(d.abbonamenti); eurAccessori.push(d.accessori);
-    });
-    if (ch['chartIncCategoryTrend']) ch['chartIncCategoryTrend'].destroy();
-    const c2 = document.getElementById('chartIncCategoryTrend');
-    if (c2) {
-        ch['chartIncCategoryTrend'] = new Chart(c2, {
-            type: 'bar',
-            data: { labels, datasets: [
-                { label: 'Corsi', data: eurN4, backgroundColor: '#b45309', stack:'eur' },
-                { label: 'Ingressi', data: eurIngressi, backgroundColor: '#2563eb', stack:'eur' },
-                { label: 'Abbonamenti', data: eurAbbonamenti, backgroundColor: '#7c3aed', stack:'eur' },
-                { label: 'Accessori', data: eurAccessori, backgroundColor: '#ea580c', stack:'eur' }
-            ]},
-            options: { animation:false, responsive:true, maintainAspectRatio:false,
-                scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true, ticks:{callback:v=>fmtEUR(v)}} },
-                plugins: { legend:{display:true}, tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${fmtEUR(ctx.parsed.y)}`}} } }
-        });
-    }
-
-    // ===== Dettaglio Accessori: KPI stagione + composizione + trend mensile =====
-    const accSeasonSum = { crediti:0, tessere:0, cuffie:0, noleggio:0, altro:0 };
-    const accMonthlyAgg = {};
-    dataIncassi.forEach(d => {
-        const ym = d.date.slice(0,7);
-        if (!accMonthlyAgg[ym]) accMonthlyAgg[ym] = { crediti:0, tessere:0, cuffie:0, noleggio:0, altro:0 };
-        accMonthlyAgg[ym].crediti += d.acc_crediti||0; accMonthlyAgg[ym].tessere += d.acc_tessere||0;
-        accMonthlyAgg[ym].cuffie += d.acc_cuffie||0; accMonthlyAgg[ym].noleggio += d.acc_noleggio||0; accMonthlyAgg[ym].altro += d.acc_altro||0;
-        if (getSeasonLabel(getSeasonStartYear(d.date)) === currSeasonLabel) {
-            accSeasonSum.crediti += d.acc_crediti||0; accSeasonSum.tessere += d.acc_tessere||0;
-            accSeasonSum.cuffie += d.acc_cuffie||0; accSeasonSum.noleggio += d.acc_noleggio||0; accSeasonSum.altro += d.acc_altro||0;
-        }
-    });
-    const accSeasonTot = accSeasonSum.crediti + accSeasonSum.tessere + accSeasonSum.cuffie + accSeasonSum.noleggio + accSeasonSum.altro;
-    const accPct = (v) => accSeasonTot > 0 ? `${((v/accSeasonTot)*100).toFixed(1)}% del totale` : '-';
-    document.getElementById('inc-acc-stats-crediti-val').innerText = fmtEUR(accSeasonSum.crediti);
-    document.getElementById('inc-acc-stats-crediti-sub').innerText = accPct(accSeasonSum.crediti);
-    document.getElementById('inc-acc-stats-tessere-val').innerText = fmtEUR(accSeasonSum.tessere);
-    document.getElementById('inc-acc-stats-tessere-sub').innerText = accPct(accSeasonSum.tessere);
-    document.getElementById('inc-acc-stats-cuffie-val').innerText = fmtEUR(accSeasonSum.cuffie);
-    document.getElementById('inc-acc-stats-cuffie-sub').innerText = accPct(accSeasonSum.cuffie);
-    document.getElementById('inc-acc-stats-noleggio-val').innerText = fmtEUR(accSeasonSum.noleggio);
-    document.getElementById('inc-acc-stats-noleggio-sub').innerText = accPct(accSeasonSum.noleggio);
-    document.getElementById('inc-acc-stats-altro-val').innerText = fmtEUR(accSeasonSum.altro);
-    document.getElementById('inc-acc-stats-altro-sub').innerText = accPct(accSeasonSum.altro);
-
-    if (ch['chartIncAccessoriMix']) ch['chartIncAccessoriMix'].destroy();
-    const cAccMix = document.getElementById('chartIncAccessoriMix');
-    if (cAccMix) {
-        ch['chartIncAccessoriMix'] = new Chart(cAccMix, {
-            type: 'doughnut',
-            data: {
-                labels: ['Crediti','Tessere','Cuffie','Noleggio','Altro'],
-                datasets: [{ data: [accSeasonSum.crediti, accSeasonSum.tessere, accSeasonSum.cuffie, accSeasonSum.noleggio, accSeasonSum.altro],
-                    backgroundColor: ['#7c3aed','#2563eb','#16a34a','#ea580c','#64748b'] }]
-            },
-            options: { animation:false, responsive:true, maintainAspectRatio:false, plugins: { legend: { position: 'right' } } }
-        });
-    }
-
-    if (ch['chartIncAccessoriTrend']) ch['chartIncAccessoriTrend'].destroy();
-    const cAccTrend = document.getElementById('chartIncAccessoriTrend');
-    if (cAccTrend) {
-        ch['chartIncAccessoriTrend'] = new Chart(cAccTrend, {
-            type: 'bar',
-            data: { labels, datasets: [
-                { label: 'Crediti', data: months.map(m => accMonthlyAgg[m] ? accMonthlyAgg[m].crediti : 0), backgroundColor: '#7c3aed', stack:'acc' },
-                { label: 'Tessere', data: months.map(m => accMonthlyAgg[m] ? accMonthlyAgg[m].tessere : 0), backgroundColor: '#2563eb', stack:'acc' },
-                { label: 'Cuffie', data: months.map(m => accMonthlyAgg[m] ? accMonthlyAgg[m].cuffie : 0), backgroundColor: '#16a34a', stack:'acc' },
-                { label: 'Noleggio', data: months.map(m => accMonthlyAgg[m] ? accMonthlyAgg[m].noleggio : 0), backgroundColor: '#ea580c', stack:'acc' },
-                { label: 'Altro', data: months.map(m => accMonthlyAgg[m] ? accMonthlyAgg[m].altro : 0), backgroundColor: '#64748b', stack:'acc' }
-            ]},
-            options: { animation:false, responsive:true, maintainAspectRatio:false,
-                scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true} },
-                plugins: { legend:{display:true} } }
         });
     }
 }
