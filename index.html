@@ -998,6 +998,19 @@
                 <select id="inc-season-detail-selector" class="filter-select" style="font-weight:700" onchange="renderIncassiSeasonDetail()"></select>
             </div>
 
+            <div class="kpi-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 25px;">
+                <div class="kpi-card glass-card" style="border-left: 4px solid #dc2626">
+                    <div class="kpi-head">📊 Media per Giorno Aperto</div>
+                    <div class="kpi-val kpi-val-money" id="sd-avg-open-val">-</div>
+                    <div class="kpi-sub" id="sd-avg-open-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #ea580c">
+                    <div class="kpi-head">📅 Miglior Giorno Settimana</div>
+                    <div class="kpi-val kpi-val-money" id="sd-bestday-val">-</div>
+                    <div class="kpi-sub" id="sd-bestday-sub">-</div>
+                </div>
+            </div>
+
             <div class="table-wrap glass-card" style="margin-bottom:30px">
                 <div style="overflow-x:auto;">
                     <table id="table-season-detail-monthly">
@@ -1065,9 +1078,36 @@
         <!-- Incassi Sub-View: Statistiche (confronto tra stagioni) -->
         <div id="sub-inc-stats" class="hidden">
             <h3 style="margin:0 0 15px; font-size:1.1rem; color:var(--text-main)">📊 Confronto tra Stagioni</h3>
-            <div class="chart-card glass-card" style="height:400px; padding:15px">
-                <div class="chart-header" style="font-size:0.85rem">Stagionalità — Tutte le Stagioni a Confronto</div>
+            <div class="chart-card glass-card" style="height:380px; padding:15px; margin-bottom:20px">
+                <div class="chart-header" style="font-size:0.85rem">💰 Incasso Totale — Tutte le Stagioni a Confronto</div>
                 <div class="chart-wrapper"><canvas id="chartIncYearCompare"></canvas></div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px">
+                <div class="chart-card glass-card" style="height:340px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem">📚 Corsi — Confronto tra Stagioni</div>
+                    <div class="chart-wrapper"><canvas id="chartIncYearCompareCorsi"></canvas></div>
+                </div>
+                <div class="chart-card glass-card" style="height:340px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem">🧾 Totale Parte IVA — Confronto tra Stagioni</div>
+                    <div class="chart-wrapper"><canvas id="chartIncYearCompareIva"></canvas></div>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px">
+                <div class="chart-card glass-card" style="height:340px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem">🎫 Ingressi — Confronto tra Stagioni</div>
+                    <div class="chart-wrapper"><canvas id="chartIncYearCompareIngressi"></canvas></div>
+                </div>
+                <div class="chart-card glass-card" style="height:340px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem">🎟️ Abbonamenti — Confronto tra Stagioni</div>
+                    <div class="chart-wrapper"><canvas id="chartIncYearCompareAbbonamenti"></canvas></div>
+                </div>
+            </div>
+
+            <div class="chart-card glass-card" style="height:340px; padding:15px">
+                <div class="chart-header" style="font-size:0.85rem">🛍️ Accessori — Confronto tra Stagioni</div>
+                <div class="chart-wrapper"><canvas id="chartIncYearCompareAccessori"></canvas></div>
             </div>
         </div>
 
@@ -2787,6 +2827,33 @@ window.renderIncassiSeasonDetail = () => {
     const monthLabelsSeason = ['Set','Ott','Nov','Dic','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago'];
     const orderedMonthKeys = monthOrderSeason.map(m => `${m>=9?seasonStartY:seasonStartY+1}-${String(m).padStart(2,'0')}`);
 
+    // ===== Media per Giorno Aperto e Miglior Giorno Settimana (stagione selezionata) =====
+    const seasonDaysForSel = dataIncassi.filter(d => getSeasonLabel(getSeasonStartYear(d.date)) === selectedSeason);
+    const openDaysSel = seasonDaysForSel.filter(d => (d.incasso_totale||0) > 0);
+    const sumSeasonSel = seasonDaysForSel.reduce((s,d)=>s+(d.incasso_totale||0),0);
+    if (openDaysSel.length > 0) {
+        document.getElementById('sd-avg-open-val').innerText = fmtEUR(sumSeasonSel / openDaysSel.length);
+        document.getElementById('sd-avg-open-sub').innerText = `su ${openDaysSel.length} giorni aperti`;
+    } else {
+        document.getElementById('sd-avg-open-val').innerText = '-';
+        document.getElementById('sd-avg-open-sub').innerText = 'Nessun dato';
+    }
+    const wkSumSel = [0,0,0,0,0,0,0], wkCountSel = [0,0,0,0,0,0,0];
+    openDaysSel.forEach(d => {
+        const wd = new Date(d.date+'T00:00:00').getDay();
+        wkSumSel[wd] += d.incasso_totale; wkCountSel[wd]++;
+    });
+    const weekdayNamesSel = ['Domenica','Luned\u00ec','Marted\u00ec','Mercoled\u00ec','Gioved\u00ec','Venerd\u00ec','Sabato'];
+    let bestWdSel = -1, bestAvgSel = -1;
+    for (let i=0;i<7;i++) { if (wkCountSel[i]>0) { const avg = wkSumSel[i]/wkCountSel[i]; if (avg>bestAvgSel) { bestAvgSel=avg; bestWdSel=i; } } }
+    if (bestWdSel >= 0) {
+        document.getElementById('sd-bestday-val').innerText = weekdayNamesSel[bestWdSel];
+        document.getElementById('sd-bestday-sub').innerText = `Media ${fmtEUR(bestAvgSel)} (${wkCountSel[bestWdSel]} giorni)`;
+    } else {
+        document.getElementById('sd-bestday-val').innerText = '-';
+        document.getElementById('sd-bestday-sub').innerText = 'Nessun dato';
+    }
+
     // ===== Tabella mensile per la stagione selezionata =====
     const agg = aggregateRiepilogoIncassi(selectedSeason);
     const aggAll = aggregateRiepilogoIncassi('all');
@@ -2917,37 +2984,56 @@ window.renderIncassiSeasonDetail = () => {
 // ============ INCASSI: Statistiche (confronto tra stagioni) ============
 function renderIncassiStats() {
     if (!isChartReady() || !dataIncassi || dataIncassi.length === 0) return;
-    const sumByYearMonth = {};
+
+    // Aggregazione mensile per categoria: "YYYY-MM" -> {tot, n4, ingressi, abbonamenti, accessori}
+    const catSumByYearMonth = {};
     dataIncassi.forEach(d => {
         const ym = d.date.slice(0,7);
-        sumByYearMonth[ym] = (sumByYearMonth[ym] || 0) + (d.incasso_totale || 0);
+        if (!catSumByYearMonth[ym]) catSumByYearMonth[ym] = { tot:0, n4:0, ingressi:0, abbonamenti:0, accessori:0 };
+        catSumByYearMonth[ym].tot += d.incasso_totale || 0;
+        catSumByYearMonth[ym].n4 += d.corsi_n4_tot || 0;
+        catSumByYearMonth[ym].ingressi += d.ingressi_tot || 0;
+        catSumByYearMonth[ym].abbonamenti += d.abbonamenti_tot || 0;
+        catSumByYearMonth[ym].accessori += d.accessori_tot || 0;
     });
+
     const allSeasonsForChart = [...new Set(dataIncassi.map(d => getSeasonLabel(getSeasonStartYear(d.date))))].sort();
     const monthOrderSeason = [9,10,11,12,1,2,3,4,5,6,7,8];
     const monthLabelsSeason = ['Set','Ott','Nov','Dic','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago'];
     const yearColors = ['#94a3b8','#2563eb','#16a34a','#ea580c','#7c3aed','#dc2626'];
-    const yearDatasets = allSeasonsForChart.map((seasonLbl, idx) => {
-        const seasonStartY = parseInt(seasonLbl.split('/')[0], 10);
-        return {
-            label: 'Stagione ' + seasonLbl,
-            data: monthOrderSeason.map(m => {
-                const y = m >= 9 ? seasonStartY : seasonStartY + 1;
-                return sumByYearMonth[`${y}-${String(m).padStart(2,'0')}`] || null;
-            }),
-            backgroundColor: yearColors[idx % yearColors.length]
-        };
-    });
-    if (ch['chartIncYearCompare']) ch['chartIncYearCompare'].destroy();
-    const cYear = document.getElementById('chartIncYearCompare');
-    if (cYear) {
-        ch['chartIncYearCompare'] = new Chart(cYear, {
-            type: 'bar',
-            data: { labels: monthLabelsSeason, datasets: yearDatasets },
-            options: { animation:false, responsive:true, maintainAspectRatio:false,
-                plugins: { legend: { display: true } },
-                scales: { y: { beginAtZero: true } } }
+
+    function buildSeasonCompareChart(canvasId, metricFn) {
+        const yearDatasets = allSeasonsForChart.map((seasonLbl, idx) => {
+            const seasonStartY = parseInt(seasonLbl.split('/')[0], 10);
+            return {
+                label: 'Stagione ' + seasonLbl,
+                data: monthOrderSeason.map(m => {
+                    const y = m >= 9 ? seasonStartY : seasonStartY + 1;
+                    const rec = catSumByYearMonth[`${y}-${String(m).padStart(2,'0')}`];
+                    return rec ? metricFn(rec) : null;
+                }),
+                backgroundColor: yearColors[idx % yearColors.length]
+            };
         });
+        if (ch[canvasId]) ch[canvasId].destroy();
+        const canvas = document.getElementById(canvasId);
+        if (canvas) {
+            ch[canvasId] = new Chart(canvas, {
+                type: 'bar',
+                data: { labels: monthLabelsSeason, datasets: yearDatasets },
+                options: { animation:false, responsive:true, maintainAspectRatio:false,
+                    plugins: { legend: { display: true }, tooltip: { callbacks: { label:(ctx)=>`${ctx.dataset.label}: ${fmtEUR(ctx.parsed.y)}` } } },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v=>fmtEUR(v) } } } }
+            });
+        }
     }
+
+    buildSeasonCompareChart('chartIncYearCompare', r => r.tot);
+    buildSeasonCompareChart('chartIncYearCompareCorsi', r => r.n4);
+    buildSeasonCompareChart('chartIncYearCompareIva', r => r.ingressi + r.abbonamenti + r.accessori);
+    buildSeasonCompareChart('chartIncYearCompareIngressi', r => r.ingressi);
+    buildSeasonCompareChart('chartIncYearCompareAbbonamenti', r => r.abbonamenti);
+    buildSeasonCompareChart('chartIncYearCompareAccessori', r => r.accessori);
 }
 
 // ============ INCASSI: Settimanale ============
