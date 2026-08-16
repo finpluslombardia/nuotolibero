@@ -998,7 +998,12 @@
                 <select id="inc-season-detail-selector" class="filter-select" style="font-weight:700" onchange="renderIncassiSeasonDetail()"></select>
             </div>
 
-            <div class="kpi-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 25px;">
+            <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 25px;">
+                <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
+                    <div class="kpi-head">💰 Incasso Stagione</div>
+                    <div class="kpi-val kpi-val-money" id="sd-season-tot-val">-</div>
+                    <div class="kpi-sub" id="sd-season-tot-sub">-</div>
+                </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #dc2626">
                     <div class="kpi-head">📊 Media per Giorno Aperto</div>
                     <div class="kpi-val kpi-val-money" id="sd-avg-open-val">-</div>
@@ -1009,6 +1014,11 @@
                     <div class="kpi-val kpi-val-money" id="sd-bestday-val">-</div>
                     <div class="kpi-sub" id="sd-bestday-sub">-</div>
                 </div>
+            </div>
+
+            <div class="chart-card glass-card" style="height:360px; padding:15px; margin-bottom:30px">
+                <div class="chart-header" style="font-size:0.85rem">📊 Confronto Mensile — Ultime 4 Stagioni</div>
+                <div class="chart-wrapper"><canvas id="chartSeasonDetailLast4"></canvas></div>
             </div>
 
             <div class="table-wrap glass-card" style="margin-bottom:30px">
@@ -1073,6 +1083,11 @@
                     <div class="chart-wrapper"><canvas id="chartIncAccessoriTrend"></canvas></div>
                 </div>
             </div>
+
+            <div class="chart-card glass-card" style="height:360px; padding:15px; margin-top:30px">
+                <div class="chart-header" style="font-size:0.85rem">📈 Andamento Incasso Giornaliero</div>
+                <div class="chart-wrapper"><canvas id="chartSeasonDetailDaily"></canvas></div>
+            </div>
         </div>
 
         <!-- Incassi Sub-View: Statistiche (confronto tra stagioni) -->
@@ -1105,9 +1120,15 @@
                 </div>
             </div>
 
-            <div class="chart-card glass-card" style="height:340px; padding:15px">
-                <div class="chart-header" style="font-size:0.85rem">🛍️ Accessori — Confronto tra Stagioni</div>
-                <div class="chart-wrapper"><canvas id="chartIncYearCompareAccessori"></canvas></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px">
+                <div class="chart-card glass-card" style="height:340px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem">🛍️ Accessori — Confronto tra Stagioni</div>
+                    <div class="chart-wrapper"><canvas id="chartIncYearCompareAccessori"></canvas></div>
+                </div>
+                <div class="chart-card glass-card" style="height:340px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem">💳 Crediti — Confronto tra Stagioni</div>
+                    <div class="chart-wrapper"><canvas id="chartIncYearCompareCrediti"></canvas></div>
+                </div>
             </div>
         </div>
 
@@ -2827,6 +2848,31 @@ window.renderIncassiSeasonDetail = () => {
     const monthLabelsSeason = ['Set','Ott','Nov','Dic','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago'];
     const orderedMonthKeys = monthOrderSeason.map(m => `${m>=9?seasonStartY:seasonStartY+1}-${String(m).padStart(2,'0')}`);
 
+    // ===== Incasso Stagione (selezionata) vs stessi giorni della stagione precedente =====
+    const yoySD = (c, p) => { if (!p) return ''; const delta = ((c-p)/p)*100; const sign = delta>=0?'+':''; const col = delta>=0?'#16a34a':'#dc2626'; const arr = delta>=0?'\u25b2':'\u25bc'; return `<span style="color:${col}">${arr} ${sign}${delta.toFixed(1)}%</span>`; };
+    const selSeasonStartDate = `${seasonStartY}-09-01`;
+    const todaySD = new Date();
+    const todayStrSD = fmtDateISO(todaySD);
+    const isCurrentSeasonSelected = (getSeasonLabel(getSeasonStartYear(todayStrSD)) === selectedSeason);
+    const cutoffStrSD = isCurrentSeasonSelected ? todayStrSD : `${seasonStartY+1}-08-31`;
+    const daysElapsedSD = Math.max(Math.floor((new Date(cutoffStrSD) - new Date(selSeasonStartDate)) / 86400000) + 1, 1);
+
+    const prevSeasonLabelSD = getSeasonLabel(seasonStartY - 1);
+    const prevSeasonStartDateSD = `${seasonStartY-1}-09-01`;
+    const prevSeasonCutoffDateSD = new Date(prevSeasonStartDateSD); prevSeasonCutoffDateSD.setDate(prevSeasonCutoffDateSD.getDate() + daysElapsedSD - 1);
+    const prevSeasonCutoffStrSD = fmtDateISO(prevSeasonCutoffDateSD);
+
+    let sumSelSeasonToDate = 0, sumPrevSelSeasonToDate = 0;
+    dataIncassi.forEach(d => {
+        const s = getSeasonLabel(getSeasonStartYear(d.date));
+        if (s === selectedSeason && d.date <= cutoffStrSD) sumSelSeasonToDate += d.incasso_totale || 0;
+        if (s === prevSeasonLabelSD && d.date <= prevSeasonCutoffStrSD) sumPrevSelSeasonToDate += d.incasso_totale || 0;
+    });
+    document.getElementById('sd-season-tot-val').innerText = fmtEUR(sumSelSeasonToDate);
+    document.getElementById('sd-season-tot-sub').innerHTML = sumPrevSelSeasonToDate > 0
+        ? `${yoySD(sumSelSeasonToDate, sumPrevSelSeasonToDate)} vs Stagione ${prevSeasonLabelSD} (stessi giorni)`
+        : `Stagione ${selectedSeason}`;
+
     // ===== Media per Giorno Aperto e Miglior Giorno Settimana (stagione selezionata) =====
     const seasonDaysForSel = dataIncassi.filter(d => getSeasonLabel(getSeasonStartYear(d.date)) === selectedSeason);
     const openDaysSel = seasonDaysForSel.filter(d => (d.incasso_totale||0) > 0);
@@ -2852,6 +2898,38 @@ window.renderIncassiSeasonDetail = () => {
     } else {
         document.getElementById('sd-bestday-val').innerText = '-';
         document.getElementById('sd-bestday-sub').innerText = 'Nessun dato';
+    }
+
+    // ===== Confronto Mensile — Ultime 4 Stagioni (selezionata + 3 precedenti) =====
+    const sumByYearMonthSD = {};
+    dataIncassi.forEach(d => {
+        const ym = d.date.slice(0,7);
+        sumByYearMonthSD[ym] = (sumByYearMonthSD[ym] || 0) + (d.incasso_totale || 0);
+    });
+    const last4SeasonLabels = [3,2,1,0].map(offset => getSeasonLabel(seasonStartY - offset));
+    const last4Colors = ['#94a3b8','#2563eb','#16a34a','#7c3aed'];
+    const last4Datasets = last4SeasonLabels.map((seasonLbl, idx) => {
+        const sY = parseInt(seasonLbl.split('/')[0], 10);
+        const hasData = dataIncassi.some(d => getSeasonLabel(getSeasonStartYear(d.date)) === seasonLbl);
+        return hasData ? {
+            label: 'Stagione ' + seasonLbl,
+            data: monthOrderSeason.map(m => {
+                const y = m >= 9 ? sY : sY + 1;
+                return sumByYearMonthSD[`${y}-${String(m).padStart(2,'0')}`] || null;
+            }),
+            backgroundColor: last4Colors[idx]
+        } : null;
+    }).filter(ds => ds !== null);
+    if (ch['chartSeasonDetailLast4']) ch['chartSeasonDetailLast4'].destroy();
+    const cLast4 = document.getElementById('chartSeasonDetailLast4');
+    if (cLast4) {
+        ch['chartSeasonDetailLast4'] = new Chart(cLast4, {
+            type: 'bar',
+            data: { labels: monthLabelsSeason, datasets: last4Datasets },
+            options: { animation:false, responsive:true, maintainAspectRatio:false,
+                plugins: { legend: { display: true }, tooltip: { callbacks: { label:(ctx)=>`${ctx.dataset.label}: ${fmtEUR(ctx.parsed.y)}` } } },
+                scales: { y: { beginAtZero: true, ticks: { callback: v=>fmtEUR(v) } } } }
+        });
     }
 
     // ===== Tabella mensile per la stagione selezionata =====
@@ -2979,22 +3057,38 @@ window.renderIncassiSeasonDetail = () => {
                 plugins: { legend:{display:true} } }
         });
     }
+
+    // ===== Andamento Incasso Giornaliero: TUTTI i giorni della stagione selezionata =====
+    const selSeasonDaysAll = dataIncassi.filter(d => getSeasonLabel(getSeasonStartYear(d.date)) === selectedSeason).sort((a,b) => a.date < b.date ? -1 : 1);
+    if (ch['chartSeasonDetailDaily']) ch['chartSeasonDetailDaily'].destroy();
+    const cDaily = document.getElementById('chartSeasonDetailDaily');
+    if (cDaily) {
+        ch['chartSeasonDetailDaily'] = new Chart(cDaily, {
+            type: 'bar',
+            data: {
+                labels: selSeasonDaysAll.map(d => d.date.split('-').reverse().slice(0,2).join('/')),
+                datasets: [{ label: 'Incasso Giornaliero (\u20ac)', data: selSeasonDaysAll.map(d => d.incasso_totale || 0), backgroundColor: '#16a34a' }]
+            },
+            options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v=>fmtEUR(v) } } } }
+        });
+    }
 };
 
 // ============ INCASSI: Statistiche (confronto tra stagioni) ============
 function renderIncassiStats() {
     if (!isChartReady() || !dataIncassi || dataIncassi.length === 0) return;
 
-    // Aggregazione mensile per categoria: "YYYY-MM" -> {tot, n4, ingressi, abbonamenti, accessori}
+    // Aggregazione mensile per categoria: "YYYY-MM" -> {tot, n4, ingressi, abbonamenti, accessori, crediti}
     const catSumByYearMonth = {};
     dataIncassi.forEach(d => {
         const ym = d.date.slice(0,7);
-        if (!catSumByYearMonth[ym]) catSumByYearMonth[ym] = { tot:0, n4:0, ingressi:0, abbonamenti:0, accessori:0 };
+        if (!catSumByYearMonth[ym]) catSumByYearMonth[ym] = { tot:0, n4:0, ingressi:0, abbonamenti:0, accessori:0, crediti:0 };
         catSumByYearMonth[ym].tot += d.incasso_totale || 0;
         catSumByYearMonth[ym].n4 += d.corsi_n4_tot || 0;
         catSumByYearMonth[ym].ingressi += d.ingressi_tot || 0;
         catSumByYearMonth[ym].abbonamenti += d.abbonamenti_tot || 0;
         catSumByYearMonth[ym].accessori += d.accessori_tot || 0;
+        catSumByYearMonth[ym].crediti += d.acc_crediti || 0;
     });
 
     const allSeasonsForChart = [...new Set(dataIncassi.map(d => getSeasonLabel(getSeasonStartYear(d.date))))].sort();
@@ -3034,6 +3128,7 @@ function renderIncassiStats() {
     buildSeasonCompareChart('chartIncYearCompareIngressi', r => r.ingressi);
     buildSeasonCompareChart('chartIncYearCompareAbbonamenti', r => r.abbonamenti);
     buildSeasonCompareChart('chartIncYearCompareAccessori', r => r.accessori);
+    buildSeasonCompareChart('chartIncYearCompareCrediti', r => r.crediti);
 }
 
 // ============ INCASSI: Settimanale ============
