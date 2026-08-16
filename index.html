@@ -989,9 +989,48 @@
                 <div class="chart-header" style="font-size:0.85rem">📈 Andamento Incasso Giornaliero</div>
                 <div class="chart-wrapper"><canvas id="chartIncTrend"></canvas></div>
             </div>
-            <div class="chart-card glass-card" style="height:320px; padding:15px">
+            <div class="chart-card glass-card" style="height:320px; padding:15px; margin-bottom:20px">
                 <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori (mensile)</div>
                 <div class="chart-wrapper"><canvas id="chartIncCategoryTrend"></canvas></div>
+            </div>
+
+            <h3 style="margin:30px 0 15px; font-size:1.1rem; color:var(--text-main)">🛍️ Dettaglio Accessori — Stagione in Corso</h3>
+            <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 25px;">
+                <div class="kpi-card glass-card" style="border-left: 4px solid #7c3aed">
+                    <div class="kpi-head">💳 Crediti</div>
+                    <div class="kpi-val kpi-val-money" id="inc-acc-stats-crediti-val">-</div>
+                    <div class="kpi-sub" id="inc-acc-stats-crediti-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #2563eb">
+                    <div class="kpi-head">🪪 Tessere</div>
+                    <div class="kpi-val kpi-val-money" id="inc-acc-stats-tessere-val">-</div>
+                    <div class="kpi-sub" id="inc-acc-stats-tessere-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
+                    <div class="kpi-head">🏊 Cuffie</div>
+                    <div class="kpi-val kpi-val-money" id="inc-acc-stats-cuffie-val">-</div>
+                    <div class="kpi-sub" id="inc-acc-stats-cuffie-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #ea580c">
+                    <div class="kpi-head">🔑 Noleggio</div>
+                    <div class="kpi-val kpi-val-money" id="inc-acc-stats-noleggio-val">-</div>
+                    <div class="kpi-sub" id="inc-acc-stats-noleggio-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #64748b">
+                    <div class="kpi-head">📦 Altro</div>
+                    <div class="kpi-val kpi-val-money" id="inc-acc-stats-altro-val">-</div>
+                    <div class="kpi-sub" id="inc-acc-stats-altro-sub">-</div>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1.6fr; gap:20px">
+                <div class="chart-card glass-card" style="height:320px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem">🥧 Composizione Accessori (stagione)</div>
+                    <div class="chart-wrapper"><canvas id="chartIncAccessoriMix"></canvas></div>
+                </div>
+                <div class="chart-card glass-card" style="height:320px; padding:15px">
+                    <div class="chart-header" style="font-size:0.85rem">📊 Andamento Mensile Accessori</div>
+                    <div class="chart-wrapper"><canvas id="chartIncAccessoriTrend"></canvas></div>
+                </div>
             </div>
         </div>
 
@@ -2607,21 +2646,28 @@ function renderIncassiStats() {
     document.getElementById('inc-stats-multiyear-cards').innerHTML = cardsHtml || '<div style="color:#94a3b8; padding:10px">Nessun dato per questo mese</div>';
     document.getElementById('inc-stats-multiyear-cards').style.gridTemplateColumns = `repeat(${Math.min(yearsWithThisMonth.length||1, 5)}, 1fr)`;
 
-    // ===== Grafico Stagionalità — Confronto tra Anni =====
-    const allYears = [...new Set(dataIncassi.map(d => d.date.slice(0,4)))].sort();
-    const monthLabelsShort = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+    // ===== Grafico Stagionalità — Confronto tra Stagioni (Set-Ago) =====
+    const allSeasonsForChart = [...new Set(dataIncassi.map(d => getSeasonLabel(getSeasonStartYear(d.date))))].sort();
+    const monthOrderSeason = [9,10,11,12,1,2,3,4,5,6,7,8];
+    const monthLabelsSeason = ['Set','Ott','Nov','Dic','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago'];
     const yearColors = ['#94a3b8','#2563eb','#16a34a','#ea580c','#7c3aed','#dc2626'];
-    const yearDatasets = allYears.map((y, idx) => ({
-        label: y,
-        data: monthLabelsShort.map((_, mi) => sumByYearMonth[`${y}-${String(mi+1).padStart(2,'0')}`] || null),
-        backgroundColor: yearColors[idx % yearColors.length]
-    }));
+    const yearDatasets = allSeasonsForChart.map((seasonLbl, idx) => {
+        const seasonStartY = parseInt(seasonLbl.split('/')[0], 10);
+        return {
+            label: 'Stagione ' + seasonLbl,
+            data: monthOrderSeason.map(m => {
+                const y = m >= 9 ? seasonStartY : seasonStartY + 1;
+                return sumByYearMonth[`${y}-${String(m).padStart(2,'0')}`] || null;
+            }),
+            backgroundColor: yearColors[idx % yearColors.length]
+        };
+    });
     if (ch['chartIncYearCompare']) ch['chartIncYearCompare'].destroy();
     const cYear = document.getElementById('chartIncYearCompare');
     if (cYear) {
         ch['chartIncYearCompare'] = new Chart(cYear, {
             type: 'bar',
-            data: { labels: monthLabelsShort, datasets: yearDatasets },
+            data: { labels: monthLabelsSeason, datasets: yearDatasets },
             options: { animation:false, responsive:true, maintainAspectRatio:false,
                 plugins: { legend: { display: true } },
                 scales: { y: { beginAtZero: true } } }
@@ -2751,6 +2797,64 @@ function renderIncassiStats() {
             options: { animation:false, responsive:true, maintainAspectRatio:false,
                 scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true, max:100, ticks:{callback:v=>v+'%'}} },
                 plugins: { legend:{display:true}, tooltip:{callbacks:{label:(ctx)=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`}} } }
+        });
+    }
+
+    // ===== Dettaglio Accessori: KPI stagione + composizione + trend mensile =====
+    const accSeasonSum = { crediti:0, tessere:0, cuffie:0, noleggio:0, altro:0 };
+    const accMonthlyAgg = {};
+    dataIncassi.forEach(d => {
+        const ym = d.date.slice(0,7);
+        if (!accMonthlyAgg[ym]) accMonthlyAgg[ym] = { crediti:0, tessere:0, cuffie:0, noleggio:0, altro:0 };
+        accMonthlyAgg[ym].crediti += d.acc_crediti||0; accMonthlyAgg[ym].tessere += d.acc_tessere||0;
+        accMonthlyAgg[ym].cuffie += d.acc_cuffie||0; accMonthlyAgg[ym].noleggio += d.acc_noleggio||0; accMonthlyAgg[ym].altro += d.acc_altro||0;
+        if (getSeasonLabel(getSeasonStartYear(d.date)) === currSeasonLabel) {
+            accSeasonSum.crediti += d.acc_crediti||0; accSeasonSum.tessere += d.acc_tessere||0;
+            accSeasonSum.cuffie += d.acc_cuffie||0; accSeasonSum.noleggio += d.acc_noleggio||0; accSeasonSum.altro += d.acc_altro||0;
+        }
+    });
+    const accSeasonTot = accSeasonSum.crediti + accSeasonSum.tessere + accSeasonSum.cuffie + accSeasonSum.noleggio + accSeasonSum.altro;
+    const accPct = (v) => accSeasonTot > 0 ? `${((v/accSeasonTot)*100).toFixed(1)}% del totale` : '-';
+    document.getElementById('inc-acc-stats-crediti-val').innerText = fmtEUR(accSeasonSum.crediti);
+    document.getElementById('inc-acc-stats-crediti-sub').innerText = accPct(accSeasonSum.crediti);
+    document.getElementById('inc-acc-stats-tessere-val').innerText = fmtEUR(accSeasonSum.tessere);
+    document.getElementById('inc-acc-stats-tessere-sub').innerText = accPct(accSeasonSum.tessere);
+    document.getElementById('inc-acc-stats-cuffie-val').innerText = fmtEUR(accSeasonSum.cuffie);
+    document.getElementById('inc-acc-stats-cuffie-sub').innerText = accPct(accSeasonSum.cuffie);
+    document.getElementById('inc-acc-stats-noleggio-val').innerText = fmtEUR(accSeasonSum.noleggio);
+    document.getElementById('inc-acc-stats-noleggio-sub').innerText = accPct(accSeasonSum.noleggio);
+    document.getElementById('inc-acc-stats-altro-val').innerText = fmtEUR(accSeasonSum.altro);
+    document.getElementById('inc-acc-stats-altro-sub').innerText = accPct(accSeasonSum.altro);
+
+    if (ch['chartIncAccessoriMix']) ch['chartIncAccessoriMix'].destroy();
+    const cAccMix = document.getElementById('chartIncAccessoriMix');
+    if (cAccMix) {
+        ch['chartIncAccessoriMix'] = new Chart(cAccMix, {
+            type: 'doughnut',
+            data: {
+                labels: ['Crediti','Tessere','Cuffie','Noleggio','Altro'],
+                datasets: [{ data: [accSeasonSum.crediti, accSeasonSum.tessere, accSeasonSum.cuffie, accSeasonSum.noleggio, accSeasonSum.altro],
+                    backgroundColor: ['#7c3aed','#2563eb','#16a34a','#ea580c','#64748b'] }]
+            },
+            options: { animation:false, responsive:true, maintainAspectRatio:false, plugins: { legend: { position: 'right' } } }
+        });
+    }
+
+    if (ch['chartIncAccessoriTrend']) ch['chartIncAccessoriTrend'].destroy();
+    const cAccTrend = document.getElementById('chartIncAccessoriTrend');
+    if (cAccTrend) {
+        ch['chartIncAccessoriTrend'] = new Chart(cAccTrend, {
+            type: 'bar',
+            data: { labels, datasets: [
+                { label: 'Crediti', data: months.map(m => accMonthlyAgg[m] ? accMonthlyAgg[m].crediti : 0), backgroundColor: '#7c3aed', stack:'acc' },
+                { label: 'Tessere', data: months.map(m => accMonthlyAgg[m] ? accMonthlyAgg[m].tessere : 0), backgroundColor: '#2563eb', stack:'acc' },
+                { label: 'Cuffie', data: months.map(m => accMonthlyAgg[m] ? accMonthlyAgg[m].cuffie : 0), backgroundColor: '#16a34a', stack:'acc' },
+                { label: 'Noleggio', data: months.map(m => accMonthlyAgg[m] ? accMonthlyAgg[m].noleggio : 0), backgroundColor: '#ea580c', stack:'acc' },
+                { label: 'Altro', data: months.map(m => accMonthlyAgg[m] ? accMonthlyAgg[m].altro : 0), backgroundColor: '#64748b', stack:'acc' }
+            ]},
+            options: { animation:false, responsive:true, maintainAspectRatio:false,
+                scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true} },
+                plugins: { legend:{display:true} } }
         });
     }
 }
