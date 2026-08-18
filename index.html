@@ -901,7 +901,7 @@
                 <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📅 Confronto Mensile</h3>
                 <input type="month" id="inc-kpi-month-selector" class="filter-select" style="font-weight:700; background:rgba(255,255,255,0.8)" onchange="renderIncassi()">
             </div>
-            <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 25px;">
+            <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 25px;">
                 <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
                     <div class="kpi-head">💰 Incasso Totale</div>
                     <div class="kpi-val kpi-val-money" id="inc-kpi-tot-val">-</div>
@@ -912,6 +912,11 @@
                     <div class="kpi-head">📚 Corsi</div>
                     <div class="kpi-val kpi-val-money" id="inc-kpi-n4-val">-</div>
                     <div class="kpi-sub" id="inc-kpi-n4-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #a16207">
+                    <div class="kpi-head">🏅 Società Sportive</div>
+                    <div class="kpi-val kpi-val-money" id="inc-kpi-ss-val">-</div>
+                    <div class="kpi-sub" id="inc-kpi-ss-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #2563eb">
                     <div class="kpi-head">🎫 Ingressi</div>
@@ -928,6 +933,11 @@
                     <div class="kpi-val kpi-val-money" id="inc-kpi-accessori-val">-</div>
                     <div class="kpi-sub" id="inc-kpi-accessori-sub">-</div>
                 </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #0891b2">
+                    <div class="kpi-head">📄 Fatture</div>
+                    <div class="kpi-val kpi-val-money" id="inc-kpi-fatture-val">-</div>
+                    <div class="kpi-sub" id="inc-kpi-fatture-sub">-</div>
+                </div>
             </div>
 
             <div class="chart-card glass-card" style="height:320px; padding:15px; margin-bottom:30px">
@@ -939,7 +949,7 @@
                 <h3 style="margin:0; font-size:1.1rem; color:var(--text-main)">📅 Confronto Settimanale</h3>
                 <input type="week" id="inc-weekly-week-selector" class="filter-select" style="font-weight:700; background:rgba(255,255,255,0.8)" onchange="renderIncassiWeekly()">
             </div>
-            <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 25px;">
+            <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 25px;">
                 <div class="kpi-card glass-card" style="border-left: 4px solid #16a34a">
                     <div class="kpi-head">💰 Incasso Totale</div>
                     <div class="kpi-val kpi-val-money" id="inc-wk-tot-val">-</div>
@@ -950,6 +960,11 @@
                     <div class="kpi-head">📚 Corsi</div>
                     <div class="kpi-val kpi-val-money" id="inc-wk-n4-val">-</div>
                     <div class="kpi-sub" id="inc-wk-n4-sub">-</div>
+                </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #a16207">
+                    <div class="kpi-head">🏅 Società Sportive</div>
+                    <div class="kpi-val kpi-val-money" id="inc-wk-ss-val">-</div>
+                    <div class="kpi-sub" id="inc-wk-ss-sub">-</div>
                 </div>
                 <div class="kpi-card glass-card" style="border-left: 4px solid #2563eb">
                     <div class="kpi-head">🎫 Ingressi</div>
@@ -966,6 +981,11 @@
                     <div class="kpi-val kpi-val-money" id="inc-wk-accessori-val">-</div>
                     <div class="kpi-sub" id="inc-wk-accessori-sub">-</div>
                 </div>
+                <div class="kpi-card glass-card" style="border-left: 4px solid #0891b2">
+                    <div class="kpi-head">📄 Fatture</div>
+                    <div class="kpi-val kpi-val-money" id="inc-wk-fatture-val">-</div>
+                    <div class="kpi-sub" id="inc-wk-fatture-sub">-</div>
+                </div>
             </div>
             <div class="table-wrap glass-card" style="margin-bottom:30px">
                 <div style="overflow-x:auto;">
@@ -974,9 +994,11 @@
                             <tr>
                                 <th>Giorno</th>
                                 <th style="color:#b45309">Corsi</th>
+                                <th style="color:#a16207">Soc. Sportive</th>
                                 <th style="color:#2563eb">Ingressi</th>
                                 <th style="color:#7c3aed">Abbonamenti</th>
                                 <th style="color:#ea580c">Accessori</th>
+                                <th style="color:#0891b2">Fatture</th>
                                 <th style="background:rgba(22,163,74,0.08); color:#16a34a">Totale</th>
                             </tr>
                         </thead>
@@ -1017,7 +1039,7 @@
             </div>
 
             <div class="chart-card glass-card" style="height:320px; padding:15px; margin-bottom:30px">
-                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Ingressi / Abbonamenti / Accessori (€)</div>
+                <div class="chart-header" style="font-size:0.85rem">🧾 Composizione Corsi / Società Sportive / Ingressi / Abbonamenti / Accessori / Fatture (€)</div>
                 <div class="chart-wrapper"><canvas id="chartIncCategoryTrend"></canvas></div>
             </div>
 
@@ -1028,9 +1050,11 @@
                             <tr>
                                 <th>Mese</th>
                                 <th style="color:#b45309">Corsi</th>
+                                <th style="color:#a16207">Società Sportive</th>
                                 <th style="color:#2563eb">Ingressi</th>
                                 <th style="color:#7c3aed">Abbonamenti</th>
                                 <th style="color:#ea580c">Accessori</th>
+                                <th style="color:#0891b2">Fatture</th>
                                 <th style="background:rgba(22,163,74,0.08); color:#16a34a">Incasso Totale</th>
                             </tr>
                         </thead>
@@ -1120,9 +1144,14 @@
                     <div class="chart-wrapper"><canvas id="chartIncYearCompareCorsi"></canvas></div>
                 </div>
                 <div class="chart-card glass-card" style="height:340px; padding:15px">
-                    <div class="chart-header" style="font-size:0.85rem">🧾 Totale Parte IVA — Confronto tra Stagioni</div>
-                    <div class="chart-wrapper"><canvas id="chartIncYearCompareIva"></canvas></div>
+                    <div class="chart-header" style="font-size:0.85rem">🏅 Società Sportive — Confronto tra Stagioni</div>
+                    <div class="chart-wrapper"><canvas id="chartIncYearCompareSocietaSportive"></canvas></div>
                 </div>
+            </div>
+
+            <div class="chart-card glass-card" style="height:340px; padding:15px; margin-bottom:20px">
+                <div class="chart-header" style="font-size:0.85rem">🧾 Totale Parte IVA — Confronto tra Stagioni</div>
+                <div class="chart-wrapper"><canvas id="chartIncYearCompareIva"></canvas></div>
             </div>
 
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px">
@@ -1177,9 +1206,11 @@
                             <tr>
                                 <th>Mese</th>
                                 <th style="color:#b45309">Corsi</th>
+                                <th style="color:#a16207">Società Sportive</th>
                                 <th style="color:#2563eb">Ingressi</th>
                                 <th style="color:#7c3aed">Abbonamenti</th>
                                 <th style="color:#ea580c">Accessori</th>
+                                <th style="color:#0891b2">Fatture</th>
                                 <th style="background:rgba(22,163,74,0.08); color:#16a34a">Incasso Totale</th>
                             </tr>
                         </thead>
@@ -1203,9 +1234,11 @@
                             <tr>
                                 <th>Data</th>
                                 <th style="color:#b45309">Corsi</th>
+                                <th style="color:#a16207">Soc. Sportive</th>
                                 <th style="color:#2563eb">Ingressi</th>
                                 <th style="color:#7c3aed">Abbonamenti</th>
                                 <th style="color:#ea580c">Accessori</th>
+                                <th style="color:#0891b2">Fatture</th>
                                 <th style="background:rgba(22,163,74,0.08); color:#16a34a">Totale</th>
                                 <th>Note</th>
                                 <th style="width:90px; text-align:center">Azioni</th>
@@ -2530,8 +2563,7 @@ window.updateIncassiLiveTotal = () => {
     const accessori5Tot = numVal('inc-acc-crediti') + numVal('inc-acc-tessere') + numVal('inc-acc-cuffie') + numVal('inc-acc-noleggio') + numVal('inc-acc-altro');
     const fatSpaziAcqua = numVal('inc-fat-spazi-acqua'), fatAltro = numVal('inc-fat-altro');
     const fattureTot = fatSpaziAcqua + fatAltro;
-    const accessoriTot = accessori5Tot + fattureTot; // Fatture confluisce nel totale Accessori ai fini di calcolo/reporting
-    const ivaDetailTot = ingressiTot + abbonamentiTot + accessoriTot;
+    const ivaDetailTot = ingressiTot + abbonamentiTot + accessori5Tot + fattureTot;
 
     const ivaPos = numVal('inc-iva-pos'), ivaSat = numVal('inc-iva-satispay'), ivaBon = numVal('inc-iva-bonifico'), ivaCnt = numVal('inc-iva-contanti');
     const ivaPaySum = ivaPos + ivaSat + ivaBon + ivaCnt;
@@ -2566,7 +2598,7 @@ window.updateIncassiLiveTotal = () => {
         else { ivaCheck.innerHTML = `<span style="color:#dc2626">⚠️ Metodi pagamento: ${fmtEUR(ivaPaySum)} — differenza ${fmtEUR(ivaPaySum - ivaNetTarget)}</span>`; }
     }
 
-    return { n4Tot, ssTot, esenteDetailTot, n4Pos, n4Sat, n4Bon, n4Cnt, n4PaySum, ingressiTot, abbonamentiTot, accessori5Tot, fatSpaziAcqua, fatAltro, fattureTot, accessoriTot, ivaDetailTot, ivaNetTarget, ivaPos, ivaSat, ivaBon, ivaCnt, ivaPaySum, borselliniCorrezioni, incassoTotale };
+    return { n4Tot, ssTot, esenteDetailTot, n4Pos, n4Sat, n4Bon, n4Cnt, n4PaySum, ingressiTot, abbonamentiTot, accessori5Tot, fatSpaziAcqua, fatAltro, fattureTot, ivaDetailTot, ivaNetTarget, ivaPos, ivaSat, ivaBon, ivaCnt, ivaPaySum, borselliniCorrezioni, incassoTotale };
 };
 
 function clearIncassiForm() {
@@ -2584,7 +2616,7 @@ window.loadIncassiDayIntoForm = () => {
 };
 
 const INCASSI_FIELD_MAP = {
-    'inc-n4-tot':'corsi_solo_tot', 'inc-ss-tot':'societa_sportive_tot', 'inc-n4-pos':'corsi_n4_pos', 'inc-n4-satispay':'corsi_n4_satispay', 'inc-n4-bonifico':'corsi_n4_bonifico', 'inc-n4-contanti':'corsi_n4_contanti',
+    'inc-n4-tot':'corsi_n4_tot', 'inc-ss-tot':'societa_sportive_tot', 'inc-n4-pos':'corsi_n4_pos', 'inc-n4-satispay':'corsi_n4_satispay', 'inc-n4-bonifico':'corsi_n4_bonifico', 'inc-n4-contanti':'corsi_n4_contanti',
     'inc-ing-int-intero':'ing_int_intero', 'inc-ing-int-ridotto':'ing_int_ridotto',
     'inc-abb11-intero':'abb11_intero', 'inc-abb11-ridotto':'abb11_ridotto',
     'inc-abb-mensile-intero':'abb_mensile_intero', 'inc-abb-mensile-ridotto':'abb_mensile_ridotto',
@@ -2635,7 +2667,8 @@ window.saveIncassi = async () => {
 
     const p = {
         date, note: document.getElementById('inc-note').value || '',
-        corsi_n4_tot: v.n4Tot + v.ssTot, corsi_solo_tot: v.n4Tot, societa_sportive_tot: v.ssTot,
+        corsi_n4_tot: v.n4Tot,
+        societa_sportive_tot: v.ssTot,
         corsi_n4_pos: v.n4Pos, corsi_n4_satispay: v.n4Sat, corsi_n4_bonifico: v.n4Bon, corsi_n4_contanti: v.n4Cnt,
         ing_int_intero: numVal('inc-ing-int-intero'), ing_int_ridotto: numVal('inc-ing-int-ridotto'),
         abb11_intero: numVal('inc-abb11-intero'), abb11_ridotto: numVal('inc-abb11-ridotto'),
@@ -2649,7 +2682,8 @@ window.saveIncassi = async () => {
         abb_estivi: numVal('inc-abb-estivi'),
         acc_crediti: numVal('inc-acc-crediti'), acc_tessere: numVal('inc-acc-tessere'), acc_cuffie: numVal('inc-acc-cuffie'), acc_noleggio: numVal('inc-acc-noleggio'), acc_altro: numVal('inc-acc-altro'),
         fatture_spazi_acqua: v.fatSpaziAcqua, fatture_altro: v.fatAltro,
-        accessori_tot: v.accessoriTot,
+        accessori_tot: v.accessori5Tot,
+        fatture_tot: v.fattureTot,
         iva_pos: v.ivaPos, iva_satispay: v.ivaSat, iva_bonifico: v.ivaBon, iva_contanti: v.ivaCnt,
         // aggregati per il reporting (Panoramica/Riepilogo/Archivio)
         ingressi_tot: v.ingressiTot, abbonamenti_tot: v.abbonamentiTot,
@@ -2846,10 +2880,11 @@ function renderIncassiOverview() {
 
     const sumMonth = (year, month) => {
         const rows = dataIncassi.filter(d => { const dt = new Date(d.date); return dt.getFullYear() === year && dt.getMonth() === month; });
-        const s = { tot: 0, n4: 0, ingressi: 0, abbonamenti: 0, accessori: 0 };
+        const s = { tot: 0, n4: 0, ss: 0, ingressi: 0, abbonamenti: 0, accessori: 0, fatture: 0 };
         rows.forEach(d => {
-            s.tot += d.incasso_totale || 0; s.n4 += d.corsi_n4_tot || 0;
+            s.tot += d.incasso_totale || 0; s.n4 += d.corsi_n4_tot || 0; s.ss += d.societa_sportive_tot || 0;
             s.ingressi += d.ingressi_tot || 0; s.abbonamenti += d.abbonamenti_tot || 0; s.accessori += d.accessori_tot || 0;
+            s.fatture += d.fatture_tot || 0;
         });
         return s;
     };
@@ -2863,12 +2898,16 @@ function renderIncassiOverview() {
     document.getElementById('inc-kpi-tot-context').innerHTML = yoyFull(curr.tot, prev.tot);
     document.getElementById('inc-kpi-n4-val').innerText = fmtEUR(curr.n4);
     document.getElementById('inc-kpi-n4-sub').innerHTML = yoyFull(curr.n4, prev.n4);
+    document.getElementById('inc-kpi-ss-val').innerText = fmtEUR(curr.ss);
+    document.getElementById('inc-kpi-ss-sub').innerHTML = yoyFull(curr.ss, prev.ss);
     document.getElementById('inc-kpi-ingressi-val').innerText = fmtEUR(curr.ingressi);
     document.getElementById('inc-kpi-ingressi-sub').innerHTML = yoyFull(curr.ingressi, prev.ingressi);
     document.getElementById('inc-kpi-abbonamenti-val').innerText = fmtEUR(curr.abbonamenti);
     document.getElementById('inc-kpi-abbonamenti-sub').innerHTML = yoyFull(curr.abbonamenti, prev.abbonamenti);
     document.getElementById('inc-kpi-accessori-val').innerText = fmtEUR(curr.accessori);
     document.getElementById('inc-kpi-accessori-sub').innerHTML = yoyFull(curr.accessori, prev.accessori);
+    document.getElementById('inc-kpi-fatture-val').innerText = fmtEUR(curr.fatture);
+    document.getElementById('inc-kpi-fatture-sub').innerHTML = yoyFull(curr.fatture, prev.fatture);
 
     if (!isChartReady()) return;
     if (ch['chartIncPaymentMix']) ch['chartIncPaymentMix'].destroy();
@@ -2877,8 +2916,8 @@ function renderIncassiOverview() {
         ch['chartIncPaymentMix'] = new Chart(canvasPM, {
             type: 'doughnut',
             data: {
-                labels: ['Corsi', 'Ingressi', 'Abbonamenti', 'Accessori'],
-                datasets: [{ data: [curr.n4, curr.ingressi, curr.abbonamenti, curr.accessori], backgroundColor: ['#b45309','#2563eb','#7c3aed','#ea580c'] }]
+                labels: ['Corsi', 'Società Sportive', 'Ingressi', 'Abbonamenti', 'Accessori', 'Fatture'],
+                datasets: [{ data: [curr.n4, curr.ss, curr.ingressi, curr.abbonamenti, curr.accessori, curr.fatture], backgroundColor: ['#b45309','#a16207','#2563eb','#7c3aed','#ea580c','#0891b2'] }]
             },
             options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
         });
@@ -3025,7 +3064,7 @@ window.renderIncassiSeasonDetail = () => {
     const tFoot = document.getElementById('tfoot-season-detail-monthly');
     const fmt = (v) => fmtEUR(v);
     const rows = [];
-    const grandTotal = { n4:0, ingressi:0, abbonamenti:0, accessori:0, tot:0 };
+    const grandTotal = { n4:0, ss:0, ingressi:0, abbonamenti:0, accessori:0, fatture:0, tot:0 };
     let anyData = false;
     orderedMonthKeys.forEach(mStr => {
         const d = agg[mStr];
@@ -3033,7 +3072,7 @@ window.renderIncassiSeasonDetail = () => {
         anyData = true;
         const [y,m] = mStr.split('-');
         const monthLabel = new Date(parseInt(y), parseInt(m)-1, 1).toLocaleString('it-IT', {month:'long', year:'numeric'});
-        grandTotal.n4+=d.n4; grandTotal.ingressi+=d.ingressi; grandTotal.abbonamenti+=d.abbonamenti; grandTotal.accessori+=d.accessori; grandTotal.tot+=d.tot;
+        grandTotal.n4+=d.n4; grandTotal.ss+=d.ss; grandTotal.ingressi+=d.ingressi; grandTotal.abbonamenti+=d.abbonamenti; grandTotal.accessori+=d.accessori; grandTotal.fatture+=d.fatture; grandTotal.tot+=d.tot;
         const prevYear = String(parseInt(y)-1); const prevD = aggAll[`${prevYear}-${m}`];
         let yoyHtml = '';
         if (prevD && prevD.tot>0) {
@@ -3043,19 +3082,23 @@ window.renderIncassiSeasonDetail = () => {
         rows.push(`<tr>
             <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
             <td style="color:#b45309">${fmt(d.n4)}</td>
+            <td style="color:#a16207">${fmt(d.ss)}</td>
             <td style="color:#2563eb">${fmt(d.ingressi)}</td>
             <td style="color:#7c3aed">${fmt(d.abbonamenti)}</td>
             <td style="color:#ea580c">${fmt(d.accessori)}</td>
+            <td style="color:#0891b2">${fmt(d.fatture)}</td>
             <td style="font-weight:800; color:#16a34a; background:rgba(22,163,74,0.05)">${fmt(d.tot)}${yoyHtml}</td>
         </tr>`);
     });
-    tBody.innerHTML = anyData ? rows.join('') : '<tr><td colspan="6" style="text-align:center;padding:20px">Nessun dato per questa stagione</td></tr>';
+    tBody.innerHTML = anyData ? rows.join('') : '<tr><td colspan="8" style="text-align:center;padding:20px">Nessun dato per questa stagione</td></tr>';
     if (tFoot) tFoot.innerHTML = anyData ? `<tr style="border-top:2px solid rgba(0,0,0,0.1)">
         <td style="font-weight:800">TOTALE Stagione ${selectedSeason}</td>
         <td style="font-weight:800; color:#b45309">${fmt(grandTotal.n4)}</td>
+        <td style="font-weight:800; color:#a16207">${fmt(grandTotal.ss)}</td>
         <td style="font-weight:800; color:#2563eb">${fmt(grandTotal.ingressi)}</td>
         <td style="font-weight:800; color:#7c3aed">${fmt(grandTotal.abbonamenti)}</td>
         <td style="font-weight:800; color:#ea580c">${fmt(grandTotal.accessori)}</td>
+        <td style="font-weight:800; color:#0891b2">${fmt(grandTotal.fatture)}</td>
         <td style="font-weight:900; color:#16a34a; background:rgba(22,163,74,0.1)">${fmt(grandTotal.tot)}</td>
     </tr>` : '';
 
@@ -3064,14 +3107,14 @@ window.renderIncassiSeasonDetail = () => {
     dataIncassi.forEach(d => {
         if (getSeasonLabel(getSeasonStartYear(d.date)) !== selectedSeason) return;
         const ym = d.date.slice(0,7);
-        if (!monthlyAggX[ym]) monthlyAggX[ym] = {n4:0,ingressi:0,abbonamenti:0,accessori:0};
-        monthlyAggX[ym].n4 += d.corsi_n4_tot||0; monthlyAggX[ym].ingressi += d.ingressi_tot||0;
-        monthlyAggX[ym].abbonamenti += d.abbonamenti_tot||0; monthlyAggX[ym].accessori += d.accessori_tot||0;
+        if (!monthlyAggX[ym]) monthlyAggX[ym] = {n4:0,ss:0,ingressi:0,abbonamenti:0,accessori:0,fatture:0};
+        monthlyAggX[ym].n4 += d.corsi_n4_tot||0; monthlyAggX[ym].ss += d.societa_sportive_tot||0; monthlyAggX[ym].ingressi += d.ingressi_tot||0;
+        monthlyAggX[ym].abbonamenti += d.abbonamenti_tot||0; monthlyAggX[ym].accessori += d.accessori_tot||0; monthlyAggX[ym].fatture += d.fatture_tot||0;
     });
-    const eurN4=[], eurIngressi=[], eurAbbonamenti=[], eurAccessori=[];
+    const eurN4=[], eurSS=[], eurIngressi=[], eurAbbonamenti=[], eurAccessori=[], eurFatture=[];
     orderedMonthKeys.forEach(m => {
-        const d = monthlyAggX[m] || {n4:0,ingressi:0,abbonamenti:0,accessori:0};
-        eurN4.push(d.n4); eurIngressi.push(d.ingressi); eurAbbonamenti.push(d.abbonamenti); eurAccessori.push(d.accessori);
+        const d = monthlyAggX[m] || {n4:0,ss:0,ingressi:0,abbonamenti:0,accessori:0,fatture:0};
+        eurN4.push(d.n4); eurSS.push(d.ss); eurIngressi.push(d.ingressi); eurAbbonamenti.push(d.abbonamenti); eurAccessori.push(d.accessori); eurFatture.push(d.fatture);
     });
     if (ch['chartIncCategoryTrend']) ch['chartIncCategoryTrend'].destroy();
     const c2 = document.getElementById('chartIncCategoryTrend');
@@ -3080,9 +3123,11 @@ window.renderIncassiSeasonDetail = () => {
             type: 'bar',
             data: { labels: monthLabelsSeason, datasets: [
                 { label:'Corsi', data:eurN4, backgroundColor:'#b45309', stack:'eur' },
+                { label:'Società Sportive', data:eurSS, backgroundColor:'#a16207', stack:'eur' },
                 { label:'Ingressi', data:eurIngressi, backgroundColor:'#2563eb', stack:'eur' },
                 { label:'Abbonamenti', data:eurAbbonamenti, backgroundColor:'#7c3aed', stack:'eur' },
-                { label:'Accessori', data:eurAccessori, backgroundColor:'#ea580c', stack:'eur' }
+                { label:'Accessori', data:eurAccessori, backgroundColor:'#ea580c', stack:'eur' },
+                { label:'Fatture', data:eurFatture, backgroundColor:'#0891b2', stack:'eur' }
             ]},
             options: { animation:false, responsive:true, maintainAspectRatio:false,
                 scales: { x:{stacked:true}, y:{stacked:true, beginAtZero:true, ticks:{callback:v=>fmtEUR(v)}} },
@@ -3164,13 +3209,14 @@ window.renderIncassiSeasonDetail = () => {
 function renderIncassiStats() {
     if (!isChartReady() || !dataIncassi || dataIncassi.length === 0) return;
 
-    // Aggregazione mensile per categoria: "YYYY-MM" -> {tot, n4, ingressi, abbonamenti, accessori, crediti, fatture, spaziAcqua}
+    // Aggregazione mensile per categoria: "YYYY-MM" -> {tot, n4, ss, ingressi, abbonamenti, accessori, crediti, fatture, spaziAcqua}
     const catSumByYearMonth = {};
     dataIncassi.forEach(d => {
         const ym = d.date.slice(0,7);
-        if (!catSumByYearMonth[ym]) catSumByYearMonth[ym] = { tot:0, n4:0, ingressi:0, abbonamenti:0, accessori:0, crediti:0, fatture:0, spaziAcqua:0 };
+        if (!catSumByYearMonth[ym]) catSumByYearMonth[ym] = { tot:0, n4:0, ss:0, ingressi:0, abbonamenti:0, accessori:0, crediti:0, fatture:0, spaziAcqua:0 };
         catSumByYearMonth[ym].tot += d.incasso_totale || 0;
         catSumByYearMonth[ym].n4 += d.corsi_n4_tot || 0;
+        catSumByYearMonth[ym].ss += d.societa_sportive_tot || 0;
         catSumByYearMonth[ym].ingressi += d.ingressi_tot || 0;
         catSumByYearMonth[ym].abbonamenti += d.abbonamenti_tot || 0;
         catSumByYearMonth[ym].accessori += d.accessori_tot || 0;
@@ -3212,7 +3258,8 @@ function renderIncassiStats() {
 
     buildSeasonCompareChart('chartIncYearCompare', r => r.tot);
     buildSeasonCompareChart('chartIncYearCompareCorsi', r => r.n4);
-    buildSeasonCompareChart('chartIncYearCompareIva', r => r.ingressi + r.abbonamenti + r.accessori);
+    buildSeasonCompareChart('chartIncYearCompareSocietaSportive', r => r.ss);
+    buildSeasonCompareChart('chartIncYearCompareIva', r => r.ingressi + r.abbonamenti + r.accessori + r.fatture);
     buildSeasonCompareChart('chartIncYearCompareIngressi', r => r.ingressi);
     buildSeasonCompareChart('chartIncYearCompareAbbonamenti', r => r.abbonamenti);
     buildSeasonCompareChart('chartIncYearCompareAccessori', r => r.accessori);
@@ -3262,11 +3309,12 @@ window.renderIncassiWeekly = () => {
     dataIncassi.forEach(d => { byDate[d.date] = d; });
 
     const sumDays = (dateList) => {
-        const s = { tot: 0, n4: 0, ingressi: 0, abbonamenti: 0, accessori: 0 };
+        const s = { tot: 0, n4: 0, ss: 0, ingressi: 0, abbonamenti: 0, accessori: 0, fatture: 0 };
         dateList.forEach(ds => {
             const r = byDate[ds]; if (!r) return;
-            s.tot += r.incasso_totale || 0; s.n4 += r.corsi_n4_tot || 0;
+            s.tot += r.incasso_totale || 0; s.n4 += r.corsi_n4_tot || 0; s.ss += r.societa_sportive_tot || 0;
             s.ingressi += r.ingressi_tot || 0; s.abbonamenti += r.abbonamenti_tot || 0; s.accessori += r.accessori_tot || 0;
+            s.fatture += r.fatture_tot || 0;
         });
         return s;
     };
@@ -3280,24 +3328,30 @@ window.renderIncassiWeekly = () => {
     document.getElementById('inc-wk-tot-context').innerHTML = wow(curr.tot, prev.tot);
     document.getElementById('inc-wk-n4-val').innerText = fmtEUR(curr.n4);
     document.getElementById('inc-wk-n4-sub').innerHTML = wow(curr.n4, prev.n4);
+    document.getElementById('inc-wk-ss-val').innerText = fmtEUR(curr.ss);
+    document.getElementById('inc-wk-ss-sub').innerHTML = wow(curr.ss, prev.ss);
     document.getElementById('inc-wk-ingressi-val').innerText = fmtEUR(curr.ingressi);
     document.getElementById('inc-wk-ingressi-sub').innerHTML = wow(curr.ingressi, prev.ingressi);
     document.getElementById('inc-wk-abbonamenti-val').innerText = fmtEUR(curr.abbonamenti);
     document.getElementById('inc-wk-abbonamenti-sub').innerHTML = wow(curr.abbonamenti, prev.abbonamenti);
     document.getElementById('inc-wk-accessori-val').innerText = fmtEUR(curr.accessori);
     document.getElementById('inc-wk-accessori-sub').innerHTML = wow(curr.accessori, prev.accessori);
+    document.getElementById('inc-wk-fatture-val').innerText = fmtEUR(curr.fatture);
+    document.getElementById('inc-wk-fatture-sub').innerHTML = wow(curr.fatture, prev.fatture);
 
     const tBody = document.getElementById('tbody-incassi-weekly');
     tBody.innerHTML = days.map(ds => {
         const r = byDate[ds];
         const label = new Date(ds+'T00:00:00').toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long'});
-        if (!r) return `<tr><td style="font-weight:700; text-transform:capitalize; color:#94a3b8">${label}</td><td colspan="5" style="color:#cbd5e1; text-align:center">Nessun dato</td></tr>`;
+        if (!r) return `<tr><td style="font-weight:700; text-transform:capitalize; color:#94a3b8">${label}</td><td colspan="7" style="color:#cbd5e1; text-align:center">Nessun dato</td></tr>`;
         return `<tr>
             <td style="font-weight:700; text-transform:capitalize">${label}</td>
             <td style="color:#b45309">${fmtEUR(r.corsi_n4_tot)}</td>
+            <td style="color:#a16207">${fmtEUR(r.societa_sportive_tot)}</td>
             <td style="color:#2563eb">${fmtEUR(r.ingressi_tot)}</td>
             <td style="color:#7c3aed">${fmtEUR(r.abbonamenti_tot)}</td>
             <td style="color:#ea580c">${fmtEUR(r.accessori_tot)}</td>
+            <td style="color:#0891b2">${fmtEUR(r.fatture_tot)}</td>
             <td style="font-weight:800; color:#16a34a; background:rgba(22,163,74,0.05)">${fmtEUR(r.incasso_totale)}</td>
         </tr>`;
     }).join('');
@@ -3320,11 +3374,13 @@ function aggregateRiepilogoIncassi(seasonFilter) {
         const yyyymm = d.date.slice(0,7);
         const seasonLabel = getSeasonLabel(getSeasonStartYear(d.date));
         if (seasonFilter !== 'all' && seasonLabel !== seasonFilter) return;
-        if (!agg[yyyymm]) agg[yyyymm] = { n4:0, ingressi:0, abbonamenti:0, accessori:0, tot:0 };
+        if (!agg[yyyymm]) agg[yyyymm] = { n4:0, ss:0, ingressi:0, abbonamenti:0, accessori:0, fatture:0, tot:0 };
         agg[yyyymm].n4 += d.corsi_n4_tot||0;
+        agg[yyyymm].ss += d.societa_sportive_tot||0;
         agg[yyyymm].ingressi += d.ingressi_tot||0;
         agg[yyyymm].abbonamenti += d.abbonamenti_tot||0;
         agg[yyyymm].accessori += d.accessori_tot||0;
+        agg[yyyymm].fatture += d.fatture_tot||0;
         agg[yyyymm].tot += d.incasso_totale||0;
     });
     return agg;
@@ -3345,14 +3401,14 @@ window.renderRiepilogoIncassi = () => {
     const tFoot = document.getElementById('tfoot-riepilogo-incassi');
     const fmt = (v) => fmtEUR(v);
 
-    if (sortedMonths.length === 0) { tBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px">Nessun dato</td></tr>'; if(tFoot) tFoot.innerHTML=''; return; }
+    if (sortedMonths.length === 0) { tBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px">Nessun dato</td></tr>'; if(tFoot) tFoot.innerHTML=''; return; }
 
     const rows = [];
-    const grandTotal = { n4:0, ingressi:0, abbonamenti:0, accessori:0, tot:0 };
+    const grandTotal = { n4:0, ss:0, ingressi:0, abbonamenti:0, accessori:0, fatture:0, tot:0 };
     sortedMonths.forEach(mStr => {
         const d = agg[mStr]; const [y,m] = mStr.split('-');
         const monthLabel = new Date(parseInt(y), parseInt(m)-1, 1).toLocaleString('it-IT', {month:'long', year:'numeric'});
-        grandTotal.n4 += d.n4; grandTotal.ingressi += d.ingressi; grandTotal.abbonamenti += d.abbonamenti; grandTotal.accessori += d.accessori; grandTotal.tot += d.tot;
+        grandTotal.n4 += d.n4; grandTotal.ss += d.ss; grandTotal.ingressi += d.ingressi; grandTotal.abbonamenti += d.abbonamenti; grandTotal.accessori += d.accessori; grandTotal.fatture += d.fatture; grandTotal.tot += d.tot;
 
         // Confronto vs stesso mese dell'anno solare precedente (indipendente dalla stagione fiscale)
         const prevYear = String(parseInt(y)-1); const prevD = aggAll[`${prevYear}-${m}`];
@@ -3364,9 +3420,11 @@ window.renderRiepilogoIncassi = () => {
         rows.push(`<tr>
             <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
             <td style="color:#b45309">${fmt(d.n4)}</td>
+            <td style="color:#a16207">${fmt(d.ss)}</td>
             <td style="color:#2563eb">${fmt(d.ingressi)}</td>
             <td style="color:#7c3aed">${fmt(d.abbonamenti)}</td>
             <td style="color:#ea580c">${fmt(d.accessori)}</td>
+            <td style="color:#0891b2">${fmt(d.fatture)}</td>
             <td style="font-weight:800; color:#16a34a; background:rgba(22,163,74,0.05)">${fmt(d.tot)}${yoyHtml}</td>
         </tr>`);
     });
@@ -3375,9 +3433,11 @@ window.renderRiepilogoIncassi = () => {
         tFoot.innerHTML = `<tr style="border-top:2px solid rgba(0,0,0,0.1)">
             <td style="font-weight:800">TOTALE${seasonFilter!=='all'?' Stagione '+seasonFilter:''}</td>
             <td style="font-weight:800; color:#b45309">${fmt(grandTotal.n4)}</td>
+            <td style="font-weight:800; color:#a16207">${fmt(grandTotal.ss)}</td>
             <td style="font-weight:800; color:#2563eb">${fmt(grandTotal.ingressi)}</td>
             <td style="font-weight:800; color:#7c3aed">${fmt(grandTotal.abbonamenti)}</td>
             <td style="font-weight:800; color:#ea580c">${fmt(grandTotal.accessori)}</td>
+            <td style="font-weight:800; color:#0891b2">${fmt(grandTotal.fatture)}</td>
             <td style="font-weight:900; color:#16a34a; background:rgba(22,163,74,0.1)">${fmt(grandTotal.tot)}</td>
         </tr>`;
     }
@@ -3389,11 +3449,11 @@ window.downloadRiepilogoIncassiCSV = () => {
     const agg = aggregateRiepilogoIncassi(seasonFilter);
     const sortedMonths = Object.keys(agg).sort();
     if (!sortedMonths.length) return showToast("Nessun dato da scaricare", "error");
-    let csv = "Mese;Corsi;Ingressi;Abbonamenti;Accessori;Incasso Totale\n";
+    let csv = "Mese;Corsi;Società Sportive;Ingressi;Abbonamenti;Accessori;Fatture;Incasso Totale\n";
     sortedMonths.forEach(mStr => {
         const d = agg[mStr]; const [y,m] = mStr.split('-');
         const label = new Date(parseInt(y), parseInt(m)-1, 1).toLocaleString('it-IT', {month:'long', year:'numeric'});
-        csv += `${label};${d.n4.toFixed(2)};${d.ingressi.toFixed(2)};${d.abbonamenti.toFixed(2)};${d.accessori.toFixed(2)};${d.tot.toFixed(2)}\n`;
+        csv += `${label};${d.n4.toFixed(2)};${d.ss.toFixed(2)};${d.ingressi.toFixed(2)};${d.abbonamenti.toFixed(2)};${d.accessori.toFixed(2)};${d.fatture.toFixed(2)};${d.tot.toFixed(2)}\n`;
     });
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const link = document.createElement('a');
@@ -3410,16 +3470,18 @@ window.renderIncassiArchive = () => {
     f.sort((a,b) => a.date < b.date ? 1 : -1);
 
     const t = document.getElementById('tbody-incassi-archive');
-    if (f.length === 0) { t.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px">Nessun dato trovato.</td></tr>'; return; }
+    if (f.length === 0) { t.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px">Nessun dato trovato.</td></tr>'; return; }
 
     t.innerHTML = f.map(d => {
         const dateLabel = d.date.split('-').reverse().join('/');
         return `<tr>
             <td style="font-weight:700">${dateLabel}</td>
             <td style="color:#b45309">${fmtEUR(d.corsi_n4_tot)}</td>
+            <td style="color:#a16207">${fmtEUR(d.societa_sportive_tot)}</td>
             <td style="color:#2563eb">${fmtEUR(d.ingressi_tot)}</td>
             <td style="color:#7c3aed">${fmtEUR(d.abbonamenti_tot)}</td>
             <td style="color:#ea580c">${fmtEUR(d.accessori_tot)}</td>
+            <td style="color:#0891b2">${fmtEUR(d.fatture_tot)}</td>
             <td style="font-weight:800; color:#16a34a">${fmtEUR(d.incasso_totale)}</td>
             <td style="font-size:0.8rem; color:#64748b">${d.note||''}</td>
             <td style="min-width:90px">
