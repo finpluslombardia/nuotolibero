@@ -908,7 +908,7 @@
                     <div class="kpi-sub" id="inc-kpi-tot-sub">-</div>
                     <div class="kpi-context" id="inc-kpi-tot-context"></div>
                 </div>
-                <div class="kpi-card glass-card" style="border-left: 4px solid #b45309">
+                <div class="kpi-card glass-card" style="border-left: 4px solid #dc2626">
                     <div class="kpi-head">📚 Corsi</div>
                     <div class="kpi-val kpi-val-money" id="inc-kpi-n4-val">-</div>
                     <div class="kpi-sub" id="inc-kpi-n4-sub">-</div>
@@ -956,7 +956,7 @@
                     <div class="kpi-sub" id="inc-wk-tot-sub">-</div>
                     <div class="kpi-context" id="inc-wk-tot-context"></div>
                 </div>
-                <div class="kpi-card glass-card" style="border-left: 4px solid #b45309">
+                <div class="kpi-card glass-card" style="border-left: 4px solid #dc2626">
                     <div class="kpi-head">📚 Corsi</div>
                     <div class="kpi-val kpi-val-money" id="inc-wk-n4-val">-</div>
                     <div class="kpi-sub" id="inc-wk-n4-sub">-</div>
@@ -993,7 +993,7 @@
                         <thead>
                             <tr>
                                 <th>Giorno</th>
-                                <th style="color:#b45309">Corsi</th>
+                                <th style="color:#dc2626">Corsi</th>
                                 <th style="color:#a16207">Soc. Sportive</th>
                                 <th style="color:#2563eb">Ingressi</th>
                                 <th style="color:#7c3aed">Abbonamenti</th>
@@ -1049,7 +1049,7 @@
                         <thead>
                             <tr>
                                 <th>Mese</th>
-                                <th style="color:#b45309">Corsi</th>
+                                <th style="color:#dc2626">Corsi</th>
                                 <th style="color:#a16207">Società Sportive</th>
                                 <th style="color:#2563eb">Ingressi</th>
                                 <th style="color:#7c3aed">Abbonamenti</th>
@@ -1205,7 +1205,7 @@
                         <thead>
                             <tr>
                                 <th>Mese</th>
-                                <th style="color:#b45309">Corsi</th>
+                                <th style="color:#dc2626">Corsi</th>
                                 <th style="color:#a16207">Società Sportive</th>
                                 <th style="color:#2563eb">Ingressi</th>
                                 <th style="color:#7c3aed">Abbonamenti</th>
@@ -1233,7 +1233,7 @@
                         <thead>
                             <tr>
                                 <th>Data</th>
-                                <th style="color:#b45309">Corsi</th>
+                                <th style="color:#dc2626">Corsi</th>
                                 <th style="color:#a16207">Soc. Sportive</th>
                                 <th style="color:#2563eb">Ingressi</th>
                                 <th style="color:#7c3aed">Abbonamenti</th>
@@ -1269,10 +1269,10 @@
 
                 <!-- ============ MACRO-BOX: ESENTE IVA ============ -->
                 <div style="margin-top:16px; padding:16px; border-radius:14px; background:rgba(180,83,9,0.06); border:2px solid rgba(180,83,9,0.25)">
-                    <div style="font-weight:900; font-size:0.95rem; color:#b45309; margin-bottom:12px">🧾 ESENTE IVA</div>
+                    <div style="font-weight:900; font-size:0.95rem; color:#dc2626; margin-bottom:12px">🧾 ESENTE IVA</div>
 
                     <div style="padding:12px; border-radius:10px; background:rgba(255,255,255,0.6); margin-bottom:10px">
-                        <div style="font-weight:800; font-size:0.85rem; color:#b45309; margin-bottom:8px">📚 Corsi</div>
+                        <div style="font-weight:800; font-size:0.85rem; color:#dc2626; margin-bottom:8px">📚 Corsi</div>
                         <div class="cb-row">
                             <div class="inp-field" style="flex:1"><label>Totale (€)</label><input type="number" step="any" id="inc-n4-tot" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
                         </div>
@@ -1286,7 +1286,7 @@
                     </div>
 
                     <div style="padding:12px; border-radius:10px; background:rgba(255,255,255,0.6)">
-                        <div style="font-weight:800; font-size:0.85rem; color:#b45309; margin-bottom:4px">💳 Metodi di Pagamento — Esente IVA</div>
+                        <div style="font-weight:800; font-size:0.85rem; color:#dc2626; margin-bottom:4px">💳 Metodi di Pagamento — Esente IVA</div>
                         <div style="font-size:0.75rem; color:#64748b; margin-bottom:8px">Corsi + Società Sportive — Totale calcolato: <b id="inc-esente-calc-tot">€ 0,00</b></div>
                         <div class="cb-row">
                             <div class="inp-field"><label>Carta</label><input type="number" step="any" id="inc-n4-pos" oninput="updateIncassiLiveTotal()" placeholder="0"></div>
@@ -2917,7 +2917,7 @@ function renderIncassiOverview() {
             type: 'doughnut',
             data: {
                 labels: ['Corsi', 'Società Sportive', 'Ingressi', 'Abbonamenti', 'Accessori', 'Fatture'],
-                datasets: [{ data: [curr.n4, curr.ss, curr.ingressi, curr.abbonamenti, curr.accessori, curr.fatture], backgroundColor: ['#b45309','#a16207','#2563eb','#7c3aed','#ea580c','#0891b2'] }]
+                datasets: [{ data: [curr.n4, curr.ss, curr.ingressi, curr.abbonamenti, curr.accessori, curr.fatture], backgroundColor: ['#dc2626','#a16207','#2563eb','#7c3aed','#ea580c','#0891b2'] }]
             },
             options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
         });
@@ -3081,7 +3081,7 @@ window.renderIncassiSeasonDetail = () => {
         }
         rows.push(`<tr>
             <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
-            <td style="color:#b45309">${fmt(d.n4)}</td>
+            <td style="color:#dc2626">${fmt(d.n4)}</td>
             <td style="color:#a16207">${fmt(d.ss)}</td>
             <td style="color:#2563eb">${fmt(d.ingressi)}</td>
             <td style="color:#7c3aed">${fmt(d.abbonamenti)}</td>
@@ -3093,7 +3093,7 @@ window.renderIncassiSeasonDetail = () => {
     tBody.innerHTML = anyData ? rows.join('') : '<tr><td colspan="8" style="text-align:center;padding:20px">Nessun dato per questa stagione</td></tr>';
     if (tFoot) tFoot.innerHTML = anyData ? `<tr style="border-top:2px solid rgba(0,0,0,0.1)">
         <td style="font-weight:800">TOTALE Stagione ${selectedSeason}</td>
-        <td style="font-weight:800; color:#b45309">${fmt(grandTotal.n4)}</td>
+        <td style="font-weight:800; color:#dc2626">${fmt(grandTotal.n4)}</td>
         <td style="font-weight:800; color:#a16207">${fmt(grandTotal.ss)}</td>
         <td style="font-weight:800; color:#2563eb">${fmt(grandTotal.ingressi)}</td>
         <td style="font-weight:800; color:#7c3aed">${fmt(grandTotal.abbonamenti)}</td>
@@ -3122,7 +3122,7 @@ window.renderIncassiSeasonDetail = () => {
         ch['chartIncCategoryTrend'] = new Chart(c2, {
             type: 'bar',
             data: { labels: monthLabelsSeason, datasets: [
-                { label:'Corsi', data:eurN4, backgroundColor:'#b45309', stack:'eur' },
+                { label:'Corsi', data:eurN4, backgroundColor:'#dc2626', stack:'eur' },
                 { label:'Società Sportive', data:eurSS, backgroundColor:'#a16207', stack:'eur' },
                 { label:'Ingressi', data:eurIngressi, backgroundColor:'#2563eb', stack:'eur' },
                 { label:'Abbonamenti', data:eurAbbonamenti, backgroundColor:'#7c3aed', stack:'eur' },
@@ -3346,7 +3346,7 @@ window.renderIncassiWeekly = () => {
         if (!r) return `<tr><td style="font-weight:700; text-transform:capitalize; color:#94a3b8">${label}</td><td colspan="7" style="color:#cbd5e1; text-align:center">Nessun dato</td></tr>`;
         return `<tr>
             <td style="font-weight:700; text-transform:capitalize">${label}</td>
-            <td style="color:#b45309">${fmtEUR(r.corsi_n4_tot)}</td>
+            <td style="color:#dc2626">${fmtEUR(r.corsi_n4_tot)}</td>
             <td style="color:#a16207">${fmtEUR(r.societa_sportive_tot)}</td>
             <td style="color:#2563eb">${fmtEUR(r.ingressi_tot)}</td>
             <td style="color:#7c3aed">${fmtEUR(r.abbonamenti_tot)}</td>
@@ -3419,7 +3419,7 @@ window.renderRiepilogoIncassi = () => {
         }
         rows.push(`<tr>
             <td style="font-weight:700; text-transform:capitalize">${monthLabel}</td>
-            <td style="color:#b45309">${fmt(d.n4)}</td>
+            <td style="color:#dc2626">${fmt(d.n4)}</td>
             <td style="color:#a16207">${fmt(d.ss)}</td>
             <td style="color:#2563eb">${fmt(d.ingressi)}</td>
             <td style="color:#7c3aed">${fmt(d.abbonamenti)}</td>
@@ -3432,7 +3432,7 @@ window.renderRiepilogoIncassi = () => {
     if (tFoot) {
         tFoot.innerHTML = `<tr style="border-top:2px solid rgba(0,0,0,0.1)">
             <td style="font-weight:800">TOTALE${seasonFilter!=='all'?' Stagione '+seasonFilter:''}</td>
-            <td style="font-weight:800; color:#b45309">${fmt(grandTotal.n4)}</td>
+            <td style="font-weight:800; color:#dc2626">${fmt(grandTotal.n4)}</td>
             <td style="font-weight:800; color:#a16207">${fmt(grandTotal.ss)}</td>
             <td style="font-weight:800; color:#2563eb">${fmt(grandTotal.ingressi)}</td>
             <td style="font-weight:800; color:#7c3aed">${fmt(grandTotal.abbonamenti)}</td>
@@ -3476,7 +3476,7 @@ window.renderIncassiArchive = () => {
         const dateLabel = d.date.split('-').reverse().join('/');
         return `<tr>
             <td style="font-weight:700">${dateLabel}</td>
-            <td style="color:#b45309">${fmtEUR(d.corsi_n4_tot)}</td>
+            <td style="color:#dc2626">${fmtEUR(d.corsi_n4_tot)}</td>
             <td style="color:#a16207">${fmtEUR(d.societa_sportive_tot)}</td>
             <td style="color:#2563eb">${fmtEUR(d.ingressi_tot)}</td>
             <td style="color:#7c3aed">${fmtEUR(d.abbonamenti_tot)}</td>
